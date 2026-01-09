@@ -46,14 +46,22 @@ async function fetchListings() {
       const container = document.querySelector(".notion-table-view")
       if (!container) return []
 
-      const elements = container.querySelectorAll("[data-block-id]")
+      const elements = container.querySelectorAll(
+        "[data-block-id].notion-collection-item"
+      )
+
       return Array.from(elements).map((el) => {
         const ID = el.getAttribute("data-block-id") || ""
         const rowElement = el.querySelector(".notion-table-view-row")
         const rowItems = rowElement?.querySelectorAll("[data-col-index]")
 
+        const rowIndex = Number(
+          rowItems?.item(0)?.getAttribute("data-row-index") || "0"
+        )
+
         return {
           id: ID,
+          rowIndex,
           // Notion removes dashes from IDs in URLs
           formattedId: ID.replaceAll("-", ""),
           applyLink: `https://noteforms.com/forms/top-shelf-job-application-cheqot?084f5395-fbce-48de-81e2-ca34d396c6a0%5B%5D=${ID}`,
