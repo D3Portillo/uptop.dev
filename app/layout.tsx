@@ -1,8 +1,8 @@
 import "./globals.css"
 import type { Metadata } from "next"
-import { Geist_Mono } from "next/font/google"
+import { Inter } from "next/font/google"
 
-const nextFont = Geist_Mono({
+const nextFont = Inter({
   subsets: [],
   display: "fallback",
   adjustFontFallback: true,
