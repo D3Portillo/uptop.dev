@@ -1,8 +1,4 @@
-import puppeteer, { Browser } from "puppeteer-core"
-import chromium from "@sparticuz/chromium"
-
-// Optional: If you'd like to disable webgl, true is the default.
-chromium.setGraphicsMode = false
+import { getBrowser, type Browser } from "@/lib/chromium"
 
 const ROW_HEADERS = [
   "STATUS",
@@ -28,31 +24,12 @@ const fetchBlockProperty = (
   return value || null
 }
 
-export async function GET() {
+async function fetchListings() {
   let browser = null as Browser | null
 
   try {
-    const isLocal = process.env.NODE_ENV !== "production"
-
     // Launch browser with chromium
-    browser = await puppeteer.launch({
-      acceptInsecureCerts: true,
-      args: isLocal
-        ? puppeteer.defaultArgs()
-        : puppeteer.defaultArgs({ args: chromium.args, headless: "shell" }),
-      defaultViewport: {
-        deviceScaleFactor: 1,
-        hasTouch: false,
-        height: 1080,
-        isLandscape: true,
-        isMobile: false,
-        width: 1920,
-      },
-      executablePath: isLocal
-        ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-        : await chromium.executablePath(),
-      headless: isLocal ? false : "shell",
-    })
+    browser = await getBrowser()
 
     const page = await browser.newPage()
 
@@ -93,65 +70,8 @@ export async function GET() {
       })
     })
 
-    // Reuse a single page instead of creating 50+
-    const detailPage = await browser.newPage()
-
-    type BlockData = (typeof rawBlockData)[number]
-    type FinalBlockData = BlockData & {
-      description: string | null
-    }
-
-    const blockData = [] as Array<FinalBlockData>
-
-    for (const block of rawBlockData) {
-      // Omit for now - testing purposes
-      let blockWithMetadata: FinalBlockData = {
-        ...block,
-        description: null,
-      }
-
-      try {
-        throw new Error("Skipping detail fetch for testing")
-        await detailPage.goto(
-          `https://uptop.notion.site/${block.formattedId}`,
-          {
-            waitUntil: "domcontentloaded",
-            timeout: 15_000,
-          }
-        )
-
-        await detailPage.waitForSelector(".notion-page-content", {
-          timeout: 10_000,
-        })
-
-        const { description } = await detailPage.evaluate(() => {
-          const applyLink = document.querySelector(".notion-page-block a")
-
-          return {
-            applyLink: applyLink?.getAttribute("href") || null,
-            description:
-              document.querySelector(".notion-page-content")?.textContent ||
-              null,
-          }
-        })
-
-        blockWithMetadata = {
-          ...block,
-          description,
-        }
-      } catch (error) {
-        console.error(
-          `Error fetching details for ID: ${block.formattedId}:`,
-          error
-        )
-      }
-
-      blockData.push(blockWithMetadata)
-    }
-
-    await Promise.all([page, detailPage].map((p) => p.close()))
-
-    const formattedBlocks = blockData
+    await browser.close()
+    const formattedBlocks = rawBlockData
       // Remove empty blocks
       .filter((block) => block.properties.length > 0)
       // Remove duplicate blocks
@@ -194,17 +114,25 @@ export async function GET() {
         }
       })
 
-    return Response.json({
+    const result = {
       success: true,
       count: formattedBlocks.length,
       data: formattedBlocks,
-    })
-  } catch (error) {
-    if (browser) {
-      await browser.close()
     }
 
-    console.error("Error scraping Notion:", error)
+    return result
+  } catch (error) {
+    if (browser) await browser.close()
+    throw error
+  }
+}
+
+export type TListingResponse = Awaited<ReturnType<typeof fetchListings>>
+export async function GET() {
+  try {
+    const result = await fetchListings()
+    return Response.json(result)
+  } catch (error) {
     return Response.json(
       {
         success: false,
