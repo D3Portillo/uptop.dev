@@ -22,7 +22,7 @@ const fetchBlockProperty = (
   propertyName: (typeof ROW_HEADERS)[number]
 ) => {
   const index = ROW_HEADERS.indexOf(propertyName)
-  const value = index !== -1 ? block.properties[index] : null
+  const value = index !== -1 ? block?.properties[index]?.trim() : null
 
   // Avoid falsy values - keep consitent
   return value || null
@@ -79,6 +79,7 @@ export async function GET() {
           id: ID,
           // Notion removes dashes from IDs in URLs
           formattedId: ID.replaceAll("-", ""),
+          applyLink: `https://noteforms.com/forms/top-shelf-job-application-cheqot?084f5395-fbce-48de-81e2-ca34d396c6a0%5B%5D=${ID}`,
           properties: Array.from(rowItems || []).map((item) => {
             const popUps = Array.from(
               item.querySelectorAll("[data-popup-origin=true]")
@@ -98,19 +99,19 @@ export async function GET() {
     type BlockData = (typeof rawBlockData)[number]
     type FinalBlockData = BlockData & {
       description: string | null
-      applyLink: string | null
     }
 
     const blockData = [] as Array<FinalBlockData>
 
     for (const block of rawBlockData) {
+      // Omit for now - testing purposes
       let blockWithMetadata: FinalBlockData = {
         ...block,
         description: null,
-        applyLink: null,
       }
 
       try {
+        throw new Error("Skipping detail fetch for testing")
         await detailPage.goto(
           `https://uptop.notion.site/${block.formattedId}`,
           {
@@ -123,7 +124,7 @@ export async function GET() {
           timeout: 10_000,
         })
 
-        const { description, applyLink } = await detailPage.evaluate(() => {
+        const { description } = await detailPage.evaluate(() => {
           const applyLink = document.querySelector(".notion-page-block a")
 
           return {
@@ -137,7 +138,6 @@ export async function GET() {
         blockWithMetadata = {
           ...block,
           description,
-          applyLink,
         }
       } catch (error) {
         console.error(
@@ -159,21 +159,37 @@ export async function GET() {
         (block, idx, arr) => idx === arr.findIndex(({ id }) => id === block.id)
       )
       .map((block) => {
-        const SALARY = fetchBlockProperty(block, "SALARY")
-          ?.replaceAll(",", "")
-          .replace(/market rate/i, "")
-          .trim()
+        const SALARY_RANGE = tagify(
+          fetchBlockProperty(block, "SALARY")
+            // Remove "MARKET RATE" from notion entry
+            ?.replace(/market rate/i, "")
+        ).map((range) => {
+          // Format from possible inputs to standard format
+          // "$300k +" => "> $300k"
+          // "+$300k"  => "> $300k"
+          const isPlus = range.includes("+")
+          const isSingleRange = !range.includes("-")
+          return isPlus && isSingleRange
+            ? `> ${range.replaceAll("+", "").trim()}`
+            : range
+        })
+
+        const COMPANY =
+          `${fetchBlockProperty(block, "COMPANY") || ""}`
+            .replace("No access", "")
+            .trim() || null
 
         return {
           ...block,
           properties: {
             title: fetchBlockProperty(block, "TITLE"),
-            company: fetchBlockProperty(block, "COMPANY"),
             status: fetchBlockProperty(block, "STATUS"),
             location: fetchBlockProperty(block, "LOCATION"),
             remotePolicy: fetchBlockProperty(block, "OFFICE_POLICY"),
-            skills: fetchBlockProperty(block, "SKILLS"),
-            salary: SALARY || "MARKET",
+            skills: tagify(fetchBlockProperty(block, "SKILLS") || ""),
+            // Null when salary not present
+            salaryRange: SALARY_RANGE.length ? SALARY_RANGE : null,
+            company: COMPANY,
           },
         }
       })
@@ -197,4 +213,18 @@ export async function GET() {
       { status: 500 }
     )
   }
+}
+
+/**
+ * Helper to turn a comma-separated string into an array of tags
+ */
+function tagify(str = "") {
+  return (
+    str
+      // Clean up comman and turn into array
+      .split(",")
+      .map((s) => s.trim())
+      // Filter out empty strings
+      .filter(Boolean) || null
+  )
 }
