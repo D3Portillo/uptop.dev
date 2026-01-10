@@ -57,13 +57,31 @@ const normalizeLocation = (loc: string): string => {
 }
 
 export default function Home() {
+  const SHOW_OR_LESS_SIZE =
+    typeof window !== "undefined" && window.innerWidth < 800 ? 5 : 8
+
   const [searchQuery, setSearchQuery] = useState("")
   const [locationQuery, setLocationQuery] = useState("ANYWHERE")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [showAllCategories, setShowAllCategories] = useState(false)
   const [sortBy, setSortBy] = useState("Most Recent")
+  const [showSortMenu, setShowSortMenu] = useState(false)
   const [selectedPostID, setSelectedPostID] = useState<string | null>(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+
+  // Helper function to parse salary from string like "$150k - $200k" or "> $300k"
+  const parseSalary = (salaryStr: string): number => {
+    if (!salaryStr) return 0
+    // Remove $ and k, handle > sign
+    const cleaned = salaryStr.replace(/[$k,>\s]/g, "")
+    // If it's a range, take the higher number
+    if (salaryStr.includes("-")) {
+      const parts = salaryStr.split("-")
+      const higher = parts[1].replace(/[$k,>\s]/g, "")
+      return parseInt(higher) || 0
+    }
+    return parseInt(cleaned) || 0
+  }
 
   const { data: listingsData, isLoading } = useSWR<TListingResponse>(
     "/api/listings",
@@ -84,7 +102,7 @@ export default function Home() {
 
   const displayedCategories = showAllCategories
     ? categories
-    : categories.slice(0, 8)
+    : categories.slice(0, SHOW_OR_LESS_SIZE)
 
   // Extract unique locations from actual job postings
   const availableLocations = new Set<string>()
@@ -174,6 +192,21 @@ export default function Home() {
     return true
   })
 
+  // Sort listings based on selected option
+  const sortedListings = [...(filteredListings || [])].sort((a, b) => {
+    if (sortBy === "By Salary") {
+      const aMaxSalary = Math.max(
+        ...(a.properties.salaryRange?.map(parseSalary) || [0])
+      )
+      const bMaxSalary = Math.max(
+        ...(b.properties.salaryRange?.map(parseSalary) || [0])
+      )
+      return bMaxSalary - aMaxSalary // Highest first
+    }
+    // "Most Recent" - keep original order (already sorted by date)
+    return 0
+  })
+
   return (
     <>
       {/* Main Container with Light Background */}
@@ -193,11 +226,20 @@ export default function Home() {
                   className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all text-sm"
                 />
               </div>
-              <div className="w-52 relative">
+              <div className="w-16 md:w-52 relative">
+                {/* Display emoji on mobile */}
+                <span className="absolute z-1 left-4 top-1/2 -translate-y-1/2 text-xl pointer-events-none md:hidden">
+                  {
+                    CRYPTO_JOB_LOCATIONS[
+                      locationQuery as keyof typeof CRYPTO_JOB_LOCATIONS
+                    ]?.emoji
+                  }
+                </span>
+
                 <select
                   value={locationQuery}
                   onChange={(e) => setLocationQuery(e.target.value)}
-                  className="w-full pl-4 pr-10 py-3.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all text-sm appearance-none cursor-pointer"
+                  className="w-full md:pl-4 pl-4 pr-10 py-3.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all text-sm appearance-none cursor-pointer"
                 >
                   {locationOptions.map((locationKey) => {
                     const locationData =
@@ -206,12 +248,15 @@ export default function Home() {
                       ]
                     return (
                       <option key={locationKey} value={locationKey}>
-                        {locationData.emoji} {locationData.name}
+                        <span className="md:inline hidden">
+                          {locationData.emoji}
+                        </span>{" "}
+                        {locationData.name}
                       </option>
                     )
                   })}
                 </select>
-                <IoChevronDownOutline className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <IoChevronDownOutline className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
             </div>
 
@@ -236,14 +281,15 @@ export default function Home() {
                   {category}
                 </button>
               ))}
-              {categories.length > 8 && (
+
+              {categories.length > SHOW_OR_LESS_SIZE && (
                 <button
                   onClick={() => setShowAllCategories(!showAllCategories)}
                   className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
                 >
                   {showAllCategories
                     ? "Show less"
-                    : `Show more (${categories.length - 8})`}
+                    : `Show more (${categories.length - SHOW_OR_LESS_SIZE})`}
                 </button>
               )}
             </div>
@@ -257,31 +303,66 @@ export default function Home() {
             <p className="text-gray-700">
               Showing{" "}
               <span className="font-semibold">
-                {filteredListings?.length || 0}
+                {sortedListings?.length || 0}
               </span>{" "}
               jobs
             </p>
             <div className="relative">
-              <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors">
-                <span className="text-sm text-gray-600">{sortBy}</span>
+              <button
+                onClick={() => setShowSortMenu(!showSortMenu)}
+                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors"
+              >
+                <span className="text-sm text-gray-600">
+                  {sortBy === "By Salary" ? "Highest Salary" : "Most Recent"}
+                </span>
                 <IoChevronDownOutline className="text-gray-400" />
               </button>
+              {showSortMenu && (
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                  <button
+                    onClick={() => {
+                      setSortBy("Most Recent")
+                      setShowSortMenu(false)
+                    }}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg ${
+                      sortBy === "Most Recent"
+                        ? "text-black/50 font-medium"
+                        : "text-black/80"
+                    }`}
+                  >
+                    Most Recent
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSortBy("By Salary")
+                      setShowSortMenu(false)
+                    }}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 last:rounded-b-lg ${
+                      sortBy === "By Salary"
+                        ? "text-black/50 font-medium"
+                        : "text-black/80"
+                    }`}
+                  >
+                    Highest Salary
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Job Listings */}
           {isLoading ? (
             <div className="space-y-3">
-              {[...Array(8)].map((_, i) => (
+              {[...Array(10)].map((_, i) => (
                 <div
-                  key={i}
+                  key={`mock-load-${i}`}
                   className="h-36 bg-white rounded-xl animate-pulse border border-gray-200"
                 />
               ))}
             </div>
           ) : (
-            <div className="space-y-4">
-              {filteredListings?.map((listing, idx) => (
+            <div className="space-y-4 mb-24">
+              {sortedListings?.map((listing, idx) => (
                 <button
                   key={listing.id}
                   onClick={() => openDrawer(listing)}
@@ -300,14 +381,14 @@ export default function Home() {
                           {listing.properties.title}
                         </h3>
                         {listing.rowIndex === 0 && (
-                          <span className="px-3 py-1 text-xs font-bold bg-purple-600 text-white rounded uppercase">
+                          <span className="px-3 py-1 text-xs font-bold bg-purple-600 text-white rounded-full uppercase">
                             NEW
                           </span>
                         )}
                       </div>
 
                       {/* Job Details */}
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-black/50">
+                      <div className="flex pb-6 max-w-xl flex-wrap items-center gap-3 text-sm text-black/50">
                         {listing.properties.location && (
                           <div className="flex rounded-lg pl-2 py-2 gap-2 pr-4 bg-black/5 items-center">
                             <IoLocationOutline className="text-base" />
@@ -366,10 +447,23 @@ export default function Home() {
             </div>
           )}
 
-          {!isLoading && filteredListings?.length === 0 && (
-            <div className="text-center py-16 text-gray-400">
-              No jobs found matching your search
-            </div>
+          {!isLoading && sortedListings?.length === 0 && (
+            <section className="flex gap-2 py-16 flex-col items-center justify-center">
+              <div className="text-black/50">
+                No jobs found matching your search
+              </div>
+
+              <button
+                onClick={() => {
+                  setSearchQuery("")
+                  setSelectedCategories([])
+                  setLocationQuery("")
+                }}
+                className="underline text-black/50"
+              >
+                Reset filters
+              </button>
+            </section>
           )}
         </div>
       </div>
