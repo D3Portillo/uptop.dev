@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import useSWR from "swr"
 import { TListingResponse } from "./api/listings/route"
 import { TListingDetailsResponse } from "./api/listings/[postID]/route"
@@ -10,6 +10,8 @@ import {
   IoLocationOutline,
   IoChevronDownOutline,
 } from "react-icons/io5"
+import { CRYPTO_JOB_LOCATIONS } from "../lib/constants/countries"
+import { findBestMatch } from "../lib/strings"
 
 // SWR fetcher with localStorage cache
 const fetcher = async (url: string) => {
@@ -37,9 +39,26 @@ const fetcher = async (url: string) => {
 
 type Listing = TListingResponse["data"][number]
 
+const LOCATION_KEYS = Object.keys(CRYPTO_JOB_LOCATIONS)
+
+const normalizeLocation = (loc: string): string => {
+  const trimmed = loc.trim().toUpperCase()
+
+  // Exact match first
+  if (trimmed in CRYPTO_JOB_LOCATIONS) {
+    return trimmed
+  }
+
+  // Try fuzzy matching with Jaro-Winkler
+  const bestMatch = findBestMatch(trimmed, LOCATION_KEYS, 0.85)
+
+  // Return best match or fallback to "ANYWHERE"
+  return bestMatch || "ANYWHERE"
+}
+
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState("")
-  const [locationQuery, setLocationQuery] = useState("")
+  const [locationQuery, setLocationQuery] = useState("ANYWHERE")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
   const [showAllCategories, setShowAllCategories] = useState(false)
   const [sortBy, setSortBy] = useState("Most Recent")
@@ -66,6 +85,28 @@ export default function Home() {
   const displayedCategories = showAllCategories
     ? categories
     : categories.slice(0, 8)
+
+  // Extract unique locations from actual job postings
+  const availableLocations = new Set<string>()
+  availableLocations.add("ANYWHERE") // Always include ANYWHERE
+
+  listingsData?.data?.forEach((listing) => {
+    const location = listing.properties.location
+    if (location) {
+      location.split(",").forEach((loc) => {
+        const normalized = normalizeLocation(loc)
+        if (normalized) {
+          availableLocations.add(normalized)
+        }
+      })
+    }
+  })
+
+  const locationOptions = Array.from(availableLocations).sort((a, b) => {
+    if (a === "ANYWHERE") return -1
+    if (b === "ANYWHERE") return 1
+    return a.localeCompare(b)
+  })
 
   const { data: detailsData, isLoading: isLoadingDetails } =
     useSWR<TListingDetailsResponse>(
@@ -108,12 +149,16 @@ export default function Home() {
       if (!matchesSearch) return false
     }
 
-    // Location filter
-    if (locationQuery) {
-      const location = listing.properties.location?.toLowerCase() || ""
-      const remotePolicy = listing.properties.remotePolicy?.toLowerCase() || ""
-      const query = locationQuery.toLowerCase()
-      if (!location.includes(query) && !remotePolicy.includes(query)) {
+    // Location filter (ANYWHERE shows all)
+    if (locationQuery && locationQuery !== "ANYWHERE") {
+      const location = listing.properties.location || ""
+      const normalizedJobLocations = location.split(",").map(normalizeLocation)
+
+      const matchesLocation = normalizedJobLocations.some(
+        (loc) => loc === locationQuery
+      )
+
+      if (!matchesLocation) {
         return false
       }
     }
@@ -148,15 +193,25 @@ export default function Home() {
                   className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all text-sm"
                 />
               </div>
-              <div className="w-80 relative">
-                <IoLocationOutline className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
-                <input
-                  type="text"
-                  placeholder="remote"
+              <div className="w-52 relative">
+                <select
                   value={locationQuery}
                   onChange={(e) => setLocationQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all text-sm"
-                />
+                  className="w-full pl-4 pr-10 py-3.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all text-sm appearance-none cursor-pointer"
+                >
+                  {locationOptions.map((locationKey) => {
+                    const locationData =
+                      CRYPTO_JOB_LOCATIONS[
+                        locationKey as keyof typeof CRYPTO_JOB_LOCATIONS
+                      ]
+                    return (
+                      <option key={locationKey} value={locationKey}>
+                        {locationData.emoji} {locationData.name}
+                      </option>
+                    )
+                  })}
+                </select>
+                <IoChevronDownOutline className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
               </div>
             </div>
 
@@ -244,47 +299,66 @@ export default function Home() {
                         <h3 className="text-lg font-semibold text-gray-900">
                           {listing.properties.title}
                         </h3>
-                        {idx === 0 && (
+                        {listing.rowIndex === 0 && (
                           <span className="px-3 py-1 text-xs font-bold bg-purple-600 text-white rounded uppercase">
                             NEW
                           </span>
                         )}
                       </div>
 
-                      {listing.properties.company && (
-                        <p className="text-gray-600 mb-3">
-                          {listing.properties.company}
-                        </p>
-                      )}
-
                       {/* Job Details */}
-                      <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                      <div className="flex flex-wrap items-center gap-4 text-sm text-black/50">
                         {listing.properties.location && (
-                          <div className="flex items-center gap-1.5">
+                          <div className="flex rounded-lg pl-2 py-2 gap-2 pr-4 bg-black/5 items-center">
                             <IoLocationOutline className="text-base" />
-                            <span>Remote: 🌍 Anywhere</span>
-                          </div>
-                        )}
-                        {listing.properties.remotePolicy && (
-                          <div className="flex items-center gap-1.5">
-                            <span>💼 {listing.properties.remotePolicy}</span>
-                          </div>
-                        )}
-                      </div>
+                            <div className="flex text-black items-center gap-4">
+                              {listing.properties.location
+                                .split(",")
+                                .map((loc) => {
+                                  const formatted =
+                                    CRYPTO_JOB_LOCATIONS[
+                                      normalizeLocation(
+                                        loc as string
+                                      ) as keyof typeof CRYPTO_JOB_LOCATIONS
+                                    ]
 
-                      {/* Salary Range */}
-                      {listing.properties.salaryRange &&
-                        listing.properties.salaryRange.length > 0 && (
-                          <div className="flex items-center gap-1.5 mt-3 text-sm text-gray-600">
-                            <span>💰</span>
-                            <span className="font-medium">
-                              {listing.properties.salaryRange.join(" - ")}
-                            </span>
-                            <span className="ml-2 text-gray-500">
-                              ⏰ Full-Time
+                                  return (
+                                    <span key={`c-${idx}-${formatted.name}`}>
+                                      {formatted.emoji} {formatted.name}
+                                    </span>
+                                  )
+                                })}
+                            </div>
+                          </div>
+                        )}
+
+                        {listing.properties.remotePolicy && (
+                          <div className="flex rounded-lg p-2 text-black bg-black/5 items-center">
+                            <span>
+                              {(() => {
+                                const policy =
+                                  listing.properties.remotePolicy.toUpperCase()
+                                const isHybrid = policy.includes("HYBRID")
+                                const isRemote = policy.includes("REMOTE")
+                                if (isHybrid) return "☕ Hybrid"
+                                if (isRemote) return "💻 Remote"
+                                return "🧳 On-site"
+                              })()}
                             </span>
                           </div>
                         )}
+
+                        {/* Salary Range */}
+                        {listing.properties.salaryRange?.map((range) => (
+                          <div
+                            key={`salary-${range}-${idx}`}
+                            className="flex text-black rounded-lg pl-2 py-2 gap-2 pr-4 bg-black/5 items-center"
+                          >
+                            <span>💰</span>
+                            <span className="font-medium">{range}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </button>
@@ -294,7 +368,7 @@ export default function Home() {
 
           {!isLoading && filteredListings?.length === 0 && (
             <div className="text-center py-16 text-gray-400">
-              No jobs found matching your search.
+              No jobs found matching your search
             </div>
           )}
         </div>

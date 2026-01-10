@@ -1,0 +1,23 @@
+export const CRYPTO_JOB_LOCATIONS = {
+  ANYWHERE: { emoji: "🌎", name: "Anywhere" },
+  "UNITED STATES": { emoji: "🇺🇸", name: "United States" },
+  EUROPE: { emoji: "🇪🇺", name: "Europe" },
+  APAC: { emoji: "🌏", name: "APAC" },
+  ARGENTINA: { emoji: "🇦🇷", name: "Argentina" },
+  COLOMBIA: { emoji: "🇨🇴", name: "Colombia" },
+  CHILE: { emoji: "🇨🇱", name: "Chile" },
+  LATAM: { emoji: "🥑", name: "LATAM" },
+  "NEW YORK": { emoji: "🗽", name: "New York" },
+  "SAN FRANCISCO": { emoji: "🌉", name: "San Francisco" },
+  MIAMI: { emoji: "🏖️", name: "Miami" },
+  CHICAGO: { emoji: "🏙️", name: "Chicago" },
+  LONDON: { emoji: "🇬🇧", name: "London" },
+  SINGAPORE: { emoji: "🇸🇬", name: "Singapore" },
+  "HONG KONG": { emoji: "🇭🇰", name: "Hong Kong" },
+  DUBAI: { emoji: "🇦🇪", name: "Dubai" },
+  TORONTO: { emoji: "🇨🇦", name: "Toronto" },
+  BERLIN: { emoji: "🇩🇪", name: "Berlin" },
+  TOKYO: { emoji: "🇯🇵", name: "Tokyo" },
+} as const
+
+export type LocationKey = keyof typeof CRYPTO_JOB_LOCATIONS
