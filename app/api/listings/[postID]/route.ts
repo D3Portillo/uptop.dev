@@ -75,7 +75,7 @@ export type TListingDetailsResponse = Awaited<
   ReturnType<typeof fetchListingDetails>
 >
 
-export const revalidate = 5 * 60 // 5 minutes
+export const revalidate = 300 // 5 minutes
 
 export async function GET(
   _: Request,
