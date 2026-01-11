@@ -16,12 +16,19 @@ export default function Markdown({
   className?: string
 }) {
   return (
-    <section className={cn("[&_strong]:font-bold leading-relaxed", className)}>
+    <section
+      className={cn("[&_strong]:font-semibold leading-relaxed", className)}
+    >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
           h1: ({ node, ...props }) => (
             <h1 className="text-2xl font-bold mt-4 mb-3" {...props} />
+          ),
+          // No Separators
+          hr: () => null,
+          h2: ({ node, ...props }) => (
+            <h1 className="text-xl font-bold mt-5 mb-2" {...props} />
           ),
           li: ({ node, children, ...props }) => (
             <li className="flex my-2" {...props}>

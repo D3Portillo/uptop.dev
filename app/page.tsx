@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import type { TListingResponse } from "./api/listings/route"
 import {
   IoSearchOutline,
@@ -34,6 +35,9 @@ const normalizeLocation = (loc: string): string => {
 }
 
 export default function Home() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+
   const SHOW_OR_LESS_SIZE =
     typeof window !== "undefined" && window.innerWidth < 800 ? 5 : 8
 
@@ -102,20 +106,23 @@ export default function Home() {
     return a.localeCompare(b)
   })
 
-  // Handle URL params for shareability
+  // Handle URL params for shareability and browser navigation
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const postID = params.get("post")
-    if (postID) {
-      setSelectedPostID(postID)
+    const jobID = searchParams.get("job")
+    if (jobID) {
+      setSelectedPostID(jobID)
       setIsDrawerOpen(true)
+    } else {
+      // Close modal when job param is removed (browser back)
+      setIsDrawerOpen(false)
+      setSelectedPostID(null)
     }
-  }, [])
+  }, [searchParams])
 
   const openDrawer = (listing: Listing) => {
     setSelectedPostID(listing.id)
     setIsDrawerOpen(true)
-    window.history.pushState({}, "", `?post=${listing.id}`)
+    router.push(`?job=${listing.id}`, { scroll: false })
 
     // TODO: Fire this once only when clicking the listing
     // Fire-and-forget POST to trigger update (if needed)
@@ -128,7 +135,7 @@ export default function Home() {
   const closeDrawer = () => {
     setIsDrawerOpen(false)
     setSelectedPostID(null)
-    window.history.pushState({}, "", "/")
+    router.push("/", { scroll: false })
   }
 
   const filteredListings = listingsData?.data?.filter((listing) => {
@@ -452,10 +459,8 @@ export default function Home() {
             .title
         }
         onOpenChange={(open) => {
-          setIsDrawerOpen(open)
           if (!open) {
-            setSelectedPostID(null)
-            window.history.pushState({}, "", "/")
+            closeDrawer()
           }
         }}
         postID={selectedPostID}

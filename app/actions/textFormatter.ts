@@ -21,6 +21,7 @@ RULES:
 - DO NOT rewrite or change the content
 - DO NOT add new information
 - DO NOT remove important details
+- Remove redundant title like "Job Description" at start or main content. It's completely unnecessary here.
 - ONLY format the existing text into proper markdown structure
 - Use headers (# only) for sections
 - Use bullet points for lists
