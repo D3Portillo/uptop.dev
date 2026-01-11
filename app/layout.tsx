@@ -11,7 +11,7 @@ const nextFont = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "UpTop - Top Shelf Jobs",
+  title: "UpTop - Community Job Board",
   description:
     "Find your next remote job with UpTop's curated job board. NOTE: This is a community owned project and is not affiliated with UpTop.",
 }

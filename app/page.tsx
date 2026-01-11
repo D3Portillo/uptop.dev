@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import type { TListingResponse } from "./api/listings/route"
 import {
   IoSearchOutline,
@@ -14,6 +14,7 @@ import { useJobsList } from "@/lib/jobs"
 
 import ModalJob from "@/components/ModalJob"
 import { CRYPTO_JOB_LOCATIONS } from "@/lib/constants/countries"
+import { cn } from "@/lib/utils"
 
 type Listing = TListingResponse["data"][number]
 
@@ -35,11 +36,10 @@ const normalizeLocation = (loc: string): string => {
 }
 
 export default function Home() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-
   const SHOW_OR_LESS_SIZE =
     typeof window !== "undefined" && window.innerWidth < 800 ? 5 : 8
+
+  const router = useRouter()
 
   const [searchQuery, setSearchQuery] = useState("")
   const [locationQuery, setLocationQuery] = useState("ANYWHERE")
@@ -47,8 +47,6 @@ export default function Home() {
   const [showAllCategories, setShowAllCategories] = useState(false)
   const [sortBy, setSortBy] = useState("Most Recent")
   const [showSortMenu, setShowSortMenu] = useState(false)
-  const [selectedPostID, setSelectedPostID] = useState<string | null>(null)
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
 
   // Helper function to parse salary from string like "$150k - $200k" or "> $300k"
   const parseSalary = (salaryStr: string): number => {
@@ -100,53 +98,32 @@ export default function Home() {
     }
   })
 
-  const locationOptions = Array.from(availableLocations).sort((a, b) => {
-    if (a === "ANYWHERE") return -1
-    if (b === "ANYWHERE") return 1
-    return a.localeCompare(b)
-  })
-
-  // Handle URL params for shareability and browser navigation
-  useEffect(() => {
-    const jobID = searchParams.get("job")
-    if (jobID) {
-      setSelectedPostID(jobID)
-      setIsDrawerOpen(true)
-    } else {
-      // Close modal when job param is removed (browser back)
-      setIsDrawerOpen(false)
-      setSelectedPostID(null)
-    }
-  }, [searchParams])
+  const locationOptions = Array.from(availableLocations).sort((a, b) =>
+    a.localeCompare(b)
+  )
 
   const openDrawer = (listing: Listing) => {
-    setSelectedPostID(listing.id)
-    setIsDrawerOpen(true)
     router.push(`?job=${listing.id}`, { scroll: false })
   }
 
-  const closeDrawer = () => {
-    setIsDrawerOpen(false)
-    setSelectedPostID(null)
-    router.push("/", { scroll: false })
-  }
-
-  const filteredListings = listingsData?.data?.filter((listing) => {
+  const filteredListings = listingsData?.data?.filter(({ properties }) => {
     // Search query filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
-      const matchesSearch =
-        listing.properties.title?.toLowerCase().includes(query) ||
-        listing.properties.company?.toLowerCase().includes(query) ||
-        listing.properties.skills?.some((skill) =>
-          skill.toLowerCase().includes(query)
-        )
-      if (!matchesSearch) return false
+      return [
+        properties.title,
+        properties.company,
+        properties.location,
+        properties.skills,
+      ]
+        .join("")
+        .toLowerCase()
+        .includes(query)
     }
 
     // Location filter (ANYWHERE shows all)
     if (locationQuery && locationQuery !== "ANYWHERE") {
-      const location = listing.properties.location || ""
+      const location = properties.location || ""
       const normalizedJobLocations = location.split(",").map(normalizeLocation)
 
       const matchesLocation = normalizedJobLocations.some(
@@ -161,7 +138,7 @@ export default function Home() {
     // Category filter (multiple selection)
     if (selectedCategories.length > 0) {
       const hasAnySkill = selectedCategories.some((category) =>
-        listing.properties.skills?.includes(category)
+        properties.skills?.includes(category)
       )
       if (!hasAnySkill) return false
     }
@@ -189,18 +166,18 @@ export default function Home() {
       {/* Main Container with Light Background */}
       <div className="min-h-screen bg-gray-50">
         {/* Header Section */}
-        <div className="bg-white border-b border-gray-200">
+        <div className="bg-white border-b border-black/10">
           <div className="max-w-6xl mx-auto px-6 py-6">
             {/* Search Filters */}
             <div className="flex gap-3 mb-6">
               <div className="flex-1 relative">
-                <IoSearchOutline className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-xl" />
+                <IoSearchOutline className="absolute left-4 top-1/2 -translate-y-1/2 text-black/50 text-xl" />
                 <input
                   type="text"
                   placeholder="Filter by title, company or keyword"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all text-sm"
+                  className="w-full pl-12 pr-4 py-3.5 bg-white border border-black/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
                 />
               </div>
               <div className="w-16 md:w-52 relative">
@@ -216,7 +193,7 @@ export default function Home() {
                 <select
                   value={locationQuery}
                   onChange={(e) => setLocationQuery(e.target.value)}
-                  className="w-full md:pl-4 pl-4 pr-10 py-3.5 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all text-sm appearance-none cursor-pointer"
+                  className="w-full md:pl-4 pl-4 pr-10 py-3.5 bg-white border border-black/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm appearance-none cursor-pointer"
                 >
                   {locationOptions.map((locationKey) => {
                     const locationData =
@@ -233,7 +210,7 @@ export default function Home() {
                     )
                   })}
                 </select>
-                <IoChevronDownOutline className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                <IoChevronDownOutline className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-black/50 pointer-events-none" />
               </div>
             </div>
 
@@ -249,11 +226,12 @@ export default function Home() {
                         : [...prev, category]
                     )
                   }}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={cn(
+                    "px-3 py-1 h-8 border border-transparent rounded-lg text-sm transition-colors",
                     selectedCategories.includes(category)
-                      ? "bg-purple-100 text-purple-700"
-                      : "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                  }`}
+                      ? "bg-ut-blue/20 text-black/90 border-black/10"
+                      : "bg-black/3 text-black/50 border-black/5 hover:bg-black/5"
+                  )}
                 >
                   {category}
                 </button>
@@ -262,7 +240,7 @@ export default function Home() {
               {categories.length > SHOW_OR_LESS_SIZE && (
                 <button
                   onClick={() => setShowAllCategories(!showAllCategories)}
-                  className="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+                  className="h-8 px-3 py-1 rounded-lg text-sm text-black/70 hover:bg-black/5 transition-colors"
                 >
                   {showAllCategories
                     ? "Show less"
@@ -277,7 +255,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-6 py-6">
           {/* Results Header */}
           <div className="flex items-center justify-between mb-4">
-            <p className="text-gray-700">
+            <p className="text-black/70">
               Showing{" "}
               <span className="font-semibold">
                 {sortedListings?.length || 0}
@@ -287,21 +265,23 @@ export default function Home() {
             <div className="relative">
               <button
                 onClick={() => setShowSortMenu(!showSortMenu)}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg bg-white hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 border border-black/10 rounded-lg bg-white hover:bg-black/5 transition-colors"
               >
-                <span className="text-sm text-gray-600">
-                  {sortBy === "By Salary" ? "Highest Salary" : "Most Recent"}
+                <span className="text-sm text-black/70">
+                  {sortBy === "By Salary"
+                    ? "Salary (high - low)"
+                    : "Most Recent"}
                 </span>
-                <IoChevronDownOutline className="text-gray-400" />
+                <IoChevronDownOutline className="text-black/50" />
               </button>
               {showSortMenu && (
-                <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                <div className="absolute right-0 mt-2 w-48 bg-white border border-black/10 rounded-lg shadow-lg z-10">
                   <button
                     onClick={() => {
                       setSortBy("Most Recent")
                       setShowSortMenu(false)
                     }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 first:rounded-t-lg ${
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-black/5 first:rounded-t-lg ${
                       sortBy === "Most Recent"
                         ? "text-black/50 font-medium"
                         : "text-black/80"
@@ -314,13 +294,13 @@ export default function Home() {
                       setSortBy("By Salary")
                       setShowSortMenu(false)
                     }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 last:rounded-b-lg ${
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-black/5 last:rounded-b-lg ${
                       sortBy === "By Salary"
                         ? "text-black/50 font-medium"
                         : "text-black/80"
                     }`}
                   >
-                    Highest Salary
+                    Salary (high - low)
                   </button>
                 </div>
               )}
@@ -333,7 +313,7 @@ export default function Home() {
               {[...Array(10)].map((_, i) => (
                 <div
                   key={`mock-load-${i}`}
-                  className="h-36 bg-white rounded-xl animate-pulse border border-gray-200"
+                  className="h-36 bg-white rounded-xl animate-pulse border border-black/10"
                 />
               ))}
             </div>
@@ -343,55 +323,31 @@ export default function Home() {
                 <button
                   key={listing.id}
                   onClick={() => openDrawer(listing)}
-                  className="w-full text-left p-5 bg-white border border-gray-200 rounded-2xl hover:border-purple-300 hover:shadow-md transition-all"
+                  className="w-full text-left p-5 bg-white border border-black/10 rounded-2xl hover:border-black/15 shadow-black/5 hover:shadow transition-all"
                 >
                   <div className="flex min-h-24 gap-6">
                     {/* Company Logo Placeholder */}
-                    <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-xl shrink-0">
+                    <div className="w-16 h-16 bg-ut-purple border border-black/10 rounded-lg flex items-center justify-center text-white font-bold text-xl shrink-0">
                       {listing.properties.company?.[0]?.toUpperCase() || "?"}
                     </div>
 
                     {/* Job Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-black">
                           {listing.properties.title}
                         </h3>
                         {listing.rowIndex === 0 && (
-                          <span className="px-3 py-1 text-xs font-bold bg-purple-600 text-white rounded-full uppercase">
+                          <span className="px-3 py-1 text-xs font-bold bg-ut-purple text-white rounded-full uppercase">
                             NEW
                           </span>
                         )}
                       </div>
 
                       {/* Job Details */}
-                      <div className="flex pb-6 max-w-xl flex-wrap items-center gap-3 text-sm text-black/50">
-                        {listing.properties.location && (
-                          <div className="flex rounded-lg pl-2 py-2 gap-2 pr-4 bg-black/5 items-center">
-                            <IoLocationOutline className="text-base" />
-                            <div className="flex text-black items-center gap-4">
-                              {listing.properties.location
-                                .split(",")
-                                .map((loc) => {
-                                  const formatted =
-                                    CRYPTO_JOB_LOCATIONS[
-                                      normalizeLocation(
-                                        loc as string
-                                      ) as keyof typeof CRYPTO_JOB_LOCATIONS
-                                    ]
-
-                                  return (
-                                    <span key={`c-${idx}-${formatted.name}`}>
-                                      {formatted.emoji} {formatted.name}
-                                    </span>
-                                  )
-                                })}
-                            </div>
-                          </div>
-                        )}
-
+                      <div className="flex *:min-h-10 pb-6 max-w-xl flex-wrap items-center gap-3 text-sm text-black/50">
                         {listing.properties.remotePolicy && (
-                          <div className="flex rounded-lg p-2 text-black bg-black/5 items-center">
+                          <div className="flex rounded-lg px-3 py-2 text-black bg-black/5 items-center">
                             <span>
                               {(() => {
                                 const policy =
@@ -406,11 +362,44 @@ export default function Home() {
                           </div>
                         )}
 
+                        {listing.properties.location && (
+                          <div className="flex rounded-lg pl-2 py-2 gap-2 pr-4 bg-black/5 items-center">
+                            <IoLocationOutline className="text-base shrink-0 hidden sm:block" />
+                            <div
+                              className={cn(
+                                "flex flex-wrap text-black items-center gap-2",
+                                listing.properties.location.includes(",") &&
+                                  "py-2 sm:py-0"
+                              )}
+                            >
+                              {listing.properties.location
+                                .split(",")
+                                .map((loc) => {
+                                  const formatted =
+                                    CRYPTO_JOB_LOCATIONS[
+                                      normalizeLocation(
+                                        loc as string
+                                      ) as keyof typeof CRYPTO_JOB_LOCATIONS
+                                    ]
+
+                                  return (
+                                    <span
+                                      className="whitespace-nowrap px-2"
+                                      key={`c-${idx}-${formatted.name}`}
+                                    >
+                                      {formatted.emoji} {formatted.name}
+                                    </span>
+                                  )
+                                })}
+                            </div>
+                          </div>
+                        )}
+
                         {/* Salary Range */}
                         {listing.properties.salaryRange?.map((range) => (
                           <div
                             key={`salary-${range}-${idx}`}
-                            className="flex text-black rounded-lg pl-2 py-2 gap-2 pr-4 bg-black/5 items-center"
+                            className="flex text-black rounded-lg pl-3 py-2 gap-2 pr-4 bg-black/5 items-center"
                           >
                             <span>💰</span>
                             <span className="font-medium">{range}</span>
@@ -445,14 +434,7 @@ export default function Home() {
         </div>
       </div>
 
-      <ModalJob
-        open={isDrawerOpen}
-        onOpenChange={(open) => {
-          if (open) return
-          closeDrawer()
-        }}
-        jobID={selectedPostID}
-      />
+      <ModalJob />
     </>
   )
 }
