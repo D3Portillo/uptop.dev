@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import useSWR from "swr"
 import { TListingResponse } from "./api/listings/route"
 import { TListingDetailsResponse } from "./api/listings/[postID]/route"
@@ -12,6 +12,7 @@ import {
 } from "react-icons/io5"
 import { CRYPTO_JOB_LOCATIONS } from "../lib/constants/countries"
 import { findBestMatch } from "../lib/strings"
+import Markdown from "./components/Markdown"
 
 type Listing = TListingResponse["data"][number]
 
@@ -499,11 +500,7 @@ export default function Home() {
                       )}
 
                       {detailsData.post.description ? (
-                        <div className="prose prose-sm max-w-none">
-                          <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700 leading-relaxed">
-                            {detailsData.post.description}
-                          </pre>
-                        </div>
+                        <Markdown>{detailsData.post.description}</Markdown>
                       ) : (
                         <p className="text-gray-400 italic">
                           No detailed description available.

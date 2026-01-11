@@ -4,6 +4,6 @@ export const redis = Redis.fromEnv()
 
 // Cache keys
 export const CACHE_KEYS = {
-  listings: "listings:metadata",
-  listingDetail: (postID: string) => `listing:${postID}:details`,
+  listings: "uptop:listings:all",
+  listingDetail: (postID: string) => `uptop:listings:${postID}:details`,
 } as const

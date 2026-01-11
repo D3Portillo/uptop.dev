@@ -1,3 +1,4 @@
+import { formatJobDescription } from "@/app/actions/formatDescription"
 import { getBrowser, type Browser } from "@/lib/chromium"
 import { redis, CACHE_KEYS } from "@/lib/redis"
 
@@ -16,7 +17,7 @@ async function fetchListingDetails(postID: string) {
 
     await page.waitForSelector(".notion-page-content")
 
-    const details = await page.evaluate(() => {
+    const { description, datePosted } = await page.evaluate(() => {
       // Remove all bookmarks
       document
         .querySelectorAll(".notion-bookmark-block")
@@ -63,7 +64,13 @@ async function fetchListingDetails(postID: string) {
     return {
       postID,
       formattedId,
-      post: details,
+      post: {
+        datePosted,
+        // AI format description to markdown
+        description: description
+          ? await formatJobDescription(description)
+          : null,
+      },
     }
   } catch (error) {
     if (browser) await browser.close()
@@ -94,7 +101,7 @@ export async function GET(
   } catch (error) {}
 
   return Response.json({
-    success: true,
+    success: Object.keys(data).length > 0,
     ...data,
   })
 }
