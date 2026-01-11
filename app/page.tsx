@@ -13,30 +13,6 @@ import {
 import { CRYPTO_JOB_LOCATIONS } from "../lib/constants/countries"
 import { findBestMatch } from "../lib/strings"
 
-// SWR fetcher with localStorage cache
-const fetcher = async (url: string) => {
-  const cacheKey = `cache:${url}`
-  const cached = localStorage.getItem(cacheKey)
-
-  if (cached) {
-    const { data, timestamp } = JSON.parse(cached)
-    // Cache for 5 minutes
-    if (Date.now() - timestamp < 5 * 60 * 1000) {
-      return data
-    }
-  }
-
-  const res = await fetch(url)
-  if (!res.ok) throw new Error("Failed to fetch")
-  const data = await res.json()
-
-  localStorage.setItem(
-    cacheKey,
-    JSON.stringify({ data, timestamp: Date.now() })
-  )
-  return data
-}
-
 type Listing = TListingResponse["data"][number]
 
 const LOCATION_KEYS = Object.keys(CRYPTO_JOB_LOCATIONS)
@@ -72,20 +48,22 @@ export default function Home() {
   // Helper function to parse salary from string like "$150k - $200k" or "> $300k"
   const parseSalary = (salaryStr: string): number => {
     if (!salaryStr) return 0
-    // Remove $ and k, handle > sign
-    const cleaned = salaryStr.replace(/[$k,>\s]/g, "")
+    // Remove $ and k, handle > sign, +, and spaces
+    const cleaned = salaryStr.replace(/[$k,>\s+ ]/g, "")
+    const possiblyRange = salaryStr.split("-")
+
     // If it's a range, take the higher number
-    if (salaryStr.includes("-")) {
-      const parts = salaryStr.split("-")
-      const higher = parts[1].replace(/[$k,>\s]/g, "")
-      return parseInt(higher) || 0
+    if (possiblyRange.length > 1) {
+      const higherPart = possiblyRange[1].trim()
+      return parseInt(higherPart) || 0
     }
+
     return parseInt(cleaned) || 0
   }
 
   const { data: listingsData, isLoading } = useSWR<TListingResponse>(
     "/api/listings",
-    fetcher
+    (url: string) => fetch(url).then((res) => res.json())
   )
 
   // Generate unique categories from all job skills, sorted by frequency
@@ -129,7 +107,7 @@ export default function Home() {
   const { data: detailsData, isLoading: isLoadingDetails } =
     useSWR<TListingDetailsResponse>(
       selectedPostID ? `/api/listings/${selectedPostID}` : null,
-      fetcher
+      (url: string) => fetch(url).then((res) => res.json())
     )
 
   // Handle URL params for shareability
@@ -146,6 +124,13 @@ export default function Home() {
     setSelectedPostID(listing.id)
     setIsDrawerOpen(true)
     window.history.pushState({}, "", `?post=${listing.id}`)
+
+    // TODO: Fire this once only when clicking the listing
+    // Fire-and-forget POST to trigger update (if needed)
+    fetch(`/api/listings/${listing.id}`, { method: "POST" })
+      .then((res) => res.json())
+      .then((data) => console.log("POST result:", data))
+      .catch((err) => console.error("POST error:", err))
   }
 
   const closeDrawer = () => {
@@ -502,7 +487,7 @@ export default function Home() {
                       <div className="h-4 bg-gray-100 rounded animate-pulse" />
                       <div className="h-32 bg-gray-100 rounded animate-pulse" />
                     </div>
-                  ) : detailsData?.success ? (
+                  ) : detailsData?.post ? (
                     <div className="space-y-6">
                       {detailsData.post.datePosted && (
                         <div className="text-sm text-gray-500">
@@ -544,7 +529,7 @@ export default function Home() {
                     </div>
                   ) : (
                     <div className="text-center py-8 text-gray-400">
-                      Failed to load job details.
+                      No details available yet.
                     </div>
                   )}
                 </div>

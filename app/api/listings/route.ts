@@ -93,12 +93,12 @@ async function fetchListings() {
             ?.replace(/market rate/i, "")
         ).map((range) => {
           // Format from possible inputs to standard format
-          // "$300k +" => "> $300k"
-          // "+$300k"  => "> $300k"
-          const isPlus = range.includes("+")
+          // "$300k +" => "$300k+"
+          // "+$300k"  => "$300k+"
+          const isUpperSalaryOrMore = ["+", ">"].some((c) => range.includes(c))
           const isSingleRange = !range.includes("-")
-          return isPlus && isSingleRange
-            ? `> ${range.replaceAll("+", "").trim()}`
+          return isUpperSalaryOrMore && isSingleRange
+            ? `${range.replaceAll(/[+>]/g, "").trim()}+`
             : range
         })
 
@@ -136,17 +136,29 @@ async function fetchListings() {
 }
 
 export type TListingResponse = Awaited<ReturnType<typeof fetchListings>>
+
+export const revalidate = 3600
+
 export async function GET() {
   try {
     const result = await fetchListings()
-    return Response.json(result)
+    return Response.json(result, {
+      headers: {
+        "Cache-Control": `public, max-age=${revalidate}, s-maxage=${revalidate}, stale-while-revalidate=${revalidate}`,
+      },
+    })
   } catch (error) {
     return Response.json(
       {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      }
     )
   }
 }

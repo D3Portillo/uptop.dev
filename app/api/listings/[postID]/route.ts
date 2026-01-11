@@ -1,4 +1,5 @@
 import { getBrowser, type Browser } from "@/lib/chromium"
+import { redis, CACHE_KEYS } from "@/lib/redis"
 
 async function fetchListingDetails(postID: string) {
   const formattedId = postID.replaceAll("-", "")
@@ -59,18 +60,13 @@ async function fetchListingDetails(postID: string) {
     })
 
     await browser.close()
-    const result = {
-      success: true,
+    return {
       postID,
       formattedId,
       post: details,
     }
-
-    return result
   } catch (error) {
     if (browser) await browser.close()
-
-    console.error(`Error fetching listing details for ${postID}:`, error)
     throw error
   }
 }
@@ -78,6 +74,8 @@ async function fetchListingDetails(postID: string) {
 export type TListingDetailsResponse = Awaited<
   ReturnType<typeof fetchListingDetails>
 >
+
+export const revalidate = 5 * 60 // 5 minutes
 
 export async function GET(
   _: Request,
@@ -89,13 +87,64 @@ export async function GET(
 ) {
   const { postID } = await params
 
+  let data: any = {}
   try {
+    const cacheKey = CACHE_KEYS.listingDetail(postID)
+    data = (await redis.get<TListingDetailsResponse>(cacheKey)) || {}
+  } catch (error) {}
+
+  return Response.json({
+    success: true,
+    ...data,
+  })
+}
+
+export async function POST(
+  _: Request,
+  {
+    params,
+  }: {
+    params: Promise<{ postID: string }>
+  }
+) {
+  const { postID } = await params
+
+  try {
+    const cacheKey = CACHE_KEYS.listingDetail(postID)
+    const timestampKey = `${cacheKey}:timestamp`
+
+    const lastUpdate = await redis.get<number>(timestampKey)
+    const now = Date.now()
+    const cacheTimeInMs = 60 * 60 * 1000 // 1 hour
+
+    const getNextUpdate = (ts: number) =>
+      new Date(ts + cacheTimeInMs).toISOString()
+
+    if (lastUpdate && now - lastUpdate < cacheTimeInMs) {
+      // We're still within the cache period
+      return Response.json({
+        cached: true,
+        nextUpdate: getNextUpdate(lastUpdate),
+      })
+    }
+
+    // Fetch new data + update cache
     const result = await fetchListingDetails(postID)
-    return Response.json(result)
+    if (result.post) {
+      await Promise.all([
+        redis.set(cacheKey, result),
+        redis.set(timestampKey, now),
+      ])
+    }
+
+    return Response.json({
+      cached: false,
+      data: result,
+      nextUpdate: getNextUpdate(now),
+    })
   } catch (error) {
     return Response.json(
       {
-        success: false,
         error: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
