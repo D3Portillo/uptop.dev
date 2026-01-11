@@ -1,18 +1,18 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import useSWR from "swr"
-import { TListingResponse } from "./api/listings/route"
-import { TListingDetailsResponse } from "./api/listings/[postID]/route"
+import type { TListingResponse } from "./api/listings/route"
 import {
   IoSearchOutline,
-  IoCloseOutline,
   IoLocationOutline,
   IoChevronDownOutline,
 } from "react-icons/io5"
-import { CRYPTO_JOB_LOCATIONS } from "../lib/constants/countries"
-import { findBestMatch } from "../lib/strings"
-import Markdown from "./components/Markdown"
+
+import { findBestMatch } from "@/lib/strings"
+import { useJobsList } from "@/lib/jobs"
+
+import ModalJob from "@/components/ModalJob"
+import { CRYPTO_JOB_LOCATIONS } from "@/lib/constants/countries"
 
 type Listing = TListingResponse["data"][number]
 
@@ -62,10 +62,7 @@ export default function Home() {
     return parseInt(cleaned) || 0
   }
 
-  const { data: listingsData, isLoading } = useSWR<TListingResponse>(
-    "/api/listings",
-    (url: string) => fetch(url).then((res) => res.json())
-  )
+  const { data: listingsData, isLoading } = useJobsList()
 
   // Generate unique categories from all job skills, sorted by frequency
   const skillCounts = new Map<string, number>()
@@ -104,12 +101,6 @@ export default function Home() {
     if (b === "ANYWHERE") return 1
     return a.localeCompare(b)
   })
-
-  const { data: detailsData, isLoading: isLoadingDetails } =
-    useSWR<TListingDetailsResponse>(
-      selectedPostID ? `/api/listings/${selectedPostID}` : null,
-      (url: string) => fetch(url).then((res) => res.json())
-    )
 
   // Handle URL params for shareability
   useEffect(() => {
@@ -454,87 +445,24 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Drawer */}
-      {isDrawerOpen && (
-        <>
-          {/* Backdrop */}
-          <div
-            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50"
-            onClick={closeDrawer}
-          />
-
-          {/* Drawer Panel */}
-          <div className="fixed inset-x-0 bottom-0 top-16 sm:top-20 z-50 overflow-hidden">
-            <div className="h-full max-w-2xl mx-auto px-4 sm:px-6">
-              <div className="h-full bg-white rounded-t-2xl shadow-2xl border border-gray-200 flex flex-col">
-                {/* Drawer Header */}
-                <div className="flex items-center justify-between p-6 border-b border-gray-200 shrink-0">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Job Details
-                  </h2>
-                  <button
-                    onClick={closeDrawer}
-                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <IoCloseOutline className="text-2xl text-gray-600" />
-                  </button>
-                </div>
-
-                {/* Drawer Content */}
-                <div className="flex-1 overflow-y-auto p-6">
-                  {isLoadingDetails ? (
-                    <div className="space-y-4">
-                      <div className="h-8 bg-gray-100 rounded animate-pulse" />
-                      <div className="h-4 bg-gray-100 rounded animate-pulse" />
-                      <div className="h-32 bg-gray-100 rounded animate-pulse" />
-                    </div>
-                  ) : detailsData?.post ? (
-                    <div className="space-y-6">
-                      {detailsData.post.datePosted && (
-                        <div className="text-sm text-gray-500">
-                          Posted:{" "}
-                          {new Date(
-                            detailsData.post.datePosted
-                          ).toLocaleDateString()}
-                        </div>
-                      )}
-
-                      {detailsData.post.description ? (
-                        <Markdown>{detailsData.post.description}</Markdown>
-                      ) : (
-                        <p className="text-gray-400 italic">
-                          No detailed description available.
-                        </p>
-                      )}
-
-                      {/* Apply Link */}
-                      {listingsData?.data?.find((l) => l.id === selectedPostID)
-                        ?.applyLink && (
-                        <a
-                          href={
-                            listingsData.data.find(
-                              (l) => l.id === selectedPostID
-                            )?.applyLink
-                          }
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block w-full py-3 px-4 bg-purple-600 text-white text-center rounded-lg hover:bg-purple-700 transition-colors font-medium"
-                        >
-                          Apply Now
-                        </a>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="text-center py-8 text-gray-400">
-                      No details available yet.
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
+      <ModalJob
+        open={isDrawerOpen}
+        title={
+          listingsData?.data?.find((l) => l.id === selectedPostID)?.properties
+            .title
+        }
+        onOpenChange={(open) => {
+          setIsDrawerOpen(open)
+          if (!open) {
+            setSelectedPostID(null)
+            window.history.pushState({}, "", "/")
+          }
+        }}
+        postID={selectedPostID}
+        applyLink={
+          listingsData?.data?.find((l) => l.id === selectedPostID)?.applyLink
+        }
+      />
     </>
   )
 }
