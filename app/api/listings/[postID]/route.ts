@@ -1,4 +1,4 @@
-import { formatJobDescription } from "@/app/actions/formatDescription"
+import { formatJobDescription } from "@/app/actions/textFormatter"
 import { getBrowser, type Browser } from "@/lib/chromium"
 import { redis, CACHE_KEYS } from "@/lib/redis"
 

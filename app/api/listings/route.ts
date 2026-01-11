@@ -1,3 +1,4 @@
+import { formatJobTitles } from "@/app/actions/textFormatter"
 import { getBrowser, type Browser } from "@/lib/chromium"
 
 const ROW_HEADERS = [
@@ -122,10 +123,21 @@ async function fetchListings() {
         }
       })
 
+    const formattedTitles = await formatJobTitles(
+      formattedBlocks.map((block) => block.properties.title || "NO_TITLE")
+    )
+
     const result = {
       success: true,
       count: formattedBlocks.length,
-      data: formattedBlocks,
+      data: formattedBlocks.map((block, index) => ({
+        ...block,
+        properties: {
+          ...block.properties,
+          // Use formatted title from AI
+          title: formattedTitles[index],
+        },
+      })),
     }
 
     return result
