@@ -1,26 +1,42 @@
 "use client"
 
+import { useEffect } from "react"
+import { atom, useAtom } from "jotai"
 import { IoCloseOutline } from "react-icons/io5"
-import { useJobDetails } from "@/lib/jobs"
+import { useJobsList, useJobDetails } from "@/lib/jobs"
 import Markdown from "@/components/Markdown"
 
 type ModalJobProps = {
   open: boolean
-  title?: string
   onOpenChange: (open: boolean) => void
-  postID: string | null
-  applyLink?: string
+  jobID: string | null
 }
 
-export default function ModalJob({
-  open,
-  onOpenChange,
-  title,
-  postID,
-  applyLink,
-}: ModalJobProps) {
+const atomJobUpdated = atom({} as Record<string, boolean>)
+export default function ModalJob({ open, onOpenChange, jobID }: ModalJobProps) {
+  const [updatedJobs, setUpdatedJobs] = useAtom(atomJobUpdated)
+
+  const isUpdated = updatedJobs[jobID || ""] || false
+
+  const { data: listingsData } = useJobsList()
   const { data: detailsData, isLoading: isLoadingDetails } =
-    useJobDetails(postID)
+    useJobDetails(jobID)
+
+  useEffect(() => {
+    if (open && jobID && !isUpdated) {
+      fetch(`/api/listings/${jobID}`, { method: "POST" })
+        .then((result) => {
+          console.debug(result)
+          // Mark as updated
+          setUpdatedJobs((prev) => ({ ...prev, [jobID]: true }))
+        })
+        .catch((error) => console.error({ error }))
+    }
+  }, [open, jobID, isUpdated])
+
+  const job = listingsData?.data?.find((l) => l.id === jobID)
+  const title = job?.properties.title
+  const applyLink = job?.applyLink
 
   if (!open) return null
 
@@ -40,7 +56,13 @@ export default function ModalJob({
             <h2 className="text-lg font-semibold text-gray-900">
               {title ? (
                 <>
-                  <span className="text-black/50">Jobs /</span> {title}
+                  <button
+                    className="text-black/50 hover:text-black/60"
+                    onClick={() => onOpenChange(false)}
+                  >
+                    <span>Jobs /</span>
+                  </button>{" "}
+                  {title}
                 </>
               ) : (
                 "Job Details"

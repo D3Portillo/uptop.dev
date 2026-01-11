@@ -29,6 +29,11 @@ RULES:
 - Remove final action-texts like "Apply here: [link]" or "TOS", "Privacy Policy"
 - Keep all original content as intact as possible, only changing formatting
 
+RULE: Some context or text fragments to be aware of to be removed from final/formatted description:
+- 👉🏻 LINK TO APPLY 💰
+- Feel free to drop us an email at talent@uptopsearch.com
+- Or any other similar call to action or external apply links (we just need the description here)
+
 Job Description:
 ${currentDescription}
 

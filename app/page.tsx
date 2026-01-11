@@ -123,13 +123,6 @@ export default function Home() {
     setSelectedPostID(listing.id)
     setIsDrawerOpen(true)
     router.push(`?job=${listing.id}`, { scroll: false })
-
-    // TODO: Fire this once only when clicking the listing
-    // Fire-and-forget POST to trigger update (if needed)
-    fetch(`/api/listings/${listing.id}`, { method: "POST" })
-      .then((res) => res.json())
-      .then((data) => console.log("POST result:", data))
-      .catch((err) => console.error("POST error:", err))
   }
 
   const closeDrawer = () => {
@@ -454,19 +447,11 @@ export default function Home() {
 
       <ModalJob
         open={isDrawerOpen}
-        title={
-          listingsData?.data?.find((l) => l.id === selectedPostID)?.properties
-            .title
-        }
         onOpenChange={(open) => {
-          if (!open) {
-            closeDrawer()
-          }
+          if (open) return
+          closeDrawer()
         }}
-        postID={selectedPostID}
-        applyLink={
-          listingsData?.data?.find((l) => l.id === selectedPostID)?.applyLink
-        }
+        jobID={selectedPostID}
       />
     </>
   )

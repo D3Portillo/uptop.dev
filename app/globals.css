@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+button {
+  @apply cursor-pointer;
+}
+
 @theme {
   --color-cr-green: #0ff649;
 }
