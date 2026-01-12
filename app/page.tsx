@@ -184,8 +184,8 @@ export default function Home() {
       return bMaxSalary - aMaxSalary // Highest first
     }
 
-    // "Most Recent" - keep original order (already sorted by date)
-    return 0
+    // Default: Most Recent (by rowIndex)
+    return a.rowIndex - b.rowIndex
   })
 
   useEffect(() => {
