@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense, useEffect } from "react"
+import { Fragment, Suspense, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { atom, useAtom } from "jotai"
 
@@ -9,46 +9,80 @@ import { useJobsList, useJobDetails } from "@/lib/jobs"
 
 import { MdArrowOutward } from "react-icons/md"
 import Markdown from "@/components/Markdown"
+import { cn } from "@/lib/utils"
 
 const atomJobUpdated = atom({} as Record<string, boolean>)
+const atomOpenJobID = atom("")
+
+export const useOpenJobID = () => useAtom(atomOpenJobID)
+
 function ModalJob() {
   const [updatedJobs, setUpdatedJobs] = useAtom(atomJobUpdated)
+  const [openJobID, setOpenJobID] = useOpenJobID()
 
   const searchParams = useSearchParams()
-  const JOB_ID = searchParams.get("job") || ""
+  const queryJobID = searchParams.get("job")
 
-  const isUpdated = updatedJobs[JOB_ID] || false
+  const isUpdated = updatedJobs[openJobID] === true
 
   const router = useRouter()
   const { data: listingsData } = useJobsList()
   const { data: detailsData, isLoading: isLoadingDetails } =
-    useJobDetails(JOB_ID)
+    useJobDetails(openJobID)
 
-  const isOpen = Boolean(JOB_ID)
+  const isOpen = Boolean(openJobID)
 
-  const closeModal = () =>
+  const closeModal = () => {
+    setOpenJobID("")
     router.push("/", {
       scroll: false,
     })
+  }
 
   useEffect(() => {
-    if (isOpen && JOB_ID && !isUpdated) {
-      fetch(`/api/listings/${JOB_ID}`, { method: "POST" })
-        .then((r) => r.json())
-        .then(console.debug)
-        .catch((error) => console.error({ error }))
-        .finally(() => {
-          // Mark as updated (ignore if error)
-          setUpdatedJobs((prev) => ({ ...prev, [JOB_ID]: true }))
-        })
-    }
-  }, [isOpen, JOB_ID, isUpdated])
+    if (openJobID && !isUpdated && isOpen) {
+      // Notify backend to try update cache for this job
+      fetch(`/api/listings/${openJobID}`, { method: "POST" })
 
-  const job = listingsData?.data?.find((l) => l.id === JOB_ID)
+      // Mark as updated to avoid redundant calls
+      setUpdatedJobs((prev) => ({ ...prev, [openJobID]: true }))
+    }
+  }, [openJobID, isUpdated, isOpen])
+
+  useEffect(() => {
+    setOpenJobID(queryJobID || "")
+  }, [queryJobID])
+
+  const job = listingsData?.data?.find((l) => l.id === openJobID)
   const title = job?.properties.title
   const applyLink = job?.applyLink
 
   if (!isOpen) return null
+
+  const workPolicy = (() => {
+    const policy = job?.properties?.remotePolicy?.toUpperCase() || ""
+
+    const isHybrid = policy.includes("HYBRID")
+    const isRemote = policy.includes("REMOTE")
+    if (isHybrid) {
+      return {
+        emoji: "☕",
+        label: "Hybrid",
+      }
+    }
+
+    if (isRemote) {
+      return {
+        emoji: "💻",
+        label: "Remote",
+      }
+    }
+
+    return {
+      emoji: "🧳",
+      label: "On-site",
+    }
+  })()
 
   return (
     <>
@@ -64,20 +98,15 @@ function ModalJob() {
           {/* Drawer Header */}
           <div className="flex items-center justify-between p-6 pr-3 border-b border-black/10 shrink-0">
             <h2 className="text-lg font-semibold text-black">
-              {title ? (
-                <>
-                  <button
-                    className="text-black/50 hover:text-black/70"
-                    onClick={closeModal}
-                  >
-                    <span>Jobs /</span>
-                  </button>{" "}
-                  {title}
-                </>
-              ) : (
-                "Job Details"
-              )}
+              <button
+                className="text-black/50 hover:text-black/70"
+                onClick={closeModal}
+              >
+                <span>Jobs /</span>
+              </button>{" "}
+              {title || "Full Job Details"}
             </h2>
+
             <button
               onClick={closeModal}
               className="p-2 text-black/70 hover:text-black"
@@ -96,8 +125,8 @@ function ModalJob() {
               </div>
             ) : detailsData?.post ? (
               <div className="space-y-6">
-                {detailsData.post.datePosted && (
-                  <nav className="flex">
+                <nav className="flex gap-3">
+                  {detailsData.post.datePosted && (
                     <div className="rounded-full border text-sm border-black/10 bg-black/5 font-semibold px-3 py-1 text-black/70">
                       {new Date(detailsData.post.datePosted).toLocaleDateString(
                         "en-US",
@@ -108,11 +137,82 @@ function ModalJob() {
                         }
                       )}
                     </div>
-                  </nav>
-                )}
+                  )}
+                  <div className="rounded-full cursor-pointer whitespace-nowrap flex gap-2 items-center group border text-sm border-black/10 bg-black/5 font-semibold px-3 py-1 text-black/70">
+                    <span>{workPolicy.emoji}</span>
+                    <span
+                      className={cn(
+                        // Hide-show label based on datePosted presence
+                        detailsData.post.datePosted &&
+                          "hidden group-hover:block"
+                      )}
+                    >
+                      {workPolicy.label}
+                    </span>
+                  </div>
+                </nav>
 
                 {detailsData.post.description ? (
-                  <Markdown>{detailsData.post.description}</Markdown>
+                  <Fragment>
+                    <Markdown>{detailsData.post.description}</Markdown>
+
+                    <div
+                      className={cn(
+                        "flex flex-wrap py-6 px-4 mb-12 bg-black/3 rounded-2xl gap-4",
+                        [
+                          job?.properties?.location,
+                          job?.properties?.salaryRange?.length,
+                          job?.properties?.skills.length,
+                        ].every((v) => !v) && "hidden" // Hide if no data
+                      )}
+                    >
+                      {job?.properties.location ? (
+                        <section className="px-2">
+                          <h2 className="text-sm mb-4 text-black/60">
+                            Location
+                          </h2>
+
+                          <nav className="flex">
+                            <div className="rounded-full whitespace-nowrap capitalize h-8 border text-sm border-black/10 font-semibold px-3 py-1 text-black/70">
+                              📍{" "}
+                              {job.properties.location
+                                .split(",")
+                                .join(" • ")
+                                .toLowerCase()}
+                            </div>
+                          </nav>
+                        </section>
+                      ) : null}
+
+                      {job?.properties.salaryRange?.length ? (
+                        <section className="px-2">
+                          <h2 className="text-sm mb-4 text-black/60">Salary</h2>
+
+                          <nav className="flex flex-wrap gap-3">
+                            {job.properties.salaryRange.map((range) => (
+                              <div className="rounded-full whitespace-nowrap h-8 border text-sm border-black/10 font-semibold px-3 py-1 text-black/70">
+                                💰 {range}
+                              </div>
+                            ))}
+                          </nav>
+                        </section>
+                      ) : null}
+
+                      {job?.properties.skills.length ? (
+                        <section className="px-2">
+                          <h2 className="text-sm mb-4 text-black/60">Skills</h2>
+
+                          <nav className="flex flex-wrap gap-3">
+                            {job.properties.skills.map((skill) => (
+                              <div className="rounded-full capitalize whitespace-nowrap h-8 border text-sm border-black/10 font-semibold px-3 py-1 text-black/70">
+                                {skill.toLowerCase()}
+                              </div>
+                            ))}
+                          </nav>
+                        </section>
+                      ) : null}
+                    </div>
+                  </Fragment>
                 ) : (
                   <DefaultEmptyState />
                 )}
@@ -144,7 +244,7 @@ function ModalJob() {
 function DefaultEmptyState() {
   return (
     <section>
-      <p className="text-black/50 pt-16 text-center max-w-md mx-auto">
+      <p className="text-black/50 pt-20 text-center max-w-md mx-auto">
         We haven't create an AI summary for this job yet. Please check back
         later. Or click apply anyways.
       </p>

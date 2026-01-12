@@ -2,6 +2,8 @@
 
 import { Fragment, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import { blo } from "blo"
+import { keccak256, toHex } from "viem"
 import type { TListingResponse } from "./api/listings/route"
 import {
   IoSearchOutline,
@@ -12,7 +14,7 @@ import {
 import { findBestMatch } from "@/lib/strings"
 import { useJobsList } from "@/lib/jobs"
 
-import ModalJob from "@/components/ModalJob"
+import ModalJob, { useOpenJobID } from "@/components/ModalJob"
 import { CRYPTO_JOB_LOCATIONS } from "@/lib/constants/countries"
 import { cn } from "@/lib/utils"
 
@@ -40,6 +42,7 @@ export default function Home() {
     typeof window !== "undefined" && window.innerWidth < 800 ? 5 : 8
 
   const router = useRouter()
+  const [, setOpenJobID] = useOpenJobID()
 
   const [searchQuery, setSearchQuery] = useState("")
   const [locationQuery, setLocationQuery] = useState("ANYWHERE")
@@ -103,6 +106,7 @@ export default function Home() {
   )
 
   const openDrawer = (listing: Listing) => {
+    setOpenJobID(listing.id)
     router.push(`?job=${listing.id}`, { scroll: false })
   }
 
@@ -166,7 +170,8 @@ export default function Home() {
     fetch("/api/listings", {
       method: "POST",
     })
-      .then((r) => r.json().then(console.debug))
+      .then((r) => r.json())
+      .then((result) => console.debug({ ISRData: result }))
       .catch(console.error)
   }, [])
 
@@ -177,13 +182,21 @@ export default function Home() {
         {/* Header Section */}
         <div className="bg-white border-b border-black/10">
           <div className="max-w-6xl mx-auto px-6 py-6">
+            <nav className="flex sm:mt-4 mb-5 sm:mb-7 items-center gap-3">
+              <figure className="text-xl scale-110">🧳</figure>
+              <h1 className="font-bold text-lg">
+                UpTop Job Board ( Community{" "}
+                <span className="hidden sm:inline-block">Edition</span> )
+              </h1>
+            </nav>
+
             {/* Search Filters */}
             <div className="flex gap-3 mb-6">
               <div className="flex-1 relative">
                 <IoSearchOutline className="absolute left-4 top-1/2 -translate-y-1/2 text-black/50 text-xl" />
                 <input
                   type="text"
-                  placeholder="Filter by title, company or keyword"
+                  placeholder="Filter jobs by title, company or keyword"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-12 pr-4 py-3.5 bg-white border border-black/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
@@ -261,7 +274,7 @@ export default function Home() {
         </div>
 
         {/* Main Content */}
-        <div className="max-w-6xl mx-auto px-6 py-6">
+        <div className="max-w-6xl mx-auto p-6">
           {/* Results Header */}
           <div className="flex items-center justify-between mb-4">
             <p className="text-black/70">
@@ -328,97 +341,125 @@ export default function Home() {
             </div>
           ) : (
             <div className="space-y-4 mb-24">
-              {sortedListings?.map((listing, idx) => (
-                <button
-                  key={listing.id}
-                  onClick={() => openDrawer(listing)}
-                  className="w-full text-left p-5 bg-white border border-black/10 rounded-2xl hover:border-black/15 shadow-black/5 hover:shadow transition-all"
-                >
-                  <div className="flex min-h-24 gap-6">
-                    {/* Company Logo Placeholder */}
-                    <div className="w-16 h-16 bg-ut-purple border border-black/10 rounded-lg flex items-center justify-center text-white font-bold text-xl shrink-0">
-                      {listing.properties.company?.[0]?.toUpperCase() || "?"}
-                    </div>
+              {(sortedListings || []).map((listing, idx) => {
+                const isPriority = listing.properties.status === "PRIORITY"
+                const isLatest = listing.rowIndex === 0
+                return (
+                  <button
+                    key={`list-${listing.id}`}
+                    onClick={() => openDrawer(listing)}
+                    className={cn(
+                      "w-full text-left p-5 border border-black/10 rounded-2xl hover:border-black/15 shadow-black/5 hover:shadow transition-all",
+                      isPriority
+                        ? "bg-linear-to-bl border-black/7 from-ut-purple/10 to-black/3"
+                        : "bg-white"
+                    )}
+                  >
+                    <div className="flex min-h-24 gap-6">
+                      {/* Company Logo Placeholder */}
+                      <div
+                        style={{
+                          backgroundImage: `url(${blo(
+                            keccak256(
+                              toHex(
+                                listing.properties.company ||
+                                  listing.properties.title
+                              )
+                            ),
+                            16
+                          )})`,
+                          filter: "saturate(1.2) brightness(0.7) contrast(1.2)",
+                        }}
+                        className="size-16 bg-cover sm:size-20 bg-black border-2 border-black rounded-lg flex items-center justify-center text-white font-bold text-xl shrink-0"
+                      />
 
-                    {/* Job Info */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-3 mb-2">
-                        <h3 className="text-lg font-semibold text-black">
-                          {listing.properties.title}
-                        </h3>
-                        {listing.rowIndex === 0 && (
-                          <span className="px-3 py-1 text-xs font-bold bg-ut-purple text-white rounded-full uppercase">
-                            NEW
-                          </span>
-                        )}
-                      </div>
+                      {/* Job Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-3 mb-2">
+                          <h3 className="text-lg font-semibold text-black">
+                            {listing.properties.title}
+                          </h3>
 
-                      {/* Job Details */}
-                      <div className="flex *:min-h-10 pb-6 max-w-xl flex-wrap items-center gap-3 text-sm text-black/50">
-                        {listing.properties.remotePolicy && (
-                          <div className="flex rounded-lg px-3 py-2 text-black bg-black/5 items-center">
-                            <span>
-                              {(() => {
-                                const policy =
-                                  listing.properties.remotePolicy.toUpperCase()
-                                const isHybrid = policy.includes("HYBRID")
-                                const isRemote = policy.includes("REMOTE")
-                                if (isHybrid) return "☕ Hybrid"
-                                if (isRemote) return "💻 Remote"
-                                return "🧳 On-site"
-                              })()}
+                          {isPriority && (
+                            <span className="px-3 py-1 border border-transparent text-xs font-bold bg-ut-purple text-white rounded-full uppercase">
+                              PRIORITY
                             </span>
-                          </div>
-                        )}
+                          )}
 
-                        {listing.properties.location && (
-                          <div className="flex rounded-lg pl-2 py-2 gap-2 pr-4 bg-black/5 items-center">
-                            <IoLocationOutline className="text-base shrink-0 hidden sm:block" />
-                            <div
-                              className={cn(
-                                "flex flex-wrap text-black items-center gap-2",
-                                listing.properties.location.includes(",") &&
-                                  "py-2 sm:py-0"
-                              )}
-                            >
-                              {listing.properties.location
-                                .split(",")
-                                .map((loc) => {
-                                  const formatted =
-                                    CRYPTO_JOB_LOCATIONS[
-                                      normalizeLocation(
-                                        loc as string
-                                      ) as keyof typeof CRYPTO_JOB_LOCATIONS
-                                    ]
+                          {isLatest && (
+                            <span className="px-3 py-1 border border-black text-xs font-bold bg-ut-green text-black rounded-full uppercase">
+                              NEW
+                            </span>
+                          )}
+                        </div>
 
-                                  return (
-                                    <span
-                                      className="whitespace-nowrap px-1.5"
-                                      key={`c-${idx}-${formatted.name}`}
-                                    >
-                                      {formatted.emoji} {formatted.name}
-                                    </span>
-                                  )
-                                })}
+                        {/* Job Details */}
+                        <div className="flex *:min-h-10 pb-6 max-w-xl flex-wrap items-center gap-3 text-sm text-black/50">
+                          {listing.properties.remotePolicy && (
+                            <div className="flex rounded-lg px-3 py-2 text-black bg-black/5 items-center">
+                              <span>
+                                {(() => {
+                                  const policy =
+                                    listing.properties.remotePolicy.toUpperCase()
+                                  const isHybrid = policy.includes("HYBRID")
+                                  const isRemote = policy.includes("REMOTE")
+                                  if (isHybrid) return "☕ Hybrid"
+                                  if (isRemote) return "💻 Remote"
+                                  return "🧳 On-site"
+                                })()}
+                              </span>
                             </div>
-                          </div>
-                        )}
+                          )}
 
-                        {/* Salary Range */}
-                        {listing.properties.salaryRange?.map((range) => (
-                          <div
-                            key={`salary-${range}-${idx}`}
-                            className="flex text-black rounded-lg pl-3 py-2 gap-2 pr-4 bg-black/5 items-center"
-                          >
-                            <span>💰</span>
-                            <span className="font-medium">{range}</span>
-                          </div>
-                        ))}
+                          {listing.properties.location && (
+                            <div className="flex rounded-lg pl-2 py-2 gap-2 pr-4 bg-black/5 items-center">
+                              <IoLocationOutline className="text-base shrink-0 hidden sm:block" />
+                              <div
+                                className={cn(
+                                  "flex flex-wrap text-black items-center gap-2",
+                                  listing.properties.location.includes(",") &&
+                                    "py-2 sm:py-0"
+                                )}
+                              >
+                                {listing.properties.location
+                                  .split(",")
+                                  .map((loc) => {
+                                    const formatted =
+                                      CRYPTO_JOB_LOCATIONS[
+                                        normalizeLocation(
+                                          loc as string
+                                        ) as keyof typeof CRYPTO_JOB_LOCATIONS
+                                      ]
+
+                                    return (
+                                      <span
+                                        className="whitespace-nowrap px-1.5"
+                                        key={`c-${idx}-${formatted.name}`}
+                                      >
+                                        {formatted.emoji} {formatted.name}
+                                      </span>
+                                    )
+                                  })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Salary Range */}
+                          {listing.properties.salaryRange?.map((range) => (
+                            <div
+                              key={`salary-${range}-${idx}`}
+                              className="flex text-black rounded-lg pl-3 py-2 gap-2 pr-4 bg-black/5 items-center"
+                            >
+                              <span>💰</span>
+                              <span className="font-medium">{range}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                )
+              })}
             </div>
           )}
 
@@ -441,6 +482,21 @@ export default function Home() {
             </section>
           )}
         </div>
+
+        <footer className="max-w-6xl mx-auto px-6 pt-8 pb-16">
+          <p className="text-center max-w-xl mx-auto text-sm text-black/50">
+            This is a community project and is not affiliated with UpTop. To
+            find the job posts from UpTop, visit{" "}
+            <a
+              href="https://uptop.notion.site/job-board"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-4"
+            >
+              UpTop's Notion Job Board
+            </a>
+          </p>
+        </footer>
       </div>
 
       <ModalJob />

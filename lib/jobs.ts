@@ -1,3 +1,5 @@
+"use client"
+
 import type { TListingResponse } from "@/app/api/listings/route"
 import type { TListingDetailsResponse } from "@/app/api/listings/[postID]/route"
 

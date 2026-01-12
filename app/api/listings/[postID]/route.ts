@@ -129,10 +129,17 @@ export async function POST(
 
     if (lastUpdate && now - lastUpdate < cacheTimeInMs) {
       // We're still within the cache period
-      return Response.json({
-        cached: true,
-        nextUpdate: getNextUpdate(lastUpdate),
-      })
+      return Response.json(
+        {
+          cached: true,
+          nextUpdate: getNextUpdate(lastUpdate),
+        },
+        {
+          headers: {
+            "Cache-Control": `public, max-age=${revalidate}, s-maxage=${revalidate}, stale-while-revalidate=${revalidate}`,
+          },
+        }
+      )
     }
 
     // Fetch new data + update cache
@@ -145,11 +152,18 @@ export async function POST(
       ])
     }
 
-    return Response.json({
-      cached: false,
-      data: result,
-      nextUpdate: getNextUpdate(now),
-    })
+    return Response.json(
+      {
+        cached: false,
+        data: result,
+        nextUpdate: getNextUpdate(now),
+      },
+      {
+        headers: {
+          "Cache-Control": `public, max-age=${revalidate}, s-maxage=${revalidate}, stale-while-revalidate=${revalidate}`,
+        },
+      }
+    )
   } catch (error) {
     return Response.json(
       {

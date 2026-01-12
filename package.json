@@ -14,6 +14,7 @@
     "@sparticuz/chromium": "^143.0.4",
     "@upstash/redis": "^1.36.1",
     "ai": "^6.0.27",
+    "blo": "^2.0.0",
     "clsx": "^2.1.1",
     "jotai": "^2.16.1",
     "next": "16.0.10",
@@ -25,6 +26,7 @@
     "remark-gfm": "^4.0.1",
     "swr": "^2.3.8",
     "tailwind-merge": "^3.4.0",
+    "viem": "^2.44.1",
     "zod": "^4.3.5"
   },
   "devDependencies": {

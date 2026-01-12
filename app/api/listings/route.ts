@@ -115,6 +115,7 @@ async function fetchListings() {
             title: fetchBlockProperty(block, "TITLE"),
             status: fetchBlockProperty(block, "STATUS"),
             location: fetchBlockProperty(block, "LOCATION"),
+            category: fetchBlockProperty(block, "CATEGORY"),
             remotePolicy: fetchBlockProperty(block, "OFFICE_POLICY"),
             skills: tagify(fetchBlockProperty(block, "SKILLS") || ""),
             // Null when salary not present

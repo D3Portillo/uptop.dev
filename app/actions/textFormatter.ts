@@ -26,12 +26,15 @@ RULES:
 - Use headers (# only) for sections
 - Use bullet points for lists
 - Use bold for important terms (do not overuse)
-- Remove final action-texts like "Apply here: [link]" or "TOS", "Privacy Policy"
+- Remove any "How to Apply" sections or call to action
+- Remove Location or Salary sections if they exist - they are handled elsewhere - so it's redundant here
+- Remove footer or last action-texts like "Apply here: [link]" or "TOS", "Privacy Policy"
 - Keep all original content as intact as possible, only changing formatting
 
-RULE: Some context or text fragments to be aware of to be removed from final/formatted description:
+RULE: Remove the following specific sections if they exist:
 - 👉🏻 LINK TO APPLY 💰
 - Feel free to drop us an email at talent@uptopsearch.com
+- Feel free to drop us an email.
 - Or any other similar call to action or external apply links (we just need the description here)
 
 Job Description:

@@ -6,9 +6,7 @@ button {
 
 @theme {
   --color-ut-purple: #9f29fe;
-  --color-ut-purple-dark: #0c0621;
-  --color-ut-yellow: #fff94f;
-  --color-ut-green: #97ead2;
   --color-ut-red: #f93943;
+  --color-ut-green: #00ff04;
   --color-ut-blue: #2ec0f9;
 }
