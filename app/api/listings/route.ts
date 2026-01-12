@@ -1,6 +1,7 @@
 import { formatJobTitles } from "@/app/actions/textFormatter"
-import { getBrowser, type Browser } from "@/lib/chromium"
+import { acquireBrowserLock, releaseLockedBrowser } from "@/lib/chromium"
 import { redis, CACHE_KEYS } from "@/lib/redis"
+import { staledResponse } from "@/lib/routes"
 
 const ROW_HEADERS = [
   "STATUS",
@@ -27,12 +28,9 @@ const fetchBlockProperty = (
 }
 
 async function fetchListings() {
-  let browser = null as Browser | null
+  const browser = await acquireBrowserLock("listings")
 
   try {
-    // Launch browser with chromium
-    browser = await getBrowser()
-
     const page = await browser.newPage()
 
     // Navigate to the Notion job board
@@ -80,7 +78,7 @@ async function fetchListings() {
       })
     })
 
-    await browser.close()
+    await releaseLockedBrowser(browser)
     const formattedBlocks = rawBlockData
       // Remove empty blocks
       .filter((block) => block.properties.length > 0)
@@ -144,41 +142,30 @@ async function fetchListings() {
 
     return result
   } catch (error) {
-    if (browser) await browser.close()
+    await releaseLockedBrowser(browser)
     throw error
   }
 }
 
 export type TListingResponse = Awaited<ReturnType<typeof fetchListings>>
 
-export const revalidate = 3600
+//////////////////////////////////////////
+// API Route Handlers
+//////////////////////////////////////////
+
+export const revalidate = 3600 // 1 hour
 
 export async function GET() {
   try {
-    const cacheKey = CACHE_KEYS.listings
-    const cached = await redis.get<TListingResponse>(cacheKey)
+    const cache = await redis.get<TListingResponse>(CACHE_KEYS.listings)
+    if (cache) return Response.json(cache)
 
-    if (cached) {
-      return Response.json(cached, {
-        headers: {
-          "Cache-Control": `public, max-age=${revalidate}, s-maxage=${revalidate}, stale-while-revalidate=${revalidate}`,
-        },
-      })
-    }
-
-    // No cached data, return empty result
-    return Response.json(
-      {
-        success: false,
-        count: 0,
-        data: [],
-      },
-      {
-        headers: {
-          "Cache-Control": "no-store, max-age=0",
-        },
-      }
-    )
+    // No cached data
+    return Response.json({
+      success: false,
+      count: 0,
+      data: [],
+    })
   } catch (error) {
     return Response.json(
       {
@@ -187,9 +174,6 @@ export async function GET() {
       },
       {
         status: 500,
-        headers: {
-          "Cache-Control": "no-store, max-age=0",
-        },
       }
     )
   }
@@ -209,10 +193,15 @@ export async function POST() {
 
     if (lastUpdate && now - lastUpdate < cacheTimeInMs) {
       // We're still within the cache period
-      return Response.json({
-        cached: true,
-        nextUpdate: getNextUpdate(lastUpdate),
-      })
+      return staledResponse(
+        {
+          cached: true,
+          nextUpdate: getNextUpdate(lastUpdate),
+        },
+        {
+          timeInSeconds: revalidate,
+        }
+      )
     }
 
     // Fetch new data from Notion
@@ -246,26 +235,38 @@ export async function POST() {
       redis.set(timestampKey, now),
     ])
 
-    return Response.json({
-      cached: false,
-      data: mergedResult,
-      nextUpdate: getNextUpdate(now),
-      mergedCount: mergedJobs.size,
-      freshCount: freshData.data.length,
-    })
+    return staledResponse(
+      {
+        cached: false,
+        data: mergedResult,
+        nextUpdate: getNextUpdate(now),
+        mergedCount: mergedJobs.size,
+        freshCount: freshData.data.length,
+      },
+      {
+        timeInSeconds: revalidate,
+      }
+    )
   } catch (error) {
-    return Response.json(
+    return staledResponse(
       {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      {
+        timeInSeconds: revalidate / 2,
+        statusCode: 500,
+      }
     )
   }
 }
 
+//////////////////////////////////////////
+// Helper Functions
+//////////////////////////////////////////
+
 /**
- * Helper to turn a comma-separated string into an array of tags
+ * Turn a comma-separated string into an array of tags
  */
 function tagify(str = "") {
   return (

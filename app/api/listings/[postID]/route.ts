@@ -1,14 +1,13 @@
 import { formatJobDescription } from "@/app/actions/textFormatter"
-import { getBrowser, type Browser } from "@/lib/chromium"
+import { acquireBrowserLock, releaseLockedBrowser } from "@/lib/chromium"
 import { redis, CACHE_KEYS } from "@/lib/redis"
+import { staledResponse } from "@/lib/routes"
 
 async function fetchListingDetails(postID: string) {
   const formattedId = postID.replaceAll("-", "")
-  let browser = null as Browser | null
+  const browser = await acquireBrowserLock(`listing:${postID}`)
 
   try {
-    // Launch browser with chromium
-    browser = await getBrowser()
     const page = await browser.newPage()
 
     await page.goto(`https://uptop.notion.site/${formattedId}`, {
@@ -60,7 +59,7 @@ async function fetchListingDetails(postID: string) {
       }
     })
 
-    await browser.close()
+    await releaseLockedBrowser(browser)
     return {
       postID,
       formattedId,
@@ -73,7 +72,7 @@ async function fetchListingDetails(postID: string) {
       },
     }
   } catch (error) {
-    if (browser) await browser.close()
+    await releaseLockedBrowser(browser)
     throw error
   }
 }
@@ -81,6 +80,10 @@ async function fetchListingDetails(postID: string) {
 export type TListingDetailsResponse = Awaited<
   ReturnType<typeof fetchListingDetails>
 >
+
+//////////////////////////////////////////
+// API Route Handlers
+//////////////////////////////////////////
 
 export const revalidate = 300 // 5 minutes
 
@@ -129,15 +132,13 @@ export async function POST(
 
     if (lastUpdate && now - lastUpdate < cacheTimeInMs) {
       // We're still within the cache period
-      return Response.json(
+      return staledResponse(
         {
           cached: true,
           nextUpdate: getNextUpdate(lastUpdate),
         },
         {
-          headers: {
-            "Cache-Control": `public, max-age=${revalidate}, s-maxage=${revalidate}, stale-while-revalidate=${revalidate}`,
-          },
+          timeInSeconds: revalidate,
         }
       )
     }
@@ -152,24 +153,25 @@ export async function POST(
       ])
     }
 
-    return Response.json(
+    return staledResponse(
       {
         cached: false,
         data: result,
         nextUpdate: getNextUpdate(now),
       },
       {
-        headers: {
-          "Cache-Control": `public, max-age=${revalidate}, s-maxage=${revalidate}, stale-while-revalidate=${revalidate}`,
-        },
+        timeInSeconds: revalidate,
       }
     )
   } catch (error) {
-    return Response.json(
+    return staledResponse(
       {
         error: error instanceof Error ? error.message : "Unknown error",
       },
-      { status: 500 }
+      {
+        timeInSeconds: revalidate,
+        statusCode: 500,
+      }
     )
   }
 }
