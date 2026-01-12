@@ -17,7 +17,10 @@ export default function Markdown({
 }) {
   return (
     <section
-      className={cn("[&_strong]:font-semibold leading-relaxed", className)}
+      className={cn(
+        "[&_strong]:font-semibold min-h-[42vh] leading-relaxed",
+        className
+      )}
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}

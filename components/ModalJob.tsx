@@ -86,7 +86,7 @@ function ModalJob() {
 
   return (
     <>
-      <style jsx global>{`
+      <style>{`
         body,
         html {
           overflow: hidden;
@@ -217,7 +217,12 @@ function ModalJob() {
 
                           <nav className="flex flex-wrap gap-3">
                             {job.properties.skills.map((skill) => (
-                              <div className="rounded-full capitalize whitespace-nowrap h-8 border text-sm border-black/10 font-semibold px-3 py-1 text-black/70">
+                              <div
+                                className={cn(
+                                  skill.length > 3 ? "capitalize" : "uppercase",
+                                  "rounded-full whitespace-nowrap h-8 border text-sm border-black/10 font-semibold px-3 py-1 text-black/70"
+                                )}
+                              >
                                 {skill.toLowerCase()}
                               </div>
                             ))}
@@ -236,7 +241,9 @@ function ModalJob() {
           </div>
 
           {applyLink && (
-            <nav className="flex shrink-0 w-full pb-4 pt-2 px-6">
+            <nav className="flex relative shrink-0 w-full pb-4 pt-2 px-6">
+              <div className="absolute bottom-full left-0 right-0 h-12 pointer-events-none bg-linear-to-b from-white/0 to-white" />
+
               <a
                 href={applyLink}
                 target="_blank"
