@@ -126,9 +126,9 @@ function ModalJob() {
           <div className="grow overflow-y-auto p-6">
             {isLoadingDetails ? (
               <div className="space-y-4">
-                <div className="h-12 bg-black/5 rounded animate-pulse" />
-                <div className="h-12 bg-black/5 delay-150 rounded animate-pulse" />
-                <div className="h-40 bg-black/5 delay-300 rounded animate-pulse" />
+                <div className="h-12 bg-black/5 rounded-md animate-pulse" />
+                <div className="h-12 bg-black/5 delay-150 rounded-md animate-pulse" />
+                <div className="h-40 bg-black/5 delay-300 rounded-md animate-pulse" />
               </div>
             ) : detailsData?.post ? (
               <div className="space-y-6">

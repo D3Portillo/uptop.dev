@@ -54,18 +54,20 @@ export default function Home() {
 
   // Helper function to parse salary from string like "$150k - $200k" or "> $300k"
   const parseSalary = (salaryStr: string): number => {
+    salaryStr = salaryStr.trim()
     if (!salaryStr) return 0
-    // Remove $ and k, handle > sign, +, and spaces
-    const cleaned = salaryStr.replace(/[$k,>\s+ ]/g, "")
-    const possiblyRange = salaryStr.split("-")
+
+    // Remove $ and k, < less than, handle > sign, +, and spaces
+    const formatted = salaryStr.replace(/[$k,><\s+ ]/g, "")
+    const possiblyRange = formatted.split("-")
 
     // If it's a range, take the higher number
     if (possiblyRange.length > 1) {
       const higherPart = possiblyRange[1].trim()
-      return parseInt(higherPart) || 0
+      return Number(higherPart || "0")
     }
 
-    return parseInt(cleaned) || 0
+    return Number(formatted || "0")
   }
 
   const { data: listingsData, isLoading } = useJobsList()
@@ -157,14 +159,15 @@ export default function Home() {
   // Sort listings based on selected option
   const sortedListings = [...(filteredListings || [])].sort((a, b) => {
     if (sortBy === "By Salary") {
-      const aMaxSalary = Math.max(
-        ...(a.properties.salaryRange?.map(parseSalary) || [0])
-      )
-      const bMaxSalary = Math.max(
-        ...(b.properties.salaryRange?.map(parseSalary) || [0])
-      )
+      const aSalaries = (a?.properties?.salaryRange || []).map(parseSalary)
+      const aMaxSalary = Math.max(...aSalaries)
+
+      const bSalaries = (b?.properties?.salaryRange || []).map(parseSalary)
+      const bMaxSalary = Math.max(...bSalaries)
+
       return bMaxSalary - aMaxSalary // Highest first
     }
+
     // "Most Recent" - keep original order (already sorted by date)
     return 0
   })
