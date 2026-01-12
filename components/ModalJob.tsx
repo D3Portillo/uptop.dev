@@ -86,6 +86,13 @@ function ModalJob() {
 
   return (
     <>
+      <style jsx global>{`
+        body,
+        html {
+          overflow: hidden;
+        }
+      `}</style>
+
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50"
@@ -138,13 +145,19 @@ function ModalJob() {
                       )}
                     </div>
                   )}
-                  <div className="rounded-full cursor-pointer whitespace-nowrap flex gap-2 items-center group border text-sm border-black/10 bg-black/5 font-semibold px-3 py-1 text-black/70">
-                    <span>{workPolicy.emoji}</span>
+                  <div
+                    role="button"
+                    tabIndex={-1}
+                    className="rounded-full cursor-pointer whitespace-nowrap flex gap-2 items-center group border text-sm border-black/10 bg-black/5 font-semibold px-3 py-1 text-black/70"
+                  >
+                    <span className="pointer-events-none">
+                      {workPolicy.emoji}
+                    </span>
                     <span
                       className={cn(
                         // Hide-show label based on datePosted presence
                         detailsData.post.datePosted &&
-                          "hidden group-hover:block"
+                          "hidden group-hover:block group-focus-within:block"
                       )}
                     >
                       {workPolicy.label}

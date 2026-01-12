@@ -262,7 +262,7 @@ export default function Home() {
               {categories.length > SHOW_OR_LESS_SIZE && (
                 <button
                   onClick={() => setShowAllCategories(!showAllCategories)}
-                  className="h-8 px-3 py-1 rounded-lg text-sm text-black/70 hover:bg-black/5 transition-colors"
+                  className="ml-auto md:ml-0 h-8 px-3 py-1 rounded-lg text-sm text-black/70 hover:bg-black/5 transition-colors"
                 >
                   {showAllCategories
                     ? "Show less"
