@@ -180,7 +180,7 @@ export default function Home() {
                   className="w-full pl-12 pr-4 py-3.5 bg-white border border-black/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
                 />
               </div>
-              <div className="w-16 md:w-52 relative">
+              <div className="w-17 md:w-52 relative">
                 {/* Display emoji on mobile */}
                 <span className="absolute z-1 left-4 top-1/2 -translate-y-1/2 text-xl pointer-events-none md:hidden">
                   {
@@ -384,7 +384,7 @@ export default function Home() {
 
                                   return (
                                     <span
-                                      className="whitespace-nowrap px-2"
+                                      className="whitespace-nowrap px-1.5"
                                       key={`c-${idx}-${formatted.name}`}
                                     >
                                       {formatted.emoji} {formatted.name}
