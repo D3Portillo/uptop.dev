@@ -9,6 +9,7 @@ import { jsonify } from "@/lib/utils"
 const LOCAL_LISTINGS_KEY = "ut.jobs.listings"
 
 const getInitialData = () => {
+  if (typeof window === "undefined") return undefined
   const localCache = localStorage.getItem(LOCAL_LISTINGS_KEY)
   return localCache ? (JSON.parse(localCache) as TListingResponse) : undefined
 }

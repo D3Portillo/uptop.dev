@@ -27,7 +27,7 @@ RULES:
 - Use bullet points for lists
 - Use bold for important terms (do not overuse)
 - Remove any "How to Apply" sections or call to action
-- Remove Location or Salary sections if they exist - they are handled elsewhere - so it's redundant here
+- Remove Location or Salary sections unless they are extended details about the job itself
 - Remove footer or last action-texts like "Apply here: [link]" or "TOS", "Privacy Policy"
 - Keep all original content as intact as possible, only changing formatting
 
