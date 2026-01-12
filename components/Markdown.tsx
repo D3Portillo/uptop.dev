@@ -27,6 +27,14 @@ export default function Markdown({
           ),
           // No Separators
           hr: () => null,
+          a: ({ node, target, ...props }) => (
+            <a
+              {...props}
+              className="text-ut-purple underline underline-offset-4 break-all"
+              target="_blank"
+              rel="noopener noreferrer"
+            />
+          ),
           h2: ({ node, ...props }) => (
             <h1 className="text-xl font-bold mt-5 mb-2" {...props} />
           ),

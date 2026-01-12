@@ -34,6 +34,7 @@ function ModalJob() {
   useEffect(() => {
     if (isOpen && JOB_ID && !isUpdated) {
       fetch(`/api/listings/${JOB_ID}`, { method: "POST" })
+        .then((r) => r.json())
         .then(console.debug)
         .catch((error) => console.error({ error }))
         .finally(() => {
@@ -89,9 +90,9 @@ function ModalJob() {
           <div className="grow overflow-y-auto p-6">
             {isLoadingDetails ? (
               <div className="space-y-4">
-                <div className="h-8 bg-black/5 rounded animate-pulse" />
-                <div className="h-4 bg-black/5 rounded animate-pulse" />
-                <div className="h-32 bg-black/5 rounded animate-pulse" />
+                <div className="h-12 bg-black/5 rounded animate-pulse" />
+                <div className="h-12 bg-black/5 delay-150 rounded animate-pulse" />
+                <div className="h-40 bg-black/5 delay-300 rounded animate-pulse" />
               </div>
             ) : detailsData?.post ? (
               <div className="space-y-6">
@@ -113,15 +114,11 @@ function ModalJob() {
                 {detailsData.post.description ? (
                   <Markdown>{detailsData.post.description}</Markdown>
                 ) : (
-                  <p className="text-black/50 italic">
-                    No detailed description available.
-                  </p>
+                  <DefaultEmptyState />
                 )}
               </div>
             ) : (
-              <div className="text-center py-8 text-black/50">
-                No details available yet.
-              </div>
+              <DefaultEmptyState />
             )}
           </div>
 
@@ -141,6 +138,17 @@ function ModalJob() {
         </div>
       </div>
     </>
+  )
+}
+
+function DefaultEmptyState() {
+  return (
+    <section>
+      <p className="text-black/50 pt-16 text-center max-w-md mx-auto">
+        We haven't create an AI summary for this job yet. Please check back
+        later. Or click apply anyways.
+      </p>
+    </section>
   )
 }
 
