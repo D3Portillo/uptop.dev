@@ -45,6 +45,8 @@ export default function Home() {
   const router = useRouter()
   const [, setOpenJobID] = useOpenJobID()
 
+  const [policy, setPolicy] = useState<"REMOTE" | "ONSITE">("REMOTE")
+
   const [searchQuery, setSearchQuery] = useState("")
   const [locationQuery, setLocationQuery] = useState("ANYWHERE")
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
@@ -116,45 +118,59 @@ export default function Home() {
     router.push(`?job=${listing.id}`, { scroll: false })
   }
 
-  const filteredListings = listingsData?.data?.filter(({ properties }) => {
-    // Search query filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase()
-      return [
-        properties.title,
-        properties.company,
-        properties.location,
-        properties.skills,
-      ]
-        .join("")
-        .toLowerCase()
-        .includes(query)
-    }
+  const filteredListings = listingsData?.data
+    ?.filter(({ properties }) => {
+      // Remote / On-site filter
+      const jobPolicy = properties?.remotePolicy?.toUpperCase() || ""
+      const isHybrid = jobPolicy.includes("HYBRID")
+      const isRemote = jobPolicy.includes("REMOTE")
 
-    // Location filter (ANYWHERE shows all)
-    if (locationQuery && locationQuery !== "ANYWHERE") {
-      const location = properties.location || ""
-      const normalizedJobLocations = location.split(",").map(normalizeLocation)
-
-      const matchesLocation = normalizedJobLocations.some(
-        (loc) => loc === locationQuery
-      )
-
-      if (!matchesLocation) {
-        return false
+      // Hybrid jobs match both filters
+      if (isHybrid) return true
+      if (policy === "REMOTE") return isRemote
+      return !isRemote
+    })
+    .filter(({ properties }) => {
+      // Search query filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        return [
+          properties.title,
+          properties.company,
+          properties.location,
+          properties.skills,
+        ]
+          .join("")
+          .toLowerCase()
+          .includes(query)
       }
-    }
 
-    // Category filter (multiple selection)
-    if (selectedCategories.length > 0 && !isAllCategoriesSelected) {
-      const hasAnySkill = selectedCategories.some((category) =>
-        properties.skills?.includes(category)
-      )
-      if (!hasAnySkill) return false
-    }
+      // Location filter (ANYWHERE shows all)
+      if (locationQuery && locationQuery !== "ANYWHERE") {
+        const location = properties.location || ""
+        const normalizedJobLocations = location
+          .split(",")
+          .map(normalizeLocation)
 
-    return true
-  })
+        const matchesLocation = normalizedJobLocations.some(
+          (loc) => loc === locationQuery
+        )
+
+        if (!matchesLocation) {
+          return false
+        }
+      }
+
+      // Category filter (multiple selection)
+      if (selectedCategories.length > 0 && !isAllCategoriesSelected) {
+        const hasAnySkill = selectedCategories.some((category) =>
+          properties.skills?.includes(category)
+        )
+        if (!hasAnySkill) return false
+      }
+
+      return true
+    })
 
   // Sort listings based on selected option
   const sortedListings = [...(filteredListings || [])].sort((a, b) => {
@@ -193,7 +209,7 @@ export default function Home() {
           <div className="max-w-6xl mx-auto px-6 py-6">
             <nav className="flex sm:mt-4 mb-5 sm:mb-7 items-center gap-3">
               <figure className="text-xl scale-110">🧳</figure>
-              <h1 className="font-bold text-lg">
+              <h1 className="font-bold whitespace-nowrap text-lg">
                 UpTop Job Board ( Community{" "}
                 <span className="hidden sm:inline-block">Edition</span> )
               </h1>
@@ -318,71 +334,98 @@ export default function Home() {
         {/* Main Content */}
         <div
           className={cn(
-            "max-w-6xl mx-auto p-6 min-h-screen",
+            "max-w-6xl overflow-hidden mx-auto p-6 min-h-screen",
             isEmpty && "border-b mb-8 border-black/10"
           )}
         >
           {/* Results Header */}
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-black/70">
+          <div className="sm:flex gap-3 items-center mb-5">
+            <div className="text-black/70 whitespace-nowrap">
               Showing{" "}
               <span className="font-semibold">
                 {sortedListings?.length || 0}
               </span>{" "}
               jobs
-            </p>
-            <div className="relative">
-              <button
-                onClick={() => setShowSortMenu(!showSortMenu)}
-                className="flex items-center gap-2 px-4 py-2 border border-black/10 rounded-lg bg-white hover:bg-black/5 transition-colors"
-              >
-                <span className="text-sm text-black/70">
-                  {sortBy === "By Salary"
-                    ? "Salary (high - low)"
-                    : "Most Recent"}
-                </span>
-                <IoChevronDownOutline className="text-black/50" />
-              </button>
-              {showSortMenu && (
-                <Fragment>
-                  <div
-                    tabIndex={-1}
-                    role="button"
-                    onClick={() => setShowSortMenu(false)}
-                    className="fixed z-5 inset-0"
-                  />
+            </div>
 
-                  <div className="absolute right-0 mt-2 w-48 bg-white border border-black/10 rounded-lg shadow-lg z-10">
-                    <button
-                      onClick={() => {
-                        setSortBy("Most Recent")
-                        setShowSortMenu(false)
-                      }}
-                      className={`w-full text-left px-4 py-3 text-sm hover:bg-black/5 first:rounded-t-lg ${
-                        sortBy === "Most Recent"
-                          ? "text-black/50 font-medium"
-                          : "text-black/80"
-                      }`}
-                    >
-                      Most Recent
-                    </button>
+            <div className="grow" />
 
-                    <button
-                      onClick={() => {
-                        setSortBy("By Salary")
-                        setShowSortMenu(false)
-                      }}
-                      className={`w-full text-left px-4 py-3 text-sm hover:bg-black/5 last:rounded-b-lg ${
-                        sortBy === "By Salary"
-                          ? "text-black/50 font-medium"
-                          : "text-black/80"
-                      }`}
-                    >
-                      Salary (high - low)
-                    </button>
-                  </div>
-                </Fragment>
-              )}
+            <div className="flex mt-4 sm:mt-0 gap-3 items-center">
+              <div className="flex whitespace-nowrap h-10 gap-3 border border-black/10 rounded-lg bg-white hover:bg-black/5 transition-colors">
+                <button
+                  onClick={() => setPolicy("ONSITE")}
+                  className={cn(
+                    "text-sm pl-3",
+                    policy === "ONSITE" ? "font-semibold" : "opacity-60"
+                  )}
+                >
+                  🧳 On-site
+                </button>
+
+                <button
+                  onClick={() => setPolicy("REMOTE")}
+                  className={cn(
+                    "text-sm pr-3",
+                    policy === "REMOTE" ? "font-semibold" : "opacity-60"
+                  )}
+                >
+                  <span>💻 Remote</span>
+                </button>
+              </div>
+
+              <div className="relative ml-auto">
+                <button
+                  onClick={() => setShowSortMenu(!showSortMenu)}
+                  className="flex h-10 items-center gap-2 px-3 border border-black/10 rounded-lg bg-white hover:bg-black/5 transition-colors"
+                >
+                  <span className="text-sm whitespace-nowrap text-black/70">
+                    {sortBy === "By Salary"
+                      ? "Salary (high - low)"
+                      : "Most Recent"}
+                  </span>
+                  <IoChevronDownOutline className="text-black/50" />
+                </button>
+                {showSortMenu && (
+                  <Fragment>
+                    <div
+                      tabIndex={-1}
+                      role="button"
+                      onClick={() => setShowSortMenu(false)}
+                      className="fixed z-5 inset-0"
+                    />
+
+                    <div className="absolute right-0 mt-2 w-48 bg-white border border-black/10 rounded-lg shadow-lg z-10">
+                      <button
+                        onClick={() => {
+                          setSortBy("Most Recent")
+                          setShowSortMenu(false)
+                        }}
+                        className={`w-full text-left px-4 py-3 text-sm hover:bg-black/5 first:rounded-t-lg ${
+                          sortBy === "Most Recent"
+                            ? "text-black/80"
+                            : "text-black/50 font-medium"
+                        }`}
+                      >
+                        Most Recent
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          setSortBy("By Salary")
+                          setShowSortMenu(false)
+                        }}
+                        className={`w-full text-left px-4 py-3 text-sm hover:bg-black/5 last:rounded-b-lg ${
+                          sortBy === "By Salary"
+                            ? "text-black/80"
+                            : "text-black/50 font-medium"
+                        }`}
+                      >
+                        Salary (high - low)
+                      </button>
+                    </div>
+                  </Fragment>
+                )}
+              </div>
             </div>
           </div>
 
