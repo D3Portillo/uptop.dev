@@ -1,5 +1,6 @@
 import { formatJobTitles } from "@/app/actions/textFormatter"
 import { getBrowser, type Browser } from "@/lib/chromium"
+import { redis, CACHE_KEYS } from "@/lib/redis"
 
 const ROW_HEADERS = [
   "STATUS",
@@ -153,12 +154,30 @@ export const revalidate = 3600
 
 export async function GET() {
   try {
-    const result = await fetchListings()
-    return Response.json(result, {
-      headers: {
-        "Cache-Control": `public, max-age=${revalidate}, s-maxage=${revalidate}, stale-while-revalidate=${revalidate}`,
+    const cacheKey = CACHE_KEYS.listings
+    const cached = await redis.get<TListingResponse>(cacheKey)
+
+    if (cached) {
+      return Response.json(cached, {
+        headers: {
+          "Cache-Control": `public, max-age=${revalidate}, s-maxage=${revalidate}, stale-while-revalidate=${revalidate}`,
+        },
+      })
+    }
+
+    // No cached data, return empty result
+    return Response.json(
+      {
+        success: false,
+        count: 0,
+        data: [],
       },
-    })
+      {
+        headers: {
+          "Cache-Control": "no-store, max-age=0",
+        },
+      }
+    )
   } catch (error) {
     return Response.json(
       {
@@ -171,6 +190,75 @@ export async function GET() {
           "Cache-Control": "no-store, max-age=0",
         },
       }
+    )
+  }
+}
+
+export async function POST() {
+  try {
+    const cacheKey = CACHE_KEYS.listings
+    const timestampKey = `${cacheKey}:timestamp`
+
+    const lastUpdate = await redis.get<number>(timestampKey)
+    const now = Date.now()
+    const cacheTimeInMs = 60 * 60 * 1000 // 1 hour
+
+    const getNextUpdate = (ts: number) =>
+      new Date(ts + cacheTimeInMs).toISOString()
+
+    if (lastUpdate && now - lastUpdate < cacheTimeInMs) {
+      // We're still within the cache period
+      return Response.json({
+        cached: true,
+        nextUpdate: getNextUpdate(lastUpdate),
+      })
+    }
+
+    // Fetch new data from Notion
+    const freshData = await fetchListings()
+
+    // Get existing cached data for merge
+    const existingData = await redis.get<TListingResponse>(cacheKey)
+
+    // Merge approach: keep all jobs, update existing ones with fresh data
+    const mergedJobs = new Map<string, (typeof freshData.data)[number]>()
+
+    // First, add all existing jobs to the map
+    existingData?.data?.forEach((job) => {
+      mergedJobs.set(job.id, job)
+    })
+
+    // Then, add/update with fresh data (overwrites existing)
+    freshData.data.forEach((job) => {
+      mergedJobs.set(job.id, job)
+    })
+
+    const mergedResult: TListingResponse = {
+      success: true,
+      count: mergedJobs.size,
+      data: Array.from(mergedJobs.values()),
+    }
+
+    // Update cache with merged data
+    await Promise.all([
+      redis.set(cacheKey, mergedResult),
+      redis.set(timestampKey, now),
+    ])
+
+    return Response.json({
+      cached: false,
+      data: mergedResult,
+      nextUpdate: getNextUpdate(now),
+      mergedCount: mergedJobs.size,
+      freshCount: freshData.data.length,
+    })
+  } catch (error) {
+    return Response.json(
+      {
+        success: false,
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
     )
   }
 }

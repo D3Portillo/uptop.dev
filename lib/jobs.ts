@@ -4,9 +4,16 @@ import type { TListingDetailsResponse } from "@/app/api/listings/[postID]/route"
 import { jsonify } from "@/lib/utils"
 
 export const useJobsList = () => {
-  return useSWR("/api/listings", async (url: string) => {
-    return await jsonify<TListingResponse>(fetch(url))
-  })
+  return useSWR(
+    "/api/listings",
+    async (url: string) => {
+      return await jsonify<TListingResponse>(fetch(url))
+    },
+    {
+      revalidateIfStale: false,
+      revalidateOnFocus: false,
+    }
+  )
 }
 
 export const useJobDetails = (postID: string | null) => {

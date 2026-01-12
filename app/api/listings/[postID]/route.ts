@@ -137,7 +137,8 @@ export async function POST(
 
     // Fetch new data + update cache
     const result = await fetchListingDetails(postID)
-    if (result.post) {
+    if ([result.post.datePosted, result.post.description].every(Boolean)) {
+      // Store only when we have data necessary data to store
       await Promise.all([
         redis.set(cacheKey, result),
         redis.set(timestampKey, now),

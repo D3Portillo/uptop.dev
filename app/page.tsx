@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import type { TListingResponse } from "./api/listings/route"
 import {
@@ -161,8 +161,17 @@ export default function Home() {
     return 0
   })
 
+  useEffect(() => {
+    // Try update listings incrementally as user visits home page
+    fetch("/api/listings", {
+      method: "POST",
+    })
+      .then((r) => r.json().then(console.debug))
+      .catch(console.error)
+  }, [])
+
   return (
-    <>
+    <Fragment>
       {/* Main Container with Light Background */}
       <div className="min-h-screen bg-gray-50">
         {/* Header Section */}
@@ -435,6 +444,6 @@ export default function Home() {
       </div>
 
       <ModalJob />
-    </>
+    </Fragment>
   )
 }
