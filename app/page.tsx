@@ -160,8 +160,8 @@ export default function Home() {
         {/* Header Section */}
         <div className="bg-white border-b border-black/10">
           <div className="max-w-6xl mx-auto px-6 py-6">
-            <nav className="flex sm:mt-4 mb-5 sm:mb-7 items-center gap-3">
-              <figure className="text-xl scale-110">🧳</figure>
+            <nav className="flex sm:mt-4 mb-5 sm:mb-7 items-center gap-4">
+              <figure className="text-2xl scale-110">🦄</figure>
               <h1 className="font-bold whitespace-nowrap text-lg">
                 UpTop Job Board ( Community{" "}
                 <span className="hidden sm:inline-block">Edition</span> )
@@ -306,7 +306,7 @@ export default function Home() {
                     policy === "ONSITE" ? "font-semibold" : "opacity-60"
                   )}
                 >
-                  🧳 On-site
+                  📒 On-site
                 </button>
 
                 <button

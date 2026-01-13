@@ -107,7 +107,7 @@ const formatPolicy = (policy: string) => {
   const isRemote = policy.includes("REMOTE")
   if (isHybrid) {
     return {
-      emoji: "☕",
+      emoji: "🎒",
       label: "Hybrid",
     }
   }
@@ -120,7 +120,7 @@ const formatPolicy = (policy: string) => {
   }
 
   return {
-    emoji: "🧳",
+    emoji: "📒",
     label: "On-site",
   }
 }
