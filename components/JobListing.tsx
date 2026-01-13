@@ -11,22 +11,26 @@ import { IoLocationOutline } from "react-icons/io5"
 import { cn, normalizeLocation } from "@/lib/utils"
 import { CRYPTO_JOB_LOCATIONS } from "@/lib/constants/countries"
 
-export default function JobListing({ listing }: { listing: JobsList[number] }) {
+export default function JobListing({
+  listing: { id, properties, rowIndex },
+}: {
+  listing: JobsList[number]
+}) {
   const router = useRouter()
   const [, setOpenJobID] = useOpenJobID()
 
-  const isPriority = listing.properties.status === "PRIORITY"
-  const isLatest = listing.rowIndex === 0
+  const isPriority = properties.status === "PRIORITY"
+  const isLatest = rowIndex === 0
 
-  const openDrawer = (listingId: string) => {
-    setOpenJobID(listingId)
-    router.push(`?job=${listingId}`, { scroll: false })
+  const openDrawer = () => {
+    setOpenJobID(id)
+    router.push(`?job=${id}`, { scroll: false })
   }
 
   return (
     <button
-      key={`list-${listing.id}`}
-      onClick={() => openDrawer(listing.id)}
+      key={`list-${id}`}
+      onClick={openDrawer}
       className={cn(
         "w-full text-left p-5 border border-black/10 rounded-2xl hover:border-black/15 shadow-black/5 hover:shadow transition-all",
         isPriority
@@ -39,9 +43,7 @@ export default function JobListing({ listing }: { listing: JobsList[number] }) {
         <div
           style={{
             backgroundImage: `url(${blo(
-              keccak256(
-                toHex(listing.properties.company || listing.properties.title)
-              ),
+              keccak256(toHex(properties.company || id)),
               16
             )})`,
             filter: "saturate(1.2) brightness(0.7) contrast(1.2)",
@@ -53,7 +55,7 @@ export default function JobListing({ listing }: { listing: JobsList[number] }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-3 mb-2">
             <h3 className="text-lg font-semibold text-black">
-              {listing.properties.title}
+              {properties.title}
             </h3>
 
             {isPriority && (
@@ -71,27 +73,27 @@ export default function JobListing({ listing }: { listing: JobsList[number] }) {
 
           {/* Job Details */}
           <div className="flex *:min-h-10 pb-6 max-w-xl flex-wrap items-center gap-3 text-sm text-black/50">
-            {listing.properties.formattedJobPolicy && (
+            {properties.formattedJobPolicy && (
               <div className="flex rounded-lg px-3 py-2 text-black bg-black/5 items-center">
                 <span>
-                  {listing.properties.formattedJobPolicy.emoji}{" "}
-                  {listing.properties.formattedJobPolicy.label}
+                  {properties.formattedJobPolicy.emoji}{" "}
+                  {properties.formattedJobPolicy.label}
                 </span>
               </div>
             )}
 
-            {listing.properties.location && (
+            {properties.location && (
               <div className="flex rounded-lg pl-2 py-2 gap-2 pr-4 bg-black/5 items-center">
                 <IoLocationOutline className="text-base shrink-0 hidden sm:block" />
                 <div
                   className={cn(
                     "flex flex-wrap text-black items-center gap-2",
-                    listing.properties.location.includes(",") && "py-2 sm:py-0"
+                    properties.location.includes(",") && "py-2 sm:py-0"
                   )}
                 >
-                  {listing.properties.location.split(",").map((loc) => {
+                  {properties.location.split(",").map((location) => {
                     const formatted =
-                      CRYPTO_JOB_LOCATIONS[normalizeLocation(loc)]
+                      CRYPTO_JOB_LOCATIONS[normalizeLocation(location)]
 
                     return (
                       <span
@@ -107,7 +109,7 @@ export default function JobListing({ listing }: { listing: JobsList[number] }) {
             )}
 
             {/* Salary Range */}
-            {listing.properties.salaryRange?.map((range) => (
+            {properties.salaryRange?.map((range) => (
               <div
                 key={`salary-${range}`}
                 className="flex text-black rounded-lg pl-3 py-2 gap-2 pr-4 bg-black/5 items-center"
