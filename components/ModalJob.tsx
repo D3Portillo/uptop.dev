@@ -27,7 +27,7 @@ function ModalJob() {
   const isUpdated = updatedJobs[openJobID] === true
 
   const router = useRouter()
-  const { data: listingsData } = useJobsList()
+  const { jobs } = useJobsList()
   const { data: detailsData, isLoading: isLoadingDetails } =
     useJobDetails(openJobID)
 
@@ -60,37 +60,11 @@ function ModalJob() {
     setOpenJobID(queryJobID || "")
   }, [queryJobID])
 
-  const job = listingsData?.data?.find((l) => l.id === openJobID)
+  const job = jobs.find(({ id }) => id === openJobID)
   const title = job?.properties.title
   const applyLink = job?.applyLink
 
   if (!isOpen) return null
-
-  const workPolicy = (() => {
-    const policy = job?.properties?.remotePolicy?.toUpperCase() || ""
-
-    const isHybrid = policy.includes("HYBRID")
-    const isRemote = policy.includes("REMOTE")
-    if (isHybrid) {
-      return {
-        emoji: "☕",
-        label: "Hybrid",
-      }
-    }
-
-    if (isRemote) {
-      return {
-        emoji: "💻",
-        label: "Remote",
-      }
-    }
-
-    return {
-      emoji: "🧳",
-      label: "On-site",
-    }
-  })()
-
   return (
     <>
       <style>{`
@@ -152,24 +126,26 @@ function ModalJob() {
                       )}
                     </div>
                   )}
-                  <div
-                    role="button"
-                    tabIndex={-1}
-                    className="rounded-full cursor-pointer whitespace-nowrap flex gap-2 items-center group border text-sm border-black/10 bg-black/5 font-semibold px-3 py-1 text-black/70"
-                  >
-                    <span className="pointer-events-none">
-                      {workPolicy.emoji}
-                    </span>
-                    <span
-                      className={cn(
-                        // Hide-show label based on datePosted presence
-                        detailsData.post.datePosted &&
-                          "hidden group-hover:block group-focus-within:block"
-                      )}
+                  {job?.properties.formattedJobPolicy && (
+                    <div
+                      role="button"
+                      tabIndex={-1}
+                      className="rounded-full cursor-pointer whitespace-nowrap flex gap-2 items-center group border text-sm border-black/10 bg-black/5 font-semibold px-3 py-1 text-black/70"
                     >
-                      {workPolicy.label}
-                    </span>
-                  </div>
+                      <span className="pointer-events-none">
+                        {job.properties.formattedJobPolicy.emoji}
+                      </span>
+                      <span
+                        className={cn(
+                          // Hide-show label based on datePosted presence
+                          detailsData.post.datePosted &&
+                            "hidden group-hover:block group-focus-within:block"
+                        )}
+                      >
+                        {job.properties.formattedJobPolicy.label}
+                      </span>
+                    </div>
+                  )}
                 </nav>
 
                 {detailsData.post.description ? (

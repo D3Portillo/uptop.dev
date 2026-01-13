@@ -1,125 +1,78 @@
 "use client"
 
 import { Fragment, useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { blo } from "blo"
-import { keccak256, toHex } from "viem"
-import type { TListingResponse } from "./api/listings/route"
-import {
-  IoSearchOutline,
-  IoLocationOutline,
-  IoChevronDownOutline,
-} from "react-icons/io5"
+
+import { IoSearchOutline, IoChevronDownOutline } from "react-icons/io5"
 import { MdCheck, MdOutlineClose } from "react-icons/md"
 
-import { findBestMatch } from "@/lib/strings"
+import {
+  cn,
+  getHighestSalaryFromProperty,
+  normalizeLocation,
+} from "@/lib/utils"
 import { useJobsList } from "@/lib/jobs"
 
-import ModalJob, { useOpenJobID } from "@/components/ModalJob"
-import { CRYPTO_JOB_LOCATIONS } from "@/lib/constants/countries"
-import { cn } from "@/lib/utils"
+import {
+  CRYPTO_JOB_LOCATIONS,
+  LOCATION_ANYWHERE,
+  LocationKey,
+} from "@/lib/constants/countries"
+import JobListing from "@/components/JobListing"
+import ModalJob from "@/components/ModalJob"
+import SelectSortBy from "@/components/SelectSortBy"
 
-type Listing = TListingResponse["data"][number]
-
-const LOCATION_KEYS = Object.keys(CRYPTO_JOB_LOCATIONS)
-
-const normalizeLocation = (loc: string): string => {
-  const trimmed = loc.trim().toUpperCase()
-
-  // Exact match first
-  if (trimmed in CRYPTO_JOB_LOCATIONS) {
-    return trimmed
-  }
-
-  // Try fuzzy matching with Jaro-Winkler
-  const bestMatch = findBestMatch(trimmed, LOCATION_KEYS, 0.85)
-
-  // Return best match or fallback to "ANYWHERE"
-  return bestMatch || "ANYWHERE"
-}
+const SORT_BY = {
+  MOST_RECENT: "Most Recent",
+  BY_SALARY: "Salary (high - low)",
+} as const
 
 export default function Home() {
   const SHOW_OR_LESS_SIZE =
     typeof window !== "undefined" && window.innerWidth < 800 ? 5 : 7
 
-  const router = useRouter()
-  const [, setOpenJobID] = useOpenJobID()
-
   const [policy, setPolicy] = useState<"REMOTE" | "ONSITE">("REMOTE")
+  const { jobs, skills } = useJobsList()
 
   const [searchQuery, setSearchQuery] = useState("")
-  const [locationQuery, setLocationQuery] = useState("ANYWHERE")
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([])
-  const [showAllCategories, setShowAllCategories] = useState(false)
-  const [sortBy, setSortBy] = useState("Most Recent")
-  const [showSortMenu, setShowSortMenu] = useState(false)
+  const [locationQuery, setLocationQuery] =
+    useState<LocationKey>(LOCATION_ANYWHERE)
 
-  // Helper function to parse salary from string like "$150k - $200k" or "> $300k"
-  const parseSalary = (salaryStr: string): number => {
-    salaryStr = salaryStr.trim()
-    if (!salaryStr) return 0
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([])
+  const [showAllSkills, setShowAllSkills] = useState(false)
 
-    // Remove $ and k, < less than, handle > sign, +, and spaces
-    const formatted = salaryStr.replace(/[$k,><\s+ ]/g, "")
-    const possiblyRange = formatted.split("-")
+  const [sortBy, setSortBy] = useState<(typeof SORT_BY)[keyof typeof SORT_BY]>(
+    SORT_BY.MOST_RECENT
+  )
 
-    // If it's a range, take the higher number
-    if (possiblyRange.length > 1) {
-      const higherPart = possiblyRange[1].trim()
-      return Number(higherPart || "0")
-    }
-
-    return Number(formatted || "0")
-  }
-
-  const { data: listingsData } = useJobsList()
-
-  // Generate unique categories from all job skills, sorted by frequency
-  const skillCounts = new Map<string, number>()
-  listingsData?.data?.forEach((listing) => {
-    listing.properties.skills?.forEach((skill) => {
-      skillCounts.set(skill, (skillCounts.get(skill) || 0) + 1)
-    })
-  })
-
-  const categories = Array.from(skillCounts.entries())
-    .sort((a, b) => b[1] - a[1]) // Sort by count descending
-    .map(([skill]) => skill)
-
-  const isAllCategoriesSelected =
-    selectedCategories.length === categories.length
-
-  const displayedCategories = showAllCategories
-    ? categories
-    : categories.slice(0, SHOW_OR_LESS_SIZE)
+  const isAllSkillsSelected = selectedSkills.length === skills.length
+  const displayedSkills = showAllSkills
+    ? skills
+    : skills.slice(0, SHOW_OR_LESS_SIZE)
 
   // Extract unique locations from actual job postings
   const availableLocations = new Set<string>()
   availableLocations.add("ANYWHERE") // Always include ANYWHERE
 
-  listingsData?.data?.forEach((listing) => {
-    const location = listing.properties.location
-    if (location) {
-      location.split(",").forEach((loc) => {
-        const normalized = normalizeLocation(loc)
-        if (normalized) {
-          availableLocations.add(normalized)
-        }
-      })
-    }
+  jobs.forEach((job) => {
+    job.properties?.location?.split(",").forEach((location) => {
+      availableLocations.add(normalizeLocation(location))
+    })
   })
 
   const locationOptions = Array.from(availableLocations).sort((a, b) =>
     a.localeCompare(b)
-  )
+  ) as LocationKey[]
 
-  const openDrawer = (listing: Listing) => {
-    setOpenJobID(listing.id)
-    router.push(`?job=${listing.id}`, { scroll: false })
+  const resetFilters = () => {
+    setSortBy(SORT_BY.MOST_RECENT)
+    setPolicy("REMOTE")
+    setSearchQuery("")
+    setSelectedSkills([])
+    setLocationQuery(LOCATION_ANYWHERE)
   }
 
-  const filteredListings = listingsData?.data
-    ?.filter(({ properties }) => {
+  const filteredListings = jobs
+    .filter(({ properties }) => {
       // Remote / On-site filter
       const jobPolicy = properties?.remotePolicy?.toUpperCase() || ""
       const isHybrid = jobPolicy.includes("HYBRID")
@@ -134,39 +87,38 @@ export default function Home() {
       // Search query filter
       if (searchQuery) {
         const query = searchQuery.toLowerCase()
-        return [
+        const formattedDataString = [
           properties.title,
-          properties.company,
-          properties.location,
-          properties.skills,
+          properties.company || "",
+          properties.location || "",
+          properties.skills.join(" "),
         ]
-          .join("")
+          .join(" ")
           .toLowerCase()
-          .includes(query)
+
+        const isInSearchQuery = formattedDataString.includes(query)
+        if (!isInSearchQuery) return false
       }
 
       // Location filter (ANYWHERE shows all)
-      if (locationQuery && locationQuery !== "ANYWHERE") {
+      if (locationQuery !== LOCATION_ANYWHERE) {
         const location = properties.location || ""
         const normalizedJobLocations = location
           .split(",")
           .map(normalizeLocation)
 
-        const matchesLocation = normalizedJobLocations.some(
+        const isInLocationQuery = normalizedJobLocations.some(
           (loc) => loc === locationQuery
         )
-
-        if (!matchesLocation) {
-          return false
-        }
+        if (!isInLocationQuery) return false
       }
 
       // Category filter (multiple selection)
-      if (selectedCategories.length > 0 && !isAllCategoriesSelected) {
-        const hasAnySkill = selectedCategories.some((category) =>
-          properties.skills?.includes(category)
+      if (selectedSkills.length > 0 && !isAllSkillsSelected) {
+        const isInSkills = selectedSkills.some((skill) =>
+          properties.skills?.includes(skill)
         )
-        if (!hasAnySkill) return false
+        if (!isInSkills) return false
       }
 
       return true
@@ -174,13 +126,13 @@ export default function Home() {
 
   // Sort listings based on selected option
   const sortedListings = [...(filteredListings || [])].sort((a, b) => {
-    if (sortBy === "By Salary") {
-      const aSalaries = (a?.properties?.salaryRange || []).map(parseSalary)
-      const aMaxSalary = Math.max(...aSalaries)
-
-      const bSalaries = (b?.properties?.salaryRange || []).map(parseSalary)
-      const bMaxSalary = Math.max(...bSalaries)
-
+    if (sortBy === SORT_BY.BY_SALARY) {
+      const aMaxSalary = Math.max(
+        ...(a?.properties?.salaryRange || []).map(getHighestSalaryFromProperty)
+      )
+      const bMaxSalary = Math.max(
+        ...(b?.properties?.salaryRange || []).map(getHighestSalaryFromProperty)
+      )
       return bMaxSalary - aMaxSalary // Highest first
     }
 
@@ -198,8 +150,8 @@ export default function Home() {
       .catch(console.error)
   }, [])
 
-  const isLoading = !listingsData?.count
-  const isEmpty = !isLoading && sortedListings?.length === 0
+  const isLoading = jobs.length <= 0
+  const isEmpty = !isLoading && sortedListings.length === 0
 
   return (
     <Fragment>
@@ -231,23 +183,18 @@ export default function Home() {
               <div className="w-17 md:w-52 relative">
                 {/* Display emoji on mobile */}
                 <span className="absolute z-1 left-4 top-1/2 -translate-y-1/2 text-xl pointer-events-none md:hidden">
-                  {
-                    CRYPTO_JOB_LOCATIONS[
-                      locationQuery as keyof typeof CRYPTO_JOB_LOCATIONS
-                    ]?.emoji
-                  }
+                  {CRYPTO_JOB_LOCATIONS[locationQuery].emoji}
                 </span>
 
                 <select
                   value={locationQuery}
-                  onChange={(e) => setLocationQuery(e.target.value)}
+                  onChange={(e) =>
+                    setLocationQuery(e.target.value as LocationKey)
+                  }
                   className="w-full md:pl-4 pl-4 pr-10 py-3.5 bg-white border border-black/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm appearance-none cursor-pointer"
                 >
                   {locationOptions.map((locationKey) => {
-                    const locationData =
-                      CRYPTO_JOB_LOCATIONS[
-                        locationKey as keyof typeof CRYPTO_JOB_LOCATIONS
-                      ]
+                    const locationData = CRYPTO_JOB_LOCATIONS[locationKey]
                     return (
                       <option key={locationKey} value={locationKey}>
                         <span className="md:inline hidden">
@@ -264,65 +211,63 @@ export default function Home() {
 
             {/* Category Filters */}
             <div className="flex flex-wrap gap-2 items-center">
-              {displayedCategories.map((category) => (
+              {displayedSkills.map((skill) => (
                 <button
-                  key={`f-category-${category}`}
+                  key={`f-skill-${skill}`}
                   onClick={() => {
-                    setSelectedCategories((prev) =>
-                      prev.includes(category)
-                        ? prev.filter((c) => c !== category)
-                        : [...prev, category]
+                    setSelectedSkills((prev) =>
+                      prev.includes(skill)
+                        ? prev.filter((c) => c !== skill)
+                        : [...prev, skill]
                     )
                   }}
                   className={cn(
                     "px-3 py-1 h-8 border border-transparent rounded-lg text-sm transition-colors",
-                    category.length > 3 ? "capitalize" : "uppercase",
-                    selectedCategories.includes(category)
+                    skill.length > 3 ? "capitalize" : "uppercase",
+                    selectedSkills.includes(skill)
                       ? "bg-ut-blue/20 text-black/90 border-black/10"
                       : "bg-black/3 text-black/50 border-black/5 hover:bg-black/5"
                   )}
                 >
-                  {category.toLowerCase()}
+                  {skill.toLowerCase()}
                 </button>
               ))}
 
-              {categories.length <= 0 &&
+              {skills.length <= 0 &&
                 Array.from({ length: SHOW_OR_LESS_SIZE }).map((_, i) => (
                   <div
-                    key={`mock-category-${i}`}
+                    key={`mock-skill-${i}`}
                     className="h-8 min-w-16 max-w-28 animate-pulse border border-black/3 bg-black/3 grow rounded-lg"
                   />
                 ))}
 
               <button
                 onClick={() => {
-                  setSelectedCategories(
-                    isAllCategoriesSelected ? [] : categories
-                  )
+                  setSelectedSkills(isAllSkillsSelected ? [] : skills)
                 }}
                 className={cn(
                   "px-3 py-1 flex items-center gap-2 h-8 border border-transparent rounded-lg text-sm transition-colors",
                   "bg-black/3 text-black/50 border-black/10 hover:bg-black/5"
                 )}
               >
-                <span>{isAllCategoriesSelected ? "Clear" : "Everything"}</span>
-                {isAllCategoriesSelected ? (
+                <span>{isAllSkillsSelected ? "Clear" : "Everything"}</span>
+                {isAllSkillsSelected ? (
                   <MdOutlineClose className="scale-125" />
                 ) : (
                   <MdCheck className="scale-110" />
                 )}
               </button>
 
-              {categories.length > SHOW_OR_LESS_SIZE && (
+              {skills.length > SHOW_OR_LESS_SIZE && (
                 <button
-                  onClick={() => setShowAllCategories(!showAllCategories)}
+                  onClick={() => setShowAllSkills(!showAllSkills)}
                   className="border px-3 border-black/10 h-8 rounded-lg text-sm text-black/70 hover:bg-black/5 transition-colors"
                 >
-                  {showAllCategories
+                  {showAllSkills
                     ? "Show less"
                     : `Show more (${Math.max(
                         0,
-                        categories.length - SHOW_OR_LESS_SIZE
+                        skills.length - SHOW_OR_LESS_SIZE
                       )})`}
                 </button>
               )}
@@ -342,7 +287,10 @@ export default function Home() {
             <div className="text-black/70 whitespace-nowrap">
               Showing{" "}
               <span className="font-semibold">
-                {sortedListings?.length || "all"}
+                {
+                  // Show empty when ZERO
+                  sortedListings.length || ""
+                }
               </span>{" "}
               jobs
             </div>
@@ -350,7 +298,7 @@ export default function Home() {
             <div className="grow" />
 
             <div className="flex mt-4 sm:mt-0 gap-3 items-center">
-              <div className="flex whitespace-nowrap h-10 gap-3 border border-black/10 rounded-lg bg-white">
+              <div className="flex whitespace-nowrap h-10 gap-3.5 border border-black/10 rounded-lg bg-white">
                 <button
                   onClick={() => setPolicy("ONSITE")}
                   className={cn(
@@ -372,59 +320,11 @@ export default function Home() {
                 </button>
               </div>
 
-              <div className="relative ml-auto">
-                <button
-                  onClick={() => setShowSortMenu(!showSortMenu)}
-                  className="flex h-10 items-center gap-2 px-3 border border-black/10 rounded-lg bg-white hover:bg-black/5 transition-colors"
-                >
-                  <span className="text-sm whitespace-nowrap text-black/70">
-                    {sortBy === "By Salary"
-                      ? "Salary (high - low)"
-                      : "Most Recent"}
-                  </span>
-                  <IoChevronDownOutline className="text-black/50" />
-                </button>
-                {showSortMenu && (
-                  <Fragment>
-                    <div
-                      tabIndex={-1}
-                      role="button"
-                      onClick={() => setShowSortMenu(false)}
-                      className="fixed z-5 inset-0"
-                    />
-
-                    <div className="absolute right-0 mt-2 w-48 bg-white border border-black/10 rounded-lg shadow-lg z-10">
-                      <button
-                        onClick={() => {
-                          setSortBy("Most Recent")
-                          setShowSortMenu(false)
-                        }}
-                        className={`w-full text-left px-4 py-3 text-sm hover:bg-black/5 first:rounded-t-lg ${
-                          sortBy === "Most Recent"
-                            ? "text-black/80"
-                            : "text-black/50 font-medium"
-                        }`}
-                      >
-                        Most Recent
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          setSortBy("By Salary")
-                          setShowSortMenu(false)
-                        }}
-                        className={`w-full text-left px-4 py-3 text-sm hover:bg-black/5 last:rounded-b-lg ${
-                          sortBy === "By Salary"
-                            ? "text-black/80"
-                            : "text-black/50 font-medium"
-                        }`}
-                      >
-                        Salary (high - low)
-                      </button>
-                    </div>
-                  </Fragment>
-                )}
-              </div>
+              <SelectSortBy
+                value={sortBy}
+                options={Object.values(SORT_BY)}
+                onValueChange={setSortBy as any}
+              />
             </div>
           </div>
 
@@ -438,147 +338,28 @@ export default function Home() {
                 />
               ))}
             </div>
-          ) : (
-            <div className="space-y-4 mb-24">
-              {(sortedListings || []).map((listing, idx) => {
-                const isPriority = listing.properties.status === "PRIORITY"
-                const isLatest = listing.rowIndex === 0
-                return (
-                  <button
-                    key={`list-${listing.id}`}
-                    onClick={() => openDrawer(listing)}
-                    className={cn(
-                      "w-full text-left p-5 border border-black/10 rounded-2xl hover:border-black/15 shadow-black/5 hover:shadow transition-all",
-                      isPriority
-                        ? "bg-linear-to-bl border-black/7 from-ut-purple/10 to-black/3"
-                        : "bg-white"
-                    )}
-                  >
-                    <div className="flex min-h-24 gap-6">
-                      {/* Company Logo Placeholder */}
-                      <div
-                        style={{
-                          backgroundImage: `url(${blo(
-                            keccak256(
-                              toHex(
-                                listing.properties.company ||
-                                  listing.properties.title
-                              )
-                            ),
-                            16
-                          )})`,
-                          filter: "saturate(1.2) brightness(0.7) contrast(1.2)",
-                        }}
-                        className="size-16 bg-cover sm:size-20 bg-black border-2 border-black rounded-lg flex items-center justify-center text-white font-bold text-xl shrink-0"
-                      />
-
-                      {/* Job Info */}
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-3 mb-2">
-                          <h3 className="text-lg font-semibold text-black">
-                            {listing.properties.title}
-                          </h3>
-
-                          {isPriority && (
-                            <span className="px-3 py-1 border border-transparent text-xs font-bold bg-ut-purple text-white rounded-full uppercase">
-                              PRIORITY
-                            </span>
-                          )}
-
-                          {isLatest && (
-                            <span className="px-3 py-1 border border-black text-xs font-bold bg-ut-green text-black rounded-full uppercase">
-                              NEW
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Job Details */}
-                        <div className="flex *:min-h-10 pb-6 max-w-xl flex-wrap items-center gap-3 text-sm text-black/50">
-                          {listing.properties.remotePolicy && (
-                            <div className="flex rounded-lg px-3 py-2 text-black bg-black/5 items-center">
-                              <span>
-                                {(() => {
-                                  const policy =
-                                    listing.properties.remotePolicy.toUpperCase()
-                                  const isHybrid = policy.includes("HYBRID")
-                                  const isRemote = policy.includes("REMOTE")
-                                  if (isHybrid) return "☕ Hybrid"
-                                  if (isRemote) return "💻 Remote"
-                                  return "🧳 On-site"
-                                })()}
-                              </span>
-                            </div>
-                          )}
-
-                          {listing.properties.location && (
-                            <div className="flex rounded-lg pl-2 py-2 gap-2 pr-4 bg-black/5 items-center">
-                              <IoLocationOutline className="text-base shrink-0 hidden sm:block" />
-                              <div
-                                className={cn(
-                                  "flex flex-wrap text-black items-center gap-2",
-                                  listing.properties.location.includes(",") &&
-                                    "py-2 sm:py-0"
-                                )}
-                              >
-                                {listing.properties.location
-                                  .split(",")
-                                  .map((loc) => {
-                                    const formatted =
-                                      CRYPTO_JOB_LOCATIONS[
-                                        normalizeLocation(
-                                          loc as string
-                                        ) as keyof typeof CRYPTO_JOB_LOCATIONS
-                                      ]
-
-                                    return (
-                                      <span
-                                        className="whitespace-nowrap px-1.5"
-                                        key={`c-${idx}-${formatted.name}`}
-                                      >
-                                        {formatted.emoji} {formatted.name}
-                                      </span>
-                                    )
-                                  })}
-                              </div>
-                            </div>
-                          )}
-
-                          {/* Salary Range */}
-                          {listing.properties.salaryRange?.map((range) => (
-                            <div
-                              key={`salary-${range}-${idx}`}
-                              className="flex text-black rounded-lg pl-3 py-2 gap-2 pr-4 bg-black/5 items-center"
-                            >
-                              <span>💰</span>
-                              <span className="font-medium">{range}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </button>
-                )
-              })}
-            </div>
-          )}
-
-          {!isLoading && sortedListings?.length === 0 && (
+          ) : isEmpty ? (
             <section className="flex gap-2 py-16 flex-col items-center justify-center">
               <div className="text-black/50">
-                No jobs found matching your search
+                Nothing found, try adjusting your search
               </div>
 
               <button
-                onClick={() => {
-                  setSearchQuery("")
-                  setSelectedCategories([])
-                  setLocationQuery("")
-                }}
+                onClick={resetFilters}
                 className="underline text-black/50"
               >
-                Reset filters
+                Clear filters
               </button>
             </section>
+          ) : (
+            <div className="space-y-4 mb-24">
+              {sortedListings.map((listing) => (
+                <JobListing
+                  key={`listing-item-${listing.id}`}
+                  listing={listing}
+                />
+              ))}
+            </div>
           )}
         </div>
 

@@ -20,7 +20,7 @@ const waitForStack = (): void => {
 }
 
 export const useJobsList = () => {
-  return useSWR(
+  const { data, ...query } = useSWR(
     "/api/listings",
     async (url: string) => {
       const data = await jsonify<TListingResponse>(fetch(url))
@@ -40,7 +40,38 @@ export const useJobsList = () => {
       revalidateOnReconnect: false,
     }
   )
+
+  const jobs =
+    data?.data.map((job) => {
+      return {
+        ...job,
+        properties: {
+          ...job.properties,
+          formattedJobPolicy: formatPolicy(job.properties.remotePolicy || ""),
+        },
+      }
+    }) || []
+
+  // Generate unique categories from all job skills, sorted by frequency
+  const skillCounts = new Map<string, number>()
+  jobs.forEach((job) => {
+    job.properties.skills?.forEach((skill) => {
+      skillCounts.set(skill, (skillCounts.get(skill) || 0) + 1)
+    })
+  })
+
+  const skills = Array.from(skillCounts.entries())
+    .sort(([, a], [, b]) => b - a) // Sort by count descending
+    .map(([skill]) => skill)
+
+  return {
+    jobs,
+    skills,
+    ...query,
+  }
 }
+
+export type JobsList = ReturnType<typeof useJobsList>["jobs"]
 
 export const useJobDetails = (postID: string | null) => {
   return useSWR(
@@ -69,4 +100,27 @@ export const useJobDetails = (postID: string | null) => {
       revalidateOnReconnect: false,
     }
   )
+}
+
+const formatPolicy = (policy: string) => {
+  const isHybrid = policy.includes("HYBRID")
+  const isRemote = policy.includes("REMOTE")
+  if (isHybrid) {
+    return {
+      emoji: "☕",
+      label: "Hybrid",
+    }
+  }
+
+  if (isRemote) {
+    return {
+      emoji: "💻",
+      label: "Remote",
+    }
+  }
+
+  return {
+    emoji: "🧳",
+    label: "On-site",
+  }
 }

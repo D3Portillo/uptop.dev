@@ -20,9 +20,12 @@ export const CRYPTO_JOB_LOCATIONS = {
   TOKYO: { emoji: "🇯🇵", name: "Tokyo" },
 } as const
 
+export const LOCATION_KEYS = Object.keys(CRYPTO_JOB_LOCATIONS) as LocationKey[]
+
+export const LOCATION_ANYWHERE = "ANYWHERE" as const
 export const GEOGRAPHIC_REGIONS = [
   CRYPTO_JOB_LOCATIONS.APAC,
   CRYPTO_JOB_LOCATIONS.LATAM,
-]
+] as const
 
 export type LocationKey = keyof typeof CRYPTO_JOB_LOCATIONS
