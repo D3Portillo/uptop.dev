@@ -10,6 +10,7 @@ import { useJobsList, useJobDetails } from "@/lib/jobs"
 import { MdArrowOutward } from "react-icons/md"
 import Markdown from "@/components/Markdown"
 import { cn } from "@/lib/utils"
+import { GEOGRAPHIC_REGIONS } from "@/lib/constants/countries"
 
 const atomJobUpdated = atom({} as Record<string, boolean>)
 const atomOpenJobID = atom("")
@@ -196,8 +197,15 @@ function ModalJob() {
                               📍{" "}
                               {job.properties.location
                                 .split(",")
-                                .join(" • ")
-                                .toLowerCase()}
+                                .map((loc) => {
+                                  return GEOGRAPHIC_REGIONS.some(
+                                    (r) => r.name === loc
+                                  )
+                                    ? // Keep geo regions capitalized
+                                      loc
+                                    : loc.toLowerCase()
+                                })
+                                .join(" • ")}
                             </div>
                           </nav>
                         </section>

@@ -296,11 +296,9 @@ export default function Home() {
 
               <button
                 onClick={() => {
-                  if (isAllCategoriesSelected) setSelectedCategories([])
-                  else {
-                    setSelectedCategories(categories)
-                    setShowAllCategories(true)
-                  }
+                  setSelectedCategories(
+                    isAllCategoriesSelected ? [] : categories
+                  )
                 }}
                 className={cn(
                   "px-3 py-1 flex items-center gap-2 h-8 border border-transparent rounded-lg text-sm transition-colors",
