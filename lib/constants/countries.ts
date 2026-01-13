@@ -1,6 +1,7 @@
 export const CRYPTO_JOB_LOCATIONS = {
   ANYWHERE: { emoji: "🪐", name: "Anywhere" },
   "UNITED STATES": { emoji: "🇺🇸", name: "United States" },
+  CANADA: { emoji: "🇨🇦", name: "Canada" },
   EUROPE: { emoji: "🇪🇺", name: "Europe" },
   APAC: { emoji: "🌏", name: "APAC" },
   ARGENTINA: { emoji: "🇦🇷", name: "Argentina" },
