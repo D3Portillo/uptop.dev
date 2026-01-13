@@ -41,8 +41,14 @@ function ModalJob() {
 
   useEffect(() => {
     if (openJobID && !isUpdated && isOpen) {
-      // Notify backend to try update cache for this job
-      fetch(`/api/listings/${openJobID}`, { method: "POST" })
+      // NOTE: This is simple logic to randomly update job details in the background
+      // to try and keep data fresh without overwhelming the backend with requests :p
+
+      const shouldSendUpdate = Math.random() < 0.33 // 33% chance
+      if (shouldSendUpdate) {
+        // Notify backend to try update cache for this job
+        fetch(`/api/listings/${openJobID}`, { method: "POST" })
+      }
 
       // Mark as updated to avoid redundant calls
       setUpdatedJobs((prev) => ({ ...prev, [openJobID]: true }))

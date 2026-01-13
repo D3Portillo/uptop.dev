@@ -72,7 +72,7 @@ export default function Home() {
     return Number(formatted || "0")
   }
 
-  const { data: listingsData, isLoading } = useJobsList()
+  const { data: listingsData } = useJobsList()
 
   // Generate unique categories from all job skills, sorted by frequency
   const skillCounts = new Map<string, number>()
@@ -198,6 +198,7 @@ export default function Home() {
       .catch(console.error)
   }, [])
 
+  const isLoading = !listingsData?.count
   const isEmpty = !isLoading && sortedListings?.length === 0
 
   return (
@@ -343,7 +344,7 @@ export default function Home() {
             <div className="text-black/70 whitespace-nowrap">
               Showing{" "}
               <span className="font-semibold">
-                {sortedListings?.length || 0}
+                {sortedListings?.length || "all"}
               </span>{" "}
               jobs
             </div>
@@ -351,7 +352,7 @@ export default function Home() {
             <div className="grow" />
 
             <div className="flex mt-4 sm:mt-0 gap-3 items-center">
-              <div className="flex whitespace-nowrap h-10 gap-3 border border-black/10 rounded-lg bg-white hover:bg-black/5 transition-colors">
+              <div className="flex whitespace-nowrap h-10 gap-3 border border-black/10 rounded-lg bg-white">
                 <button
                   onClick={() => setPolicy("ONSITE")}
                   className={cn(

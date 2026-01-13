@@ -20,7 +20,7 @@ const waitForStack = (): void => {
 }
 
 export const useJobsList = () => {
-  const { data, isLoading, ...query } = useSWR(
+  return useSWR(
     "/api/listings",
     async (url: string) => {
       const data = await jsonify<TListingResponse>(fetch(url))
@@ -40,16 +40,10 @@ export const useJobsList = () => {
       revalidateOnReconnect: false,
     }
   )
-
-  return {
-    ...query,
-    data,
-    isLoading: isLoading && !data?.count,
-  }
 }
 
 export const useJobDetails = (postID: string | null) => {
-  const { data, isLoading, ...query } = useSWR(
+  return useSWR(
     postID ? `/api/listings/${postID}` : null,
     async (url: string) => {
       if (!postID) return null
@@ -75,10 +69,4 @@ export const useJobDetails = (postID: string | null) => {
       revalidateOnReconnect: false,
     }
   )
-
-  return {
-    ...query,
-    data,
-    isLoading: isLoading && !data?.formattedId,
-  }
 }
