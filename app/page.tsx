@@ -435,7 +435,7 @@ export default function Home() {
               {[...Array(10)].map((_, i) => (
                 <div
                   key={`mock-load-${i}`}
-                  className="h-36 bg-white rounded-xl animate-pulse border border-black/10"
+                  className="h-50 sm:h-35 bg-white rounded-xl animate-pulse border border-black/10"
                 />
               ))}
             </div>
