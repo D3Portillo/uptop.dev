@@ -1,9 +1,9 @@
 export const staledResponse = (
   data: any,
-  opts: { statusCode?: number; timeInSeconds: number }
+  opts: { statusCode?: number; timeInSeconds?: number }
 ) => {
   // Format stale-while-revalidate time, min 60 seconds
-  const swrTime = Math.min(60, Math.round(opts.timeInSeconds))
+  const swrTime = Math.min(60, Math.round(opts?.timeInSeconds ?? 60))
   return Response.json(data, {
     headers: {
       "Cache-Control": `public, max-age=${swrTime}, s-maxage=${swrTime}, stale-while-revalidate=${swrTime}`,

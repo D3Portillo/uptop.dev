@@ -5,44 +5,26 @@ const apiId = parseInt(process.env.TELEGRAM_API_ID || "")
 const apiHash = process.env.TELEGRAM_API_HASH || ""
 const sessionString = process.env.TELEGRAM_SESSION || ""
 
-let clientInstance: TelegramClient | null = null
-
-async function getClient() {
-  if (clientInstance) {
-    return clientInstance
-  }
-
+export async function getTelegramMessages(channelId: string, limit = 100) {
   const session = new StringSession(sessionString)
   const client = new TelegramClient(session, apiId, apiHash, {
-    connectionRetries: 5,
+    connectionRetries: 2,
+    requestRetries: 2,
+    timeout: 5_000, // 5 seconds
   })
 
-  await client.connect()
-  clientInstance = client
-  return client
-}
+  try {
+    await client.connect()
+    const messages = await client.getMessages(channelId, { limit })
 
-export async function getTelegramMessages(channelId: string, limit = 100) {
-  const client = await getClient()
-
-  const messages = await client.getMessages(channelId, {
-    limit,
-  })
-
-  // Close connection after fetching messages
-  await client.disconnect()
-  return messages.map(({ id, date, text, message, entities }) => ({
-    id,
-    date,
-    text,
-    message,
-    entities,
-  }))
-}
-
-export async function disconnectTelegram() {
-  if (clientInstance) {
-    await clientInstance.disconnect()
-    clientInstance = null
+    return messages.map(({ id, date, text, message, entities }) => ({
+      id,
+      date,
+      text,
+      message,
+      entities,
+    }))
+  } finally {
+    await client.destroy()
   }
 }
