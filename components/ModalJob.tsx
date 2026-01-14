@@ -256,7 +256,8 @@ function DefaultEmptyState() {
     <section>
       <p className="text-black/50 pt-20 text-center max-w-md mx-auto">
         We haven't create an AI summary for this job yet. Please check back
-        later. Or click apply anyways.
+        later. Or click "apply" if you wish to continue with the application
+        process
       </p>
     </section>
   )
