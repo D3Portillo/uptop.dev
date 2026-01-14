@@ -2,6 +2,7 @@
 
 import type { JobsList } from "@/lib/jobs"
 import { blo } from "blo"
+import useSWR from "swr"
 import { keccak256, toHex } from "viem"
 
 import { useRouter } from "next/navigation"
@@ -9,8 +10,8 @@ import { useOpenJobID } from "./ModalJob"
 
 import { IoLocationOutline } from "react-icons/io5"
 import { cn, jsonify, normalizeLocation } from "@/lib/utils"
+
 import { CRYPTO_JOB_LOCATIONS } from "@/lib/constants/countries"
-import useSWR from "swr"
 
 export default function JobListing({
   listing: { id, properties, rowIndex },
@@ -28,11 +29,9 @@ export default function JobListing({
     router.push(`?job=${id}`, { scroll: false })
   }
 
-  const { favicon, dominantColor } = useDomainFavicon(
+  const { favicon, unsafeFaviconURL, dominantColor } = useDomainFavicon(
     properties.faviconBaseDomain
   )
-
-  const isFaviconReady = Boolean(favicon) && Boolean(dominantColor)
 
   // Fallback to job ID to avoid generics
   const gravatar = blo(keccak256(toHex(properties.company || id)), 16)
@@ -51,21 +50,22 @@ export default function JobListing({
       <div className="flex min-h-24 gap-6">
         {/* Company Image */}
         <div
+          data-company-image={unsafeFaviconURL || "null"}
           style={{
             backgroundImage: `url(${gravatar})`,
             filter: favicon
               ? undefined
               : "saturate(1.2) brightness(0.7) contrast(1.2)",
           }}
-          className="size-16 overflow-hidden bg-cover sm:size-20 bg-black border-2 border-black rounded-lg flex items-center justify-center text-white font-bold text-xl shrink-0"
+          className="size-16 overflow-hidden bg-cover sm:size-20 bg-white border-2 border-black rounded-lg flex items-center justify-center text-white font-bold text-xl shrink-0"
         >
           <div
             style={{
               backgroundColor: dominantColor || "white",
             }}
             className={cn(
-              "grid p-2 size-full transition-opacity duration-200 ease-in place-items-center",
-              isFaviconReady ? "opacity-100" : "opacity-0"
+              "grid p-1.5 size-full place-items-center",
+              favicon ? "opacity-100" : "opacity-0 pointer-events-none"
             )}
           >
             <figure className="rounded-md overflow-hidden">
@@ -149,37 +149,58 @@ export default function JobListing({
 }
 
 export const useDomainFavicon = (domain?: string | null) => {
-  const { data = null } = useSWR(
-    domain ? `domain.icon.${domain}` : null,
-    async () => {
-      if (!domain) return null
-      const URL = `https://www.google.com/s2/favicons?domain=${domain.replace(
+  const favicon = domain
+    ? `https://www.google.com/s2/favicons?domain=${domain.replace(
         "www.",
         ""
       )}&sz=128`
+    : null
 
-      const [favicon, { hex: dominantColor }] = await Promise.all([
-        loadFavicon(URL),
-        jsonify<{ hex: string }>(
-          fetch(`/api/images/tools?bg-color=${encodeURIComponent(URL)}`)
-        ),
-      ])
+  const { data = null } = useSWR(favicon, async () => {
+    if (!favicon) return null
 
-      return { favicon, dominantColor }
+    const LOCAL_FAVICON_KEY = `ut.jobs.favicon.${domain}`
+    const localCache = localStorage.getItem(LOCAL_FAVICON_KEY)
+    if (localCache) {
+      return JSON.parse(localCache) as {
+        isValid: boolean
+        dominantColor: string
+      }
     }
-  )
+
+    const [formattedURL, { hex: dominantColor }] = await Promise.all([
+      loadFavicon(favicon),
+      jsonify<{ hex: string }>(
+        fetch(`/api/images/tools?bg-color=${encodeURIComponent(favicon)}`)
+      ),
+    ])
+
+    const isValid = Boolean(formattedURL)
+    if (isValid && dominantColor) {
+      localStorage.setItem(
+        LOCAL_FAVICON_KEY,
+        JSON.stringify({
+          isValid,
+          dominantColor,
+        })
+      )
+    }
+
+    return { isValid, dominantColor }
+  })
 
   return {
-    favicon: data?.favicon || null,
+    unsafeFaviconURL: favicon,
+    favicon: data?.isValid === false ? null : favicon,
     dominantColor: data?.dominantColor || null,
   }
 }
 
-function loadFavicon(url: string): Promise<string> {
-  return new Promise((resolve, reject) => {
+function loadFavicon(url: string): Promise<string | null> {
+  return new Promise((resolve) => {
     const img = new Image()
     img.onload = async () => resolve(url)
-    img.onerror = reject
+    img.onerror = () => resolve(null)
     img.src = url
   })
 }

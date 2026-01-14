@@ -71,58 +71,54 @@ export default function Home() {
     setLocationQuery(LOCATION_ANYWHERE)
   }
 
-  const filteredListings = jobs
-    .filter(({ properties }) => {
-      // Remote / On-site filter
-      const jobPolicy = properties?.remotePolicy?.toUpperCase() || ""
-      const isHybrid = jobPolicy.includes("HYBRID")
-      const isRemote = jobPolicy.includes("REMOTE")
+  const remoteJobs = jobs.filter(({ properties }) =>
+    ["REMOTE", "HYBRID"].includes(properties.remotePolicy || "")
+  )
 
-      // Hybrid jobs match both filters
-      if (isHybrid) return true
-      if (policy === "REMOTE") return isRemote
-      return !isRemote
-    })
-    .filter(({ properties }) => {
-      // Search query filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase()
-        const formattedDataString = [
-          properties.title,
-          properties.company || "",
-          properties.location || "",
-          properties.skills.join(" "),
-        ]
-          .join(" ")
-          .toLowerCase()
+  const onsiteJobs = jobs.filter(({ properties }) =>
+    ["ONSITE", "HYBRID", "IRL"].includes(properties.remotePolicy || "")
+  )
 
-        const isInSearchQuery = formattedDataString.includes(query)
-        if (!isInSearchQuery) return false
-      }
+  const filteredListings = (
+    policy === "REMOTE" ? remoteJobs : onsiteJobs
+  ).filter(({ properties }) => {
+    // Location filter (ANYWHERE shows all)
+    if (locationQuery !== LOCATION_ANYWHERE) {
+      const location = properties.location || ""
+      const normalizedJobLocations = location.split(",").map(normalizeLocation)
 
-      // Location filter (ANYWHERE shows all)
-      if (locationQuery !== LOCATION_ANYWHERE) {
-        const location = properties.location || ""
-        const normalizedJobLocations = location
-          .split(",")
-          .map(normalizeLocation)
+      const isInLocationQuery = normalizedJobLocations.some(
+        (loc) => loc === locationQuery
+      )
+      if (!isInLocationQuery) return false
+    }
 
-        const isInLocationQuery = normalizedJobLocations.some(
-          (loc) => loc === locationQuery
-        )
-        if (!isInLocationQuery) return false
-      }
+    // Search query filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      const formattedDataString = [
+        properties.title,
+        properties.company || "",
+        properties.location || "",
+        properties.skills.join(" "),
+      ]
+        .join(" ")
+        .toLowerCase()
 
-      // Category filter (multiple selection)
-      if (selectedSkills.length > 0 && !isAllSkillsSelected) {
-        const isInSkills = selectedSkills.some((skill) =>
-          properties.skills?.includes(skill)
-        )
-        if (!isInSkills) return false
-      }
+      const isInSearchQuery = formattedDataString.includes(query)
+      if (!isInSearchQuery) return false
+    }
 
-      return true
-    })
+    // Category filter (multiple selection)
+    if (selectedSkills.length > 0 && !isAllSkillsSelected) {
+      const isInSkills = selectedSkills.some((skill) =>
+        properties.skills?.includes(skill)
+      )
+      if (!isInSkills) return false
+    }
+
+    return true
+  })
 
   // Sort listings based on selected option
   const sortedListings = [...(filteredListings || [])].sort((a, b) => {
@@ -149,6 +145,18 @@ export default function Home() {
       .then((result) => console.debug({ ISRData: result }))
       .catch(console.error)
   }, [])
+
+  useEffect(() => {
+    // If in default filters and no jobs for selected location+policy, switch policy
+    if (
+      filteredListings.length === 0 &&
+      searchQuery.trim().length === 0 &&
+      selectedSkills.length === 0
+    ) {
+      const oppositePolicy = policy === "REMOTE" ? "ONSITE" : "REMOTE"
+      setPolicy(oppositePolicy)
+    }
+  }, [locationQuery])
 
   const isLoading = jobs.length <= 0
   const isEmpty = !isLoading && sortedListings.length === 0
