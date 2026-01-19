@@ -30,7 +30,7 @@ export default function Home() {
   const SHOW_OR_LESS_SIZE =
     typeof window !== "undefined" && window.innerWidth < 800 ? 5 : 7
 
-  const [policy, setPolicy] = useState<"REMOTE" | "ONSITE">("REMOTE")
+  const [policy, setPolicy] = useState<"REMOTE" | "ONSITE" | null>("REMOTE")
   const { jobs, skills, isLoading: isInitialFetch } = useJobsList()
 
   const [searchQuery, setSearchQuery] = useState("")
@@ -44,6 +44,7 @@ export default function Home() {
     SORT_BY.MOST_RECENT,
   )
 
+  const isGlobalSearch = searchQuery.trim().length > 0
   const isAllSkillsSelected = selectedSkills.length === skills.length
   const displayedSkills = showAllSkills
     ? skills
@@ -80,10 +81,11 @@ export default function Home() {
   )
 
   const filteredListings = (
-    policy === "REMOTE" ? remoteJobs : onsiteJobs
+    policy === null ? jobs : policy === "REMOTE" ? remoteJobs : onsiteJobs
   ).filter(({ properties }) => {
     // Location filter (ANYWHERE shows all)
-    if (locationQuery !== LOCATION_ANYWHERE) {
+    // Do not filter when in global search mode
+    if (locationQuery !== LOCATION_ANYWHERE && !isGlobalSearch) {
       const location = properties.location || ""
       const normalizedJobLocations = location.split(",").map(normalizeLocation)
 
@@ -94,7 +96,7 @@ export default function Home() {
     }
 
     // Search query filter
-    if (searchQuery) {
+    if (isGlobalSearch) {
       const query = searchQuery.toLowerCase()
       const formattedDataString = [
         properties.title,
@@ -152,14 +154,29 @@ export default function Home() {
 
     // If in default filters and no jobs for selected location+policy, switch policy
     if (
+      !isGlobalSearch &&
       filteredListings.length === 0 &&
-      searchQuery.trim().length === 0 &&
-      selectedSkills.length === 0
+      selectedSkills.length === 0 &&
+      policy !== null // Only when a policy is set
     ) {
       const oppositePolicy = policy === "REMOTE" ? "ONSITE" : "REMOTE"
       setPolicy(oppositePolicy)
     }
   }, [locationQuery, isInitialFetch])
+
+  useEffect(() => {
+    // Keep latest "non-null" policy in session storage
+    if (policy !== null) sessionStorage.setItem("job_policy_preference", policy)
+  }, [policy])
+
+  useEffect(() => {
+    const storedPolicy = sessionStorage.getItem("job_policy_preference")
+    if (isGlobalSearch) setPolicy(null)
+    else if (storedPolicy) {
+      // Restore last known policy from session storage
+      setPolicy(storedPolicy as any)
+    }
+  }, [isGlobalSearch])
 
   const isLoading = jobs.length <= 0
   const isEmpty = !isLoading && sortedListings.length === 0
@@ -303,7 +320,15 @@ export default function Home() {
                   sortedListings.length || ""
                 }
               </span>{" "}
-              jobs
+              jobs{" "}
+              {isGlobalSearch && (
+                <span
+                  title="Search is global"
+                  className="underline cursor-pointer decoration-black/25 underline-offset-4"
+                >
+                  globally
+                </span>
+              )}
             </div>
 
             <div className="grow" />
@@ -311,8 +336,10 @@ export default function Home() {
             <div className="flex mt-4 sm:mt-0 gap-3 items-center">
               <div className="flex whitespace-nowrap h-10 gap-3.5 border border-black/10 rounded-lg bg-white">
                 <button
+                  disabled={isGlobalSearch}
                   onClick={() => setPolicy("ONSITE")}
                   className={cn(
+                    "disabled:pointer-events-none",
                     "text-sm pl-3",
                     policy === "ONSITE" ? "font-semibold" : "opacity-60",
                   )}
@@ -321,8 +348,10 @@ export default function Home() {
                 </button>
 
                 <button
+                  disabled={isGlobalSearch}
                   onClick={() => setPolicy("REMOTE")}
                   className={cn(
+                    "disabled:pointer-events-none",
                     "text-sm pr-3",
                     policy === "REMOTE" ? "font-semibold" : "opacity-60",
                   )}
