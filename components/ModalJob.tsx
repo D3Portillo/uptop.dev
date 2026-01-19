@@ -28,8 +28,11 @@ function ModalJob() {
 
   const router = useRouter()
   const { jobs } = useJobsList()
-  const { data: detailsData, isLoading: isLoadingDetails } =
-    useJobDetails(openJobID)
+  const {
+    description,
+    datePosted,
+    isLoading: isLoadingDetails,
+  } = useJobDetails(openJobID)
 
   const isOpen = Boolean(openJobID)
 
@@ -111,19 +114,16 @@ function ModalJob() {
                 <div className="h-12 bg-black/5 delay-150 rounded-md animate-pulse" />
                 <div className="h-40 bg-black/5 delay-300 rounded-md animate-pulse" />
               </div>
-            ) : detailsData?.post ? (
+            ) : description ? (
               <div className="space-y-6">
                 <nav className="flex gap-3">
-                  {detailsData.post.datePosted && (
+                  {datePosted && (
                     <div className="rounded-full border text-sm border-black/10 bg-black/5 font-semibold px-3 py-1 text-black/70">
-                      {new Date(detailsData.post.datePosted).toLocaleDateString(
-                        "en-US",
-                        {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        }
-                      )}
+                      {new Date(datePosted).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
                     </div>
                   )}
                   {job?.properties.formattedJobPolicy && (
@@ -138,8 +138,8 @@ function ModalJob() {
                       <span
                         className={cn(
                           // Hide-show label based on datePosted presence
-                          detailsData.post.datePosted &&
-                            "hidden group-hover:block group-focus-within:block"
+                          datePosted &&
+                            "hidden group-hover:block group-focus-within:block",
                         )}
                       >
                         {job.properties.formattedJobPolicy.label}
@@ -148,9 +148,9 @@ function ModalJob() {
                   )}
                 </nav>
 
-                {detailsData.post.description ? (
+                {description ? (
                   <Fragment>
-                    <Markdown>{detailsData.post.description}</Markdown>
+                    <Markdown>{description}</Markdown>
 
                     <div
                       className={cn(
@@ -160,7 +160,7 @@ function ModalJob() {
                           job?.properties.company,
                           job?.properties?.salaryRange?.length,
                           job?.properties?.skills.length,
-                        ].every((v) => !v) && "hidden" // Hide if no data
+                        ].every((v) => !v) && "hidden", // Hide if no data
                       )}
                     >
                       {job?.properties.location ? (
@@ -176,7 +176,7 @@ function ModalJob() {
                                 .split(",")
                                 .map((location) => {
                                   return GEOGRAPHIC_REGIONS.some(
-                                    (r) => r.name === location
+                                    (r) => r.name === location,
                                   )
                                     ? // Keep geo regions capitalized
                                       location
@@ -197,7 +197,7 @@ function ModalJob() {
                               <div
                                 className={cn(
                                   skill.length > 3 ? "capitalize" : "uppercase",
-                                  "rounded-full whitespace-nowrap h-8 border text-sm border-black/10 font-semibold px-3 py-1 text-black/70"
+                                  "rounded-full whitespace-nowrap h-8 border text-sm border-black/10 font-semibold px-3 py-1 text-black/70",
                                 )}
                               >
                                 {skill.toLowerCase()}

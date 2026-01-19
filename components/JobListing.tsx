@@ -2,6 +2,7 @@
 
 import type { JobsList } from "@/lib/jobs"
 import { blo } from "blo"
+import { differenceInDays } from "date-fns"
 import useSWR from "swr"
 import { keccak256, toHex } from "viem"
 
@@ -22,7 +23,13 @@ export default function JobListing({
   const [, setOpenJobID] = useOpenJobID()
 
   const isPriority = properties.status === "PRIORITY"
-  const isLatest = rowIndex === 0
+  const isLastPotedItem = rowIndex === 0
+  const daysSincePosted = properties.datePosted
+    ? differenceInDays(new Date(), new Date(properties.datePosted))
+    : null
+
+  const isLatest =
+    isLastPotedItem || (daysSincePosted != null && daysSincePosted <= 5)
 
   const openDrawer = () => {
     setOpenJobID(id)
@@ -30,7 +37,7 @@ export default function JobListing({
   }
 
   const { favicon, unsafeFaviconURL, dominantColor } = useDomainFavicon(
-    properties.faviconBaseDomain
+    properties.faviconBaseDomain,
   )
 
   // Fallback to job ID to avoid generics
@@ -44,7 +51,7 @@ export default function JobListing({
         "w-full text-left p-5 border border-black/10 rounded-2xl hover:border-black/15 shadow-black/5 hover:shadow transition-all",
         isPriority
           ? "bg-linear-to-bl border-black/7 from-ut-purple/10 to-black/3"
-          : "bg-white"
+          : "bg-white",
       )}
     >
       <div className="flex min-h-24 gap-6">
@@ -65,7 +72,7 @@ export default function JobListing({
             }}
             className={cn(
               "grid p-1.5 size-full place-items-center",
-              favicon ? "opacity-100" : "opacity-0 pointer-events-none"
+              favicon ? "opacity-100" : "opacity-0 pointer-events-none",
             )}
           >
             <figure className="rounded-md overflow-hidden">
@@ -111,7 +118,7 @@ export default function JobListing({
                 <div
                   className={cn(
                     "flex flex-wrap text-black items-center gap-2",
-                    properties.location.includes(",") && "py-2 sm:py-0"
+                    properties.location.includes(",") && "py-2 sm:py-0",
                   )}
                 >
                   {properties.location.split(",").map((location) => {
@@ -144,6 +151,15 @@ export default function JobListing({
           </div>
         </div>
       </div>
+      <nav className="flex items-center justify-end">
+        <p className="opacity-50 text-sm">
+          {daysSincePosted != null
+            ? daysSincePosted == 0
+              ? "now"
+              : `${daysSincePosted}d`
+            : "days ago"}
+        </p>
+      </nav>
     </button>
   )
 }
@@ -152,7 +168,7 @@ export const useDomainFavicon = (domain?: string | null) => {
   const favicon = domain
     ? `https://www.google.com/s2/favicons?domain=${domain.replace(
         "www.",
-        ""
+        "",
       )}&sz=128`
     : null
 
@@ -171,7 +187,7 @@ export const useDomainFavicon = (domain?: string | null) => {
     const [formattedURL, { hex: dominantColor }] = await Promise.all([
       loadFavicon(favicon),
       jsonify<{ hex: string }>(
-        fetch(`/api/images/tools?bg-color=${encodeURIComponent(favicon)}`)
+        fetch(`/api/images/tools?bg-color=${encodeURIComponent(favicon)}`),
       ),
     ])
 
@@ -182,7 +198,7 @@ export const useDomainFavicon = (domain?: string | null) => {
         JSON.stringify({
           isValid,
           dominantColor,
-        })
+        }),
       )
     }
 

@@ -15,7 +15,7 @@ const getInitialData = <T = any>(localStorageKey: string) => {
   return localCache ? (JSON.parse(localCache) as T) : undefined
 }
 
-const waitForStack = (): void => {
+const waitForStack = (): Promise<void> => {
   // Wait for call stack to clear
   return new Promise((resolve) => setTimeout(resolve, 50)) as any
 }
@@ -63,28 +63,31 @@ export const useJobsList = () => {
       keepPreviousData: true,
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-    }
+    },
   )
 
-  const { data: tgJobsMetadata } = useTelegramJobsMetadata()
+  const { getMetadataForID } = useTelegramJobsMetadata()
 
   const jobs =
     data?.data.map((job) => {
-      const telegramMetadata = tgJobsMetadata?.find(
-        (tg) =>
-          tg?.formattedJobID?.toLowerCase() === job.formattedId.toLowerCase()
-      )
+      const cachedDetails = getCachedJobDetails(job.id)
+      const telegramMetadata = getMetadataForID(job.formattedId)
 
-      const { faviconBaseDomain = null, clientName: company = null } =
-        telegramMetadata || {}
+      const {
+        datePosted,
+        faviconBaseDomain = null,
+        clientName: tgCompany = null,
+      } = telegramMetadata || {}
 
       return {
         ...job,
         properties: {
           ...job.properties,
           faviconBaseDomain,
-          company: company || job.properties.company,
+          // Prefer TG fetched company name if available
+          company: tgCompany || job.properties.company,
           formattedJobPolicy: formatPolicy(job.properties.remotePolicy || ""),
+          datePosted: cachedDetails?.post?.datePosted || datePosted || null,
         },
       }
     }) || []
@@ -108,23 +111,36 @@ export const useJobsList = () => {
   }
 }
 
+const getJobDetailsKey = (postID: string) => `ut.job.${postID}`
+export const getCachedJobDetails = (
+  postID: string,
+): TListingDetailsResponse | null => {
+  if (typeof window === "undefined") return null
+  const localCache = localStorage.getItem(getJobDetailsKey(postID))
+  return localCache ? (JSON.parse(localCache) as TListingDetailsResponse) : null
+}
+
 export const useJobDetails = (postID: string | null) => {
-  return useSWR(
+  const { getMetadataForID } = useTelegramJobsMetadata()
+
+  const tgMetadata = postID
+    ? getMetadataForID(postID.replaceAll("-", ""))
+    : null
+
+  const { data = null, ...query } = useSWR(
     postID ? `/api/listings/${postID}` : null,
     async (url: string) => {
       if (!postID) return null
 
-      const LOCAL_KEY = `ut.job.${postID}`
-      const localCache = localStorage.getItem(LOCAL_KEY)
-      if (localCache) {
-        return JSON.parse(localCache) as TListingDetailsResponse
-      }
+      const localCache = getCachedJobDetails(postID)
+      if (localCache) return localCache
 
-      const data = await jsonify<TListingDetailsResponse>(fetch(url))
-      if (data.post.description && data.post.datePosted) {
-        // Cache locally to reduce redundant fetches
+      const data = await jsonify<Partial<TListingDetailsResponse>>(fetch(url))
+      console.debug({ data })
+      if (data?.post?.description) {
+        // Cache when we have description data
+        localStorage.setItem(getJobDetailsKey(postID), JSON.stringify(data))
         await waitForStack()
-        localStorage.setItem(LOCAL_KEY, JSON.stringify(data))
       }
 
       return data
@@ -133,13 +149,19 @@ export const useJobDetails = (postID: string | null) => {
       keepPreviousData: true,
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-    }
+    },
   )
+
+  return {
+    ...query,
+    datePosted: data?.post?.datePosted || tgMetadata?.datePosted || null,
+    description: data?.post?.description || null,
+  }
 }
 
 const TG_EXTRA_DATA = "ut.jobs.tg-data"
 export const useTelegramJobsMetadata = () => {
-  return useSWR(
+  const { data = [] } = useSWR(
     "/api/telegram-jobs",
     async (url: string) => {
       const data = await jsonify<TTelegramJobsResponse>(fetch(url))
@@ -157,6 +179,17 @@ export const useTelegramJobsMetadata = () => {
       keepPreviousData: true,
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
-    }
+    },
   )
+
+  return {
+    jobs: data,
+    /**
+     * Get Telegram-fetched metadata for a given job ID (formattedJobID)
+     */
+    getMetadataForID: (jobID: string) =>
+      data.find(
+        (tg) => tg?.formattedJobID?.toLowerCase() === jobID.toLowerCase(),
+      ) || null,
+  }
 }

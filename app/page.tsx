@@ -31,7 +31,7 @@ export default function Home() {
     typeof window !== "undefined" && window.innerWidth < 800 ? 5 : 7
 
   const [policy, setPolicy] = useState<"REMOTE" | "ONSITE">("REMOTE")
-  const { jobs, skills } = useJobsList()
+  const { jobs, skills, isLoading: isInitialFetch } = useJobsList()
 
   const [searchQuery, setSearchQuery] = useState("")
   const [locationQuery, setLocationQuery] =
@@ -41,7 +41,7 @@ export default function Home() {
   const [showAllSkills, setShowAllSkills] = useState(false)
 
   const [sortBy, setSortBy] = useState<(typeof SORT_BY)[keyof typeof SORT_BY]>(
-    SORT_BY.MOST_RECENT
+    SORT_BY.MOST_RECENT,
   )
 
   const isAllSkillsSelected = selectedSkills.length === skills.length
@@ -60,7 +60,7 @@ export default function Home() {
   })
 
   const locationOptions = Array.from(availableLocations).sort((a, b) =>
-    a.localeCompare(b)
+    a.localeCompare(b),
   ) as LocationKey[]
 
   const resetFilters = () => {
@@ -72,11 +72,11 @@ export default function Home() {
   }
 
   const remoteJobs = jobs.filter(({ properties }) =>
-    ["REMOTE", "HYBRID"].includes(properties.remotePolicy || "")
+    ["REMOTE", "HYBRID"].includes(properties.remotePolicy || ""),
   )
 
   const onsiteJobs = jobs.filter(({ properties }) =>
-    ["ONSITE", "HYBRID", "IRL"].includes(properties.remotePolicy || "")
+    ["ONSITE", "HYBRID", "IRL"].includes(properties.remotePolicy || ""),
   )
 
   const filteredListings = (
@@ -88,7 +88,7 @@ export default function Home() {
       const normalizedJobLocations = location.split(",").map(normalizeLocation)
 
       const isInLocationQuery = normalizedJobLocations.some(
-        (loc) => loc === locationQuery
+        (loc) => loc === locationQuery,
       )
       if (!isInLocationQuery) return false
     }
@@ -112,7 +112,7 @@ export default function Home() {
     // Category filter (multiple selection)
     if (selectedSkills.length > 0 && !isAllSkillsSelected) {
       const isInSkills = selectedSkills.some((skill) =>
-        properties.skills?.includes(skill)
+        properties.skills?.includes(skill),
       )
       if (!isInSkills) return false
     }
@@ -124,10 +124,10 @@ export default function Home() {
   const sortedListings = [...(filteredListings || [])].sort((a, b) => {
     if (sortBy === SORT_BY.BY_SALARY) {
       const aMaxSalary = Math.max(
-        ...(a?.properties?.salaryRange || []).map(getHighestSalaryFromProperty)
+        ...(a?.properties?.salaryRange || []).map(getHighestSalaryFromProperty),
       )
       const bMaxSalary = Math.max(
-        ...(b?.properties?.salaryRange || []).map(getHighestSalaryFromProperty)
+        ...(b?.properties?.salaryRange || []).map(getHighestSalaryFromProperty),
       )
       return bMaxSalary - aMaxSalary // Highest first
     }
@@ -147,6 +147,9 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
+    // Early exit if nothing available yet, or querying ANYWHERE
+    if (isInitialFetch || locationQuery === LOCATION_ANYWHERE) return
+
     // If in default filters and no jobs for selected location+policy, switch policy
     if (
       filteredListings.length === 0 &&
@@ -156,7 +159,7 @@ export default function Home() {
       const oppositePolicy = policy === "REMOTE" ? "ONSITE" : "REMOTE"
       setPolicy(oppositePolicy)
     }
-  }, [locationQuery])
+  }, [locationQuery, isInitialFetch])
 
   const isLoading = jobs.length <= 0
   const isEmpty = !isLoading && sortedListings.length === 0
@@ -226,7 +229,7 @@ export default function Home() {
                     setSelectedSkills((prev) =>
                       prev.includes(skill)
                         ? prev.filter((c) => c !== skill)
-                        : [...prev, skill]
+                        : [...prev, skill],
                     )
                   }}
                   className={cn(
@@ -234,7 +237,7 @@ export default function Home() {
                     skill.length > 3 ? "capitalize" : "uppercase",
                     selectedSkills.includes(skill)
                       ? "bg-ut-blue/20 text-black/90 border-black/10"
-                      : "bg-black/3 text-black/50 border-black/5 hover:bg-black/5"
+                      : "bg-black/3 text-black/50 border-black/5 hover:bg-black/5",
                   )}
                 >
                   {skill.toLowerCase()}
@@ -255,7 +258,7 @@ export default function Home() {
                 }}
                 className={cn(
                   "px-3 py-1 flex items-center gap-2 h-8 border border-transparent rounded-lg text-sm transition-colors",
-                  "bg-black/3 text-black/50 border-black/10 hover:bg-black/5"
+                  "bg-black/3 text-black/50 border-black/10 hover:bg-black/5",
                 )}
               >
                 <span>{isAllSkillsSelected ? "Clear" : "Everything"}</span>
@@ -275,7 +278,7 @@ export default function Home() {
                     ? "Show less"
                     : `Show more (${Math.max(
                         0,
-                        skills.length - SHOW_OR_LESS_SIZE
+                        skills.length - SHOW_OR_LESS_SIZE,
                       )})`}
                 </button>
               )}
@@ -287,7 +290,7 @@ export default function Home() {
         <div
           className={cn(
             "max-w-6xl overflow-hidden mx-auto p-6 min-h-screen",
-            isEmpty && "border-b mb-8 border-black/10"
+            isEmpty && "border-b mb-8 border-black/10",
           )}
         >
           {/* Results Header */}
@@ -311,7 +314,7 @@ export default function Home() {
                   onClick={() => setPolicy("ONSITE")}
                   className={cn(
                     "text-sm pl-3",
-                    policy === "ONSITE" ? "font-semibold" : "opacity-60"
+                    policy === "ONSITE" ? "font-semibold" : "opacity-60",
                   )}
                 >
                   📒 On-site
@@ -321,7 +324,7 @@ export default function Home() {
                   onClick={() => setPolicy("REMOTE")}
                   className={cn(
                     "text-sm pr-3",
-                    policy === "REMOTE" ? "font-semibold" : "opacity-60"
+                    policy === "REMOTE" ? "font-semibold" : "opacity-60",
                   )}
                 >
                   <span>💻 Remote</span>

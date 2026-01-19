@@ -20,7 +20,7 @@ async function fetchTelegramJobs() {
           .trim()
 
         const links = (msg.entities || []).filter((e: any) =>
-          Boolean(e.url)
+          Boolean(e.url),
         ) as Array<{
           url: string
         }>
@@ -41,10 +41,10 @@ async function fetchTelegramJobs() {
             : null,
         }
       })
-      .filter(Boolean)
+      .filter(Boolean),
   )
 
-  return jobs
+  return jobs as NonNullable<(typeof jobs)[number]>[]
 }
 
 export type TTelegramJobsResponse = Awaited<
