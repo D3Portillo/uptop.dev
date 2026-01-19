@@ -16,7 +16,7 @@ export async function acquireBrowserLock(resourceId: string): Promise<Browser> {
   // Single browser (key-based) shared across requests
   const lockKey = CACHE_KEYS.browserLock
   const lockValue = `${resourceId}:${Date.now()}`
-  const lockTTL = 15 * 60 // 15 minutes in seconds
+  const lockTTL = 5 * 60 // 5 minutes in seconds
 
   // Attempt to acquire lock
   const acquired = await redis.set(lockKey, lockValue, {

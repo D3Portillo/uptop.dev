@@ -1,10 +1,11 @@
 import { formatJobDescription } from "@/app/actions/textFormatter"
 import { acquireBrowserLock, releaseLockedBrowser } from "@/lib/chromium"
+import { formatID } from "@/lib/id"
 import { redis, CACHE_KEYS } from "@/lib/redis"
 import { staledResponse } from "@/lib/routes"
 
 async function fetchListingDetails(postID: string) {
-  const formattedId = postID.replaceAll("-", "")
+  const formattedId = formatID(postID)
   const browser = await acquireBrowserLock(`listing:${postID}`)
 
   try {
@@ -41,7 +42,7 @@ async function fetchListingDetails(postID: string) {
 
       const datePosted = (
         document.querySelector(
-          '[aria-label="Page properties"]'
+          '[aria-label="Page properties"]',
         ) as HTMLElement | null
       )?.innerText
         ?.split("\n")
@@ -93,7 +94,7 @@ export async function GET(
     params,
   }: {
     params: Promise<{ postID: string }>
-  }
+  },
 ) {
   const { postID } = await params
 
@@ -115,7 +116,7 @@ export async function POST(
     params,
   }: {
     params: Promise<{ postID: string }>
-  }
+  },
 ) {
   const { postID } = await params
 
@@ -139,14 +140,14 @@ export async function POST(
         },
         {
           timeInSeconds: revalidate,
-        }
+        },
       )
     }
 
     // Fetch new data + update cache
     const result = await fetchListingDetails(postID)
-    if ([result.post.datePosted, result.post.description].every(Boolean)) {
-      // Store only when we have data necessary data to store
+    if ([result.post.datePosted, result.post.description].some(Boolean)) {
+      // Store if we have meaningful data
       await Promise.all([
         redis.set(cacheKey, result),
         redis.set(timestampKey, now),
@@ -161,7 +162,7 @@ export async function POST(
       },
       {
         timeInSeconds: revalidate,
-      }
+      },
     )
   } catch (error) {
     return staledResponse(
@@ -171,7 +172,7 @@ export async function POST(
       {
         timeInSeconds: revalidate,
         statusCode: 500,
-      }
+      },
     )
   }
 }

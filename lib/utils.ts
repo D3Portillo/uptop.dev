@@ -47,3 +47,9 @@ export const normalizeLocation = (locationStr: string): LocationKey => {
   // Return best match or fallback to "ANYWHERE"
   return (bestMatch as LocationKey) || "ANYWHERE"
 }
+
+export function formatTitleCase(str: string) {
+  // Normalize to lowercase first, then use regex to find the start of each word (\b)
+  // and replace the matched character with its uppercase version.
+  return str.toLowerCase().replace(/\b\w/g, (s) => s.toUpperCase())
+}

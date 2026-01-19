@@ -59,11 +59,11 @@ RULES:
 - Use proper capitalization (Title Case, avoid ALL CAPS)
 - Remove any unnecessary words or phrases
 - Ensure titles accurately reflect common industry terminology
-- If "empty" or "NO_TITLE", or "", return "Untitled Position"
+- If "empty" or "NO_TITLE", or "", return "Untitled Job"
 - Even if titles are similar, always return a formatted version - need same list length as input
 
 Job Titles:
-${titles.map((title) => `- ${title}`).join("\n")}
+${titles.map((title, idx) => `- ${idx + 1}. ${title}`).join("\n")}
 
 Return the formatted job titles as a list.
     `,

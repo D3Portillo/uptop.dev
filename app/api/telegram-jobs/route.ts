@@ -5,7 +5,7 @@ import { getTelegramMessages } from "@/lib/telegram-client"
 const CHANNEL_ID = "-1002053820209"
 
 async function fetchTelegramJobs() {
-  const messages = await getTelegramMessages(CHANNEL_ID, 100)
+  const messages = await getTelegramMessages(CHANNEL_ID, 200)
   const CLIENT_MARKER = "CLIENT — "
 
   const jobs = await Promise.all(

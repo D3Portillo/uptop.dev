@@ -6,6 +6,7 @@ import type { TListingDetailsResponse } from "@/app/api/listings/[postID]/route"
 
 import useSWR from "swr"
 import { jsonify } from "@/lib/utils"
+import { formatID } from "@/lib/id"
 
 export type JobsList = ReturnType<typeof useJobsList>["jobs"]
 
@@ -123,9 +124,7 @@ export const getCachedJobDetails = (
 export const useJobDetails = (postID: string | null) => {
   const { getMetadataForID } = useTelegramJobsMetadata()
 
-  const tgMetadata = postID
-    ? getMetadataForID(postID.replaceAll("-", ""))
-    : null
+  const tgMetadata = postID ? getMetadataForID(formatID(postID)) : null
 
   const { data = null, ...query } = useSWR(
     postID ? `/api/listings/${postID}` : null,

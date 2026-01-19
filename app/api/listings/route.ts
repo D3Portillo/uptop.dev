@@ -1,7 +1,9 @@
 import { formatJobTitles } from "@/app/actions/textFormatter"
 import { acquireBrowserLock, releaseLockedBrowser } from "@/lib/chromium"
+import { formatID } from "@/lib/id"
 import { redis, CACHE_KEYS } from "@/lib/redis"
 import { staledResponse } from "@/lib/routes"
+import { formatTitleCase } from "@/lib/utils"
 
 const ROW_HEADERS = [
   "STATUS",
@@ -18,7 +20,7 @@ const fetchBlockProperty = (
   block: {
     properties: string[]
   },
-  propertyName: (typeof ROW_HEADERS)[number]
+  propertyName: (typeof ROW_HEADERS)[number],
 ) => {
   const index = ROW_HEADERS.indexOf(propertyName)
   const value = index !== -1 ? block?.properties[index]?.trim() : null
@@ -47,7 +49,7 @@ async function fetchListings() {
       if (!container) return []
 
       const elements = container.querySelectorAll(
-        "[data-block-id].notion-collection-item"
+        "[data-block-id].notion-collection-item",
       )
 
       return Array.from(elements).map((el) => {
@@ -56,18 +58,18 @@ async function fetchListings() {
         const rowItems = rowElement?.querySelectorAll("[data-col-index]")
 
         const rowIndex = Number(
-          rowItems?.item(0)?.getAttribute("data-row-index") || "0"
+          rowItems?.item(0)?.getAttribute("data-row-index") || "0",
         )
 
         return {
           id: ID,
           rowIndex,
           // Notion removes dashes from IDs in URLs
-          formattedId: ID.replaceAll("-", ""),
+          formattedId: formatID(ID),
           applyLink: `https://noteforms.com/forms/top-shelf-job-application-cheqot?084f5395-fbce-48de-81e2-ca34d396c6a0%5B%5D=${ID}`,
           properties: Array.from(rowItems || []).map((item) => {
             const popUps = Array.from(
-              item.querySelectorAll("[data-popup-origin=true]")
+              item.querySelectorAll("[data-popup-origin=true]"),
             )
 
             return popUps.length > 0
@@ -84,13 +86,13 @@ async function fetchListings() {
       .filter((block) => block.properties.length > 0)
       // Remove duplicate blocks
       .filter(
-        (block, idx, arr) => idx === arr.findIndex(({ id }) => id === block.id)
+        (block, idx, arr) => idx === arr.findIndex(({ id }) => id === block.id),
       )
       .map((block) => {
         const SALARY_RANGE = tagify(
           fetchBlockProperty(block, "SALARY")
             // Remove "MARKET RATE" from notion entry
-            ?.replace(/market rate/i, "")
+            ?.replace(/market rate/i, ""),
         ).map((range) => {
           // Format from possible inputs to standard format
           // "$300k +" => "$300k+"
@@ -124,7 +126,7 @@ async function fetchListings() {
       })
 
     const formattedTitles = await formatJobTitles(
-      formattedBlocks.map((block) => block.properties.title || "NO_TITLE")
+      formattedBlocks.map((block) => block.properties.title || "NO_TITLE"),
     )
 
     const result = {
@@ -134,8 +136,10 @@ async function fetchListings() {
         ...block,
         properties: {
           ...block.properties,
-          // Use formatted title from AI
-          title: formattedTitles[index],
+          // Use formatted title from AI, or fallback to original
+          title:
+            formattedTitles[index] ||
+            formatTitleCase(block.properties.title || "Untitled Job"),
         },
       })),
     }
@@ -174,7 +178,7 @@ export async function GET() {
       },
       {
         status: 500,
-      }
+      },
     )
   }
 }
@@ -200,7 +204,7 @@ export async function POST() {
         },
         {
           timeInSeconds: revalidate,
-        }
+        },
       )
     }
 
@@ -245,7 +249,7 @@ export async function POST() {
       },
       {
         timeInSeconds: revalidate,
-      }
+      },
     )
   } catch (error) {
     return staledResponse(
@@ -256,7 +260,7 @@ export async function POST() {
       {
         timeInSeconds: revalidate / 2,
         statusCode: 500,
-      }
+      },
     )
   }
 }
