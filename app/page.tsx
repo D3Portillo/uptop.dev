@@ -1,8 +1,14 @@
 "use client"
 
 import { Fragment, useEffect, useState } from "react"
+import { atomWithStorage } from "jotai/utils"
+import { useAtom } from "jotai"
 
-import { IoSearchOutline, IoChevronDownOutline } from "react-icons/io5"
+import {
+  IoSearchOutline,
+  IoChevronDownOutline,
+  IoCloseOutline,
+} from "react-icons/io5"
 import { MdCheck, MdOutlineClose } from "react-icons/md"
 
 import {
@@ -26,23 +32,34 @@ const SORT_BY = {
   BY_SALARY: "Salary (high - low)",
 } as const
 
+const atomPolicy = atomWithStorage<"REMOTE" | "ONSITE" | null>(
+  "uptop.policy",
+  "REMOTE",
+)
+
+const atomSortBy = atomWithStorage<(typeof SORT_BY)[keyof typeof SORT_BY]>(
+  "uptop.sortby",
+  SORT_BY.MOST_RECENT,
+)
+
+const atomLocation = atomWithStorage<LocationKey>(
+  "uptop.location",
+  LOCATION_ANYWHERE,
+)
+
 export default function Home() {
   const SHOW_OR_LESS_SIZE =
     typeof window !== "undefined" && window.innerWidth < 800 ? 5 : 7
 
-  const [policy, setPolicy] = useState<"REMOTE" | "ONSITE" | null>("REMOTE")
   const { jobs, skills, isLoading: isInitialFetch } = useJobsList()
 
-  const [searchQuery, setSearchQuery] = useState("")
-  const [locationQuery, setLocationQuery] =
-    useState<LocationKey>(LOCATION_ANYWHERE)
+  const [policy, setPolicy] = useAtom(atomPolicy)
+  const [sortBy, setSortBy] = useAtom(atomSortBy)
+  const [locationQuery, setLocationQuery] = useAtom(atomLocation)
 
+  const [searchQuery, setSearchQuery] = useState("")
   const [selectedSkills, setSelectedSkills] = useState<string[]>([])
   const [showAllSkills, setShowAllSkills] = useState(false)
-
-  const [sortBy, setSortBy] = useState<(typeof SORT_BY)[keyof typeof SORT_BY]>(
-    SORT_BY.MOST_RECENT,
-  )
 
   const isGlobalSearch = searchQuery.trim().length > 0
   const isAllSkillsSelected = selectedSkills.length === skills.length
@@ -170,13 +187,16 @@ export default function Home() {
   }, [policy])
 
   useEffect(() => {
+    if (isInitialFetch) return
+
     const storedPolicy = sessionStorage.getItem("job_policy_preference")
     if (isGlobalSearch) setPolicy(null)
-    else if (storedPolicy) {
+    else {
       // Restore last known policy from session storage
-      setPolicy(storedPolicy as any)
+      // Or default to REMOTE
+      setPolicy((storedPolicy as any) || "REMOTE")
     }
-  }, [isGlobalSearch])
+  }, [isGlobalSearch, isInitialFetch])
 
   const isLoading = jobs.length <= 0
   const isEmpty = !isLoading && sortedListings.length === 0
@@ -198,16 +218,32 @@ export default function Home() {
 
             {/* Search Filters */}
             <div className="flex gap-3 mb-6">
-              <div className="flex-1 relative">
-                <IoSearchOutline className="absolute left-4 top-1/2 -translate-y-1/2 text-black/50 text-xl" />
+              <label
+                tabIndex={-1}
+                className="flex-1 bg-white border border-black/10 rounded-lg focus-within:border-ut-purple focus-within:ring-2 focus-within:ring-ut-purple/20 transition-all relative"
+              >
+                {isGlobalSearch ? (
+                  <div
+                    role="button"
+                    className="absolute cursor-pointer left-4 py-2 top-1/2 -translate-y-1/2"
+                    onClick={() => {
+                      setSearchQuery("")
+                    }}
+                  >
+                    <IoCloseOutline className="text-black/50 text-xl scale-110" />
+                  </div>
+                ) : (
+                  <IoSearchOutline className="absolute pointer-events-none left-4 top-1/2 -translate-y-1/2 text-black/50 text-xl" />
+                )}
                 <input
                   type="text"
                   placeholder="Filter jobs by title, company or keyword"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 bg-white border border-black/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
+                  className="w-full outline-none pl-12 pr-4 py-3.5 bg-transparent text-sm"
                 />
-              </div>
+              </label>
+
               <div className="w-17 md:w-52 relative">
                 {/* Display emoji on mobile */}
                 <span className="absolute z-1 left-4 top-1/2 -translate-y-1/2 text-xl pointer-events-none md:hidden">
@@ -336,10 +372,8 @@ export default function Home() {
             <div className="flex mt-4 sm:mt-0 gap-3 items-center">
               <div className="flex whitespace-nowrap h-10 gap-3.5 border border-black/10 rounded-lg bg-white">
                 <button
-                  disabled={isGlobalSearch}
                   onClick={() => setPolicy("ONSITE")}
                   className={cn(
-                    "disabled:pointer-events-none",
                     "text-sm pl-3",
                     policy === "ONSITE" ? "font-semibold" : "opacity-60",
                   )}
@@ -348,10 +382,8 @@ export default function Home() {
                 </button>
 
                 <button
-                  disabled={isGlobalSearch}
                   onClick={() => setPolicy("REMOTE")}
                   className={cn(
-                    "disabled:pointer-events-none",
                     "text-sm pr-3",
                     policy === "REMOTE" ? "font-semibold" : "opacity-60",
                   )}
