@@ -30,7 +30,7 @@ const fetchBlockProperty = (
 }
 
 async function fetchListings() {
-  const browser = await acquireBrowserLock("listings")
+  const browser = await acquireBrowserLock("api/listings")
 
   try {
     const page = await browser.newPage()
@@ -165,19 +165,19 @@ export async function GET() {
     if (cache) return Response.json(cache)
 
     // No cached data
-    return Response.json({
+    return staledResponse({
       success: false,
       count: 0,
       data: [],
     })
   } catch (error) {
-    return Response.json(
+    return staledResponse(
       {
         success: false,
         error: error instanceof Error ? error.message : "Unknown error",
       },
       {
-        status: 500,
+        statusCode: 500,
       },
     )
   }

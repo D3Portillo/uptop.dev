@@ -1,22 +1,27 @@
-import puppeteer, { Browser } from "puppeteer-core"
+import puppeteer, { type Browser as ChromeBrowser } from "puppeteer-core"
 import chromium from "@sparticuz/chromium"
 import { redis, CACHE_KEYS } from "./redis"
 
 // Optional: If you'd like to disable webgl, true is the default.
 chromium.setGraphicsMode = false
 
-export type { Browser }
+type Namespace = "global" | "jobs" | "experiments"
+export type Browser = ChromeBrowser & { __lockNamespace?: Namespace }
 
 /**
  * Acquires an atomic lock and launches browser
  * @param resourceId - identifier for debugging (e.g., "listings", "listing:abc-123")
+ * @param namespace - namespace for the lock (e.g., "global", "jobs") to allow multiple browsers in different contexts
  * @throws Error if lock is already held
  */
-export async function acquireBrowserLock(resourceId: string): Promise<Browser> {
-  // Single browser (key-based) shared across requests
-  const lockKey = CACHE_KEYS.browserLock
+export async function acquireBrowserLock(
+  resourceId: string,
+  namespace: Namespace = "global",
+): Promise<Browser> {
+  // Single browser (key-based) shared across requests within the same namespace
+  const lockKey = `${CACHE_KEYS.browserLock}:${namespace}`
   const lockValue = `${resourceId}:${Date.now()}`
-  const lockTTL = 5 * 60 // 5 minutes in seconds
+  const lockTTL = 10 * 60 // 10 minutes in seconds
 
   // Attempt to acquire lock
   const acquired = await redis.set(lockKey, lockValue, {
@@ -31,7 +36,7 @@ export async function acquireBrowserLock(resourceId: string): Promise<Browser> {
   // Lock acquired, launch browser
   const isLocal = process.env.NODE_ENV !== "production"
 
-  const browser = await puppeteer.launch({
+  const browser = (await puppeteer.launch({
     acceptInsecureCerts: true,
     args: isLocal
       ? puppeteer.defaultArgs()
@@ -48,7 +53,10 @@ export async function acquireBrowserLock(resourceId: string): Promise<Browser> {
       ? "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
       : await chromium.executablePath(),
     headless: isLocal ? false : "shell",
-  })
+  })) as Browser
+
+  // Attach namespace to browser instance
+  browser.__lockNamespace = namespace
 
   return browser
 }
@@ -57,11 +65,13 @@ export async function acquireBrowserLock(resourceId: string): Promise<Browser> {
  * Closes browser and releases the lock
  */
 export async function releaseLockedBrowser(browser: Browser): Promise<void> {
+  const namespace: Namespace = browser?.__lockNamespace || "global"
+
   try {
     await browser.close()
   } catch (error) {
     console.error("Error closing browser:", error)
   } finally {
-    await redis.del(CACHE_KEYS.browserLock)
+    await redis.del(`${CACHE_KEYS.browserLock}:${namespace}`)
   }
 }

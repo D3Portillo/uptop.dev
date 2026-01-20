@@ -6,7 +6,7 @@ import { staledResponse } from "@/lib/routes"
 
 async function fetchListingDetails(postID: string) {
   const formattedId = formatID(postID)
-  const browser = await acquireBrowserLock(`listing:${postID}`)
+  const browser = await acquireBrowserLock(`api/listings/${postID}`, "jobs")
 
   try {
     const page = await browser.newPage()
@@ -104,10 +104,15 @@ export async function GET(
     data = (await redis.get<TListingDetailsResponse>(cacheKey)) || {}
   } catch (error) {}
 
-  return Response.json({
-    success: Object.keys(data).length > 0,
-    ...data,
-  })
+  return staledResponse(
+    {
+      success: Object.keys(data).length > 0,
+      ...data,
+    },
+    {
+      timeInSeconds: revalidate,
+    },
+  )
 }
 
 export async function POST(

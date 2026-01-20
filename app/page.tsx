@@ -175,8 +175,6 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    resetSkillSelection()
-
     // Early exit when querying ANYWHERE
     if (locationQuery === LOCATION_ANYWHERE) return
 
@@ -273,9 +271,10 @@ export default function Home() {
 
                 <select
                   value={locationQuery}
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    resetSkillSelection()
                     setLocationQuery(e.target.value as LocationKey)
-                  }
+                  }}
                   className="w-full md:pl-4 pl-4 pr-10 py-3.5 bg-white border border-black/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm appearance-none cursor-pointer"
                 >
                   {locationOptions.map((locationKey) => {
