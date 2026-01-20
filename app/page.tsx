@@ -2,8 +2,6 @@
 
 import Link from "next/link"
 import { Fragment, useEffect, useState } from "react"
-import { atomWithStorage } from "jotai/utils"
-import { useAtom } from "jotai"
 
 import {
   IoSearchOutline,
@@ -33,11 +31,6 @@ const SORT_BY = {
   BY_SALARY: "Salary (high - low)",
 } as const
 
-const atomLocation = atomWithStorage<LocationKey>(
-  "uptop.location",
-  LOCATION_ANYWHERE,
-)
-
 const MIN_MOBILE_SHOW_SIZE = 5
 export default function Home() {
   const SHOW_OR_LESS_SIZE =
@@ -47,8 +40,9 @@ export default function Home() {
 
   const { jobs, isEmpty: isMainJobsListEmpty } = useJobsList()
 
+  const [locationQuery, setLocationQuery] =
+    useState<LocationKey>(LOCATION_ANYWHERE)
   const [policy, setPolicy] = useState<"REMOTE" | "ONSITE" | null>("REMOTE")
-  const [locationQuery, setLocationQuery] = useAtom(atomLocation)
   const [sortBy, setSortBy] = useState<(typeof SORT_BY)[keyof typeof SORT_BY]>(
     SORT_BY.MOST_RECENT,
   )
@@ -106,6 +100,8 @@ export default function Home() {
         properties.title,
         properties.company || "",
         properties.location || "",
+        properties.remotePolicy || "",
+        properties.formattedJobPolicy.label,
         properties.skills.join(" "),
       ]
         .join(" ")
