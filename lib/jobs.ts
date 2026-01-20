@@ -96,9 +96,12 @@ export const useJobsList = () => {
       }
     }) || []
 
+  // Keep loading state <> data consistent until jotai is hydrated
+  const finalJobs = isHydrated ? jobs : []
+
   return {
-    // Keep loading state <> data consistent until jotai is hydrated
-    jobs: isHydrated ? jobs : [],
+    jobs: finalJobs,
+    isEmpty: finalJobs.length <= 0,
     isLoading: isLoading || !isHydrated,
   }
 }
@@ -140,7 +143,6 @@ export const useJobDetails = (postID: string | null) => {
       if (localCache) return localCache
 
       const data = await jsonify<Partial<TListingDetailsResponse>>(fetch(url))
-      console.debug({ data })
       if (data?.post?.description) {
         // Cache when we have description data
         localStorage.setItem(getJobDetailsKey(postID), JSON.stringify(data))

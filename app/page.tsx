@@ -1,5 +1,6 @@
 "use client"
 
+import Link from "next/link"
 import { Fragment, useEffect, useState } from "react"
 import { atomWithStorage } from "jotai/utils"
 import { useAtom } from "jotai"
@@ -32,16 +33,6 @@ const SORT_BY = {
   BY_SALARY: "Salary (high - low)",
 } as const
 
-const atomPolicy = atomWithStorage<"REMOTE" | "ONSITE" | null>(
-  "uptop.policy",
-  "REMOTE",
-)
-
-const atomSortBy = atomWithStorage<(typeof SORT_BY)[keyof typeof SORT_BY]>(
-  "uptop.sortby",
-  SORT_BY.MOST_RECENT,
-)
-
 const atomLocation = atomWithStorage<LocationKey>(
   "uptop.location",
   LOCATION_ANYWHERE,
@@ -54,11 +45,13 @@ export default function Home() {
       ? MIN_MOBILE_SHOW_SIZE
       : 7
 
-  const { jobs, isLoading: isInitialFetch } = useJobsList()
+  const { jobs, isEmpty: isMainJobsListEmpty } = useJobsList()
 
-  const [policy, setPolicy] = useAtom(atomPolicy)
-  const [sortBy, setSortBy] = useAtom(atomSortBy)
+  const [policy, setPolicy] = useState<"REMOTE" | "ONSITE" | null>("REMOTE")
   const [locationQuery, setLocationQuery] = useAtom(atomLocation)
+  const [sortBy, setSortBy] = useState<(typeof SORT_BY)[keyof typeof SORT_BY]>(
+    SORT_BY.MOST_RECENT,
+  )
 
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedSkills, setSelectedSkills] = useState<string[]>([])
@@ -80,15 +73,20 @@ export default function Home() {
     a.localeCompare(b),
   ) as LocationKey[]
 
-  const resetFilters = () => {
-    setSortBy(SORT_BY.MOST_RECENT)
-    setPolicy("REMOTE")
-    setSearchQuery("")
+  const resetSkillSelection = () => {
     setSelectedSkills([])
-    setLocationQuery(LOCATION_ANYWHERE)
+    setShowAllSkills(false)
   }
 
-  const filteredListings = jobs.filter(({ properties }) => {
+  const resetFilters = () => {
+    resetSkillSelection()
+    setSortBy(SORT_BY.MOST_RECENT)
+    setLocationQuery(LOCATION_ANYWHERE)
+    setPolicy("REMOTE")
+    setSearchQuery("")
+  }
+
+  const initialFilteredItems = jobs.filter(({ properties }) => {
     // Location filter (ANYWHERE shows all)
     // Do not filter when in global search mode
     if (locationQuery !== LOCATION_ANYWHERE && !isGlobalSearch) {
@@ -120,17 +118,15 @@ export default function Home() {
     return true
   })
 
-  const skills = extractSkillsFromJobs(filteredListings)
+  const skills = extractSkillsFromJobs(initialFilteredItems)
   const isAllSkillsSelected = selectedSkills.length === skills.length
   const displayedSkills = showAllSkills
     ? skills
     : skills.slice(0, SHOW_OR_LESS_SIZE)
 
-  const sortedListings = filteredListings
+  const filteredListings = initialFilteredItems
     // First apply policy and skills filters
     .filter(({ properties }) => {
-      console.debug(properties.title, { p: properties.remotePolicy })
-
       if (policy === "REMOTE") {
         const isRemoteJob = ["HYBRID", "REMOTE"].some((policy) =>
           properties.remotePolicy?.includes(policy),
@@ -148,14 +144,6 @@ export default function Home() {
         const isInSkills = selectedSkills.some((skill) =>
           properties.skills?.includes(skill),
         )
-        console.debug({
-          skillCheck: {
-            selectedSkills,
-            isInSkills,
-            gSkills: skills,
-            itemSkills: properties.skills,
-          },
-        })
         if (!isInSkills) return false
       }
 
@@ -191,8 +179,10 @@ export default function Home() {
   }, [])
 
   useEffect(() => {
-    // Early exit if nothing available yet, or querying ANYWHERE
-    if (isInitialFetch || locationQuery === LOCATION_ANYWHERE) return
+    resetSkillSelection()
+
+    // Early exit when querying ANYWHERE
+    if (locationQuery === LOCATION_ANYWHERE) return
 
     // If in default filters and no jobs for selected location+policy, switch policy
     if (
@@ -201,10 +191,14 @@ export default function Home() {
       selectedSkills.length === 0 &&
       policy !== null // Only when a policy is set
     ) {
-      const oppositePolicy = policy === "REMOTE" ? "ONSITE" : "REMOTE"
-      setPolicy(oppositePolicy)
+      const timer = setTimeout(
+        () => setPolicy(policy === "REMOTE" ? "ONSITE" : "REMOTE"),
+        50,
+      )
+
+      return () => clearTimeout(timer)
     }
-  }, [locationQuery, isInitialFetch])
+  }, [locationQuery])
 
   useEffect(() => {
     // Keep latest "non-null" policy in session storage
@@ -212,23 +206,23 @@ export default function Home() {
   }, [policy])
 
   useEffect(() => {
-    if (isInitialFetch) return
-
     const storedPolicy = sessionStorage.getItem("job_policy_preference")
-    if (isGlobalSearch) {
-      // Reset filters
-      setPolicy(null)
-      setSelectedSkills([])
-      setShowAllSkills(false)
-    } else {
+
+    // Reset filters when doing global search
+    if (isGlobalSearch) setPolicy(null)
+    else {
       // Restore last known policy from session storage
-      // Or default to REMOTE
-      setPolicy((storedPolicy as any) || "REMOTE")
+      setPolicy(
+        // Fallback to REMOTE if nothing stored
+        (currentValue) => (storedPolicy as any) || currentValue || "REMOTE",
+      )
     }
-  }, [isGlobalSearch, isInitialFetch])
+
+    resetSkillSelection()
+  }, [isGlobalSearch])
 
   const isLoading = jobs.length <= 0
-  const isEmpty = !isLoading && sortedListings.length === 0
+  const isEmpty = !isLoading && filteredListings.length === 0
 
   return (
     <Fragment>
@@ -237,8 +231,10 @@ export default function Home() {
         {/* Header Section */}
         <div className="bg-white border-b border-black/10">
           <div className="max-w-6xl mx-auto px-6 py-6">
-            <nav className="flex sm:mt-4 mb-5 sm:mb-7 items-center gap-4">
-              <figure className="text-2xl scale-110">🦄</figure>
+            <nav className="flex sm:mt-4 mb-5 sm:mb-7 items-center">
+              <Link className="pr-4" onClick={resetFilters} href="/">
+                <figure className="text-2xl scale-110">🦄</figure>
+              </Link>
               <h1 className="font-bold whitespace-nowrap text-lg">
                 UpTop Job Board ( Community{" "}
                 <span className="hidden sm:inline-block">Edition</span> )
@@ -334,8 +330,8 @@ export default function Home() {
                 </button>
               ))}
 
-              {skills.length <= 0 &&
-                isInitialFetch &&
+              {isMainJobsListEmpty &&
+                skills.length <= 0 &&
                 Array.from({ length: SHOW_OR_LESS_SIZE }).map((_, i) => (
                   <div
                     key={`mock-skill-${i}`}
@@ -395,7 +391,7 @@ export default function Home() {
               <span className="font-semibold">
                 {
                   // Show empty when ZERO
-                  sortedListings.length || ""
+                  filteredListings.length || ""
                 }
               </span>{" "}
               jobs{" "}
@@ -467,7 +463,7 @@ export default function Home() {
             </section>
           ) : (
             <div className="space-y-4 mb-24">
-              {sortedListings.map((listing) => (
+              {filteredListings.map((listing) => (
                 <JobListing
                   key={`listing-item-${listing.id}`}
                   listing={listing}

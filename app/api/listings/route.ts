@@ -190,7 +190,7 @@ export async function POST() {
 
     const lastUpdate = await redis.get<number>(timestampKey)
     const now = Date.now()
-    const cacheTimeInMs = 60 * 60 * 1000 // 1 hour
+    const cacheTimeInMs = revalidate * 1000 // Time in milliseconds
 
     const getNextUpdate = (ts: number) =>
       new Date(ts + cacheTimeInMs).toISOString()
