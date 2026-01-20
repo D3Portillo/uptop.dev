@@ -7,6 +7,7 @@ import type { TListingDetailsResponse } from "@/app/api/listings/[postID]/route"
 import useSWR from "swr"
 import { jsonify } from "@/lib/utils"
 import { formatID } from "@/lib/id"
+import { useIsJotaiHydrated } from "./jotai"
 
 export type JobsList = ReturnType<typeof useJobsList>["jobs"]
 
@@ -46,7 +47,9 @@ const formatPolicy = (policy: string) => {
 
 const LOCAL_LISTINGS_KEY = "ut.jobs.listings"
 export const useJobsList = () => {
-  const { data, ...query } = useSWR(
+  const { isHydrated } = useIsJotaiHydrated()
+
+  const { data, isLoading } = useSWR(
     "/api/listings",
     async (url: string) => {
       const data = await jsonify<TListingResponse>(fetch(url))
@@ -94,8 +97,9 @@ export const useJobsList = () => {
     }) || []
 
   return {
-    jobs,
-    ...query,
+    // Keep loading state <> data consistent until jotai is hydrated
+    jobs: isHydrated ? jobs : [],
+    isLoading: isLoading || !isHydrated,
   }
 }
 
