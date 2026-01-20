@@ -93,6 +93,13 @@ export const useJobsList = () => {
       }
     }) || []
 
+  return {
+    jobs,
+    ...query,
+  }
+}
+
+export const extractSkillsFromJobs = (jobs: JobsList) => {
   // Generate unique categories from all job skills, sorted by frequency
   const skillCounts = new Map<string, number>()
   jobs.forEach((job) => {
@@ -101,15 +108,9 @@ export const useJobsList = () => {
     })
   })
 
-  const skills = Array.from(skillCounts.entries())
+  return Array.from(skillCounts.entries())
     .sort(([, a], [, b]) => b - a) // Sort by count descending
     .map(([skill]) => skill)
-
-  return {
-    jobs,
-    skills,
-    ...query,
-  }
 }
 
 const getJobDetailsKey = (postID: string) => `ut.job.${postID}`

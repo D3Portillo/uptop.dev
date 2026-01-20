@@ -16,7 +16,7 @@ import {
   getHighestSalaryFromProperty,
   normalizeLocation,
 } from "@/lib/utils"
-import { useJobsList } from "@/lib/jobs"
+import { extractSkillsFromJobs, useJobsList } from "@/lib/jobs"
 
 import {
   CRYPTO_JOB_LOCATIONS,
@@ -47,11 +47,14 @@ const atomLocation = atomWithStorage<LocationKey>(
   LOCATION_ANYWHERE,
 )
 
+const MIN_MOBILE_SHOW_SIZE = 5
 export default function Home() {
   const SHOW_OR_LESS_SIZE =
-    typeof window !== "undefined" && window.innerWidth < 800 ? 5 : 7
+    typeof window !== "undefined" && window.innerWidth < 800
+      ? MIN_MOBILE_SHOW_SIZE
+      : 7
 
-  const { jobs, skills, isLoading: isInitialFetch } = useJobsList()
+  const { jobs, isLoading: isInitialFetch } = useJobsList()
 
   const [policy, setPolicy] = useAtom(atomPolicy)
   const [sortBy, setSortBy] = useAtom(atomSortBy)
@@ -62,10 +65,6 @@ export default function Home() {
   const [showAllSkills, setShowAllSkills] = useState(false)
 
   const isGlobalSearch = searchQuery.trim().length > 0
-  const isAllSkillsSelected = selectedSkills.length === skills.length
-  const displayedSkills = showAllSkills
-    ? skills
-    : skills.slice(0, SHOW_OR_LESS_SIZE)
 
   // Extract unique locations from actual job postings
   const availableLocations = new Set<string>()
@@ -89,17 +88,7 @@ export default function Home() {
     setLocationQuery(LOCATION_ANYWHERE)
   }
 
-  const remoteJobs = jobs.filter(({ properties }) =>
-    ["REMOTE", "HYBRID"].includes(properties.remotePolicy || ""),
-  )
-
-  const onsiteJobs = jobs.filter(({ properties }) =>
-    ["ONSITE", "HYBRID", "IRL"].includes(properties.remotePolicy || ""),
-  )
-
-  const filteredListings = (
-    policy === null ? jobs : policy === "REMOTE" ? remoteJobs : onsiteJobs
-  ).filter(({ properties }) => {
+  const filteredListings = jobs.filter(({ properties }) => {
     // Location filter (ANYWHERE shows all)
     // Do not filter when in global search mode
     if (locationQuery !== LOCATION_ANYWHERE && !isGlobalSearch) {
@@ -128,32 +117,68 @@ export default function Home() {
       if (!isInSearchQuery) return false
     }
 
-    // Category filter (multiple selection)
-    if (selectedSkills.length > 0 && !isAllSkillsSelected) {
-      const isInSkills = selectedSkills.some((skill) =>
-        properties.skills?.includes(skill),
-      )
-      if (!isInSkills) return false
-    }
-
     return true
   })
 
-  // Sort listings based on selected option
-  const sortedListings = [...(filteredListings || [])].sort((a, b) => {
-    if (sortBy === SORT_BY.BY_SALARY) {
-      const aMaxSalary = Math.max(
-        ...(a?.properties?.salaryRange || []).map(getHighestSalaryFromProperty),
-      )
-      const bMaxSalary = Math.max(
-        ...(b?.properties?.salaryRange || []).map(getHighestSalaryFromProperty),
-      )
-      return bMaxSalary - aMaxSalary // Highest first
-    }
+  const skills = extractSkillsFromJobs(filteredListings)
+  const isAllSkillsSelected = selectedSkills.length === skills.length
+  const displayedSkills = showAllSkills
+    ? skills
+    : skills.slice(0, SHOW_OR_LESS_SIZE)
 
-    // Default: Most Recent (by rowIndex)
-    return a.rowIndex - b.rowIndex
-  })
+  const sortedListings = filteredListings
+    // First apply policy and skills filters
+    .filter(({ properties }) => {
+      console.debug(properties.title, { p: properties.remotePolicy })
+
+      if (policy === "REMOTE") {
+        const isRemoteJob = ["HYBRID", "REMOTE"].some((policy) =>
+          properties.remotePolicy?.includes(policy),
+        )
+        if (!isRemoteJob) return false
+      } else if (policy === "ONSITE") {
+        const isOnsiteJob = ["HYBRID", "ONSITE", "IRL"].some((policy) =>
+          properties.remotePolicy?.includes(policy),
+        )
+        if (!isOnsiteJob) return false
+      }
+
+      // Category filter (multiple selection)
+      if (selectedSkills.length > 0 && !isAllSkillsSelected) {
+        const isInSkills = selectedSkills.some((skill) =>
+          properties.skills?.includes(skill),
+        )
+        console.debug({
+          skillCheck: {
+            selectedSkills,
+            isInSkills,
+            gSkills: skills,
+            itemSkills: properties.skills,
+          },
+        })
+        if (!isInSkills) return false
+      }
+
+      return true
+    })
+    .sort((a, b) => {
+      if (sortBy === SORT_BY.BY_SALARY) {
+        const aMaxSalary = Math.max(
+          ...(a?.properties?.salaryRange || []).map(
+            getHighestSalaryFromProperty,
+          ),
+        )
+        const bMaxSalary = Math.max(
+          ...(b?.properties?.salaryRange || []).map(
+            getHighestSalaryFromProperty,
+          ),
+        )
+        return bMaxSalary - aMaxSalary // Highest first
+      }
+
+      // Default: Most Recent (by rowIndex)
+      return a.rowIndex - b.rowIndex
+    })
 
   useEffect(() => {
     // Try update listings incrementally as user visits home page
@@ -190,8 +215,12 @@ export default function Home() {
     if (isInitialFetch) return
 
     const storedPolicy = sessionStorage.getItem("job_policy_preference")
-    if (isGlobalSearch) setPolicy(null)
-    else {
+    if (isGlobalSearch) {
+      // Reset filters
+      setPolicy(null)
+      setSelectedSkills([])
+      setShowAllSkills(false)
+    } else {
       // Restore last known policy from session storage
       // Or default to REMOTE
       setPolicy((storedPolicy as any) || "REMOTE")
@@ -217,7 +246,7 @@ export default function Home() {
             </nav>
 
             {/* Search Filters */}
-            <div className="flex gap-3 mb-6">
+            <div className="flex gap-3">
               <label
                 tabIndex={-1}
                 className="flex-1 bg-white border border-black/10 rounded-lg focus-within:border-ut-purple focus-within:ring-2 focus-within:ring-ut-purple/20 transition-all relative"
@@ -274,7 +303,15 @@ export default function Home() {
             </div>
 
             {/* Category Filters */}
-            <div className="flex flex-wrap gap-2 items-center">
+            <div
+              className={cn(
+                "flex transition-all flex-wrap gap-2 items-center",
+                // Hide only when data is loaded
+                skills.length < 3 && jobs.length > 0
+                  ? "opacity-0 h-[0%] max-h-0 mt-2 pointer-events-none"
+                  : "opacity-100 h-full mt-6",
+              )}
+            >
               {displayedSkills.map((skill) => (
                 <button
                   key={`f-skill-${skill}`}
@@ -298,6 +335,7 @@ export default function Home() {
               ))}
 
               {skills.length <= 0 &&
+                isInitialFetch &&
                 Array.from({ length: SHOW_OR_LESS_SIZE }).map((_, i) => (
                   <div
                     key={`mock-skill-${i}`}
@@ -305,36 +343,40 @@ export default function Home() {
                   />
                 ))}
 
-              <button
-                onClick={() => {
-                  setSelectedSkills(isAllSkillsSelected ? [] : skills)
-                }}
-                className={cn(
-                  "px-3 py-1 flex items-center gap-2 h-8 border border-transparent rounded-lg text-sm transition-colors",
-                  "bg-black/3 text-black/50 border-black/10 hover:bg-black/5",
-                )}
-              >
-                <span>{isAllSkillsSelected ? "Clear" : "Everything"}</span>
-                {isAllSkillsSelected ? (
-                  <MdOutlineClose className="scale-125" />
-                ) : (
-                  <MdCheck className="scale-110" />
-                )}
-              </button>
+              {skills.length > MIN_MOBILE_SHOW_SIZE ? (
+                <Fragment>
+                  <button
+                    onClick={() => {
+                      setSelectedSkills(isAllSkillsSelected ? [] : skills)
+                    }}
+                    className={cn(
+                      "px-3 py-1 flex items-center gap-2 h-8 border border-transparent rounded-lg text-sm transition-colors",
+                      "bg-black/3 text-black/50 border-black/10 hover:bg-black/5",
+                    )}
+                  >
+                    <span>{isAllSkillsSelected ? "Clear" : "Everything"}</span>
+                    {isAllSkillsSelected ? (
+                      <MdOutlineClose className="scale-125" />
+                    ) : (
+                      <MdCheck className="scale-110" />
+                    )}
+                  </button>
 
-              {skills.length > SHOW_OR_LESS_SIZE && (
-                <button
-                  onClick={() => setShowAllSkills(!showAllSkills)}
-                  className="border px-3 border-black/10 h-8 rounded-lg text-sm text-black/70 hover:bg-black/5 transition-colors"
-                >
-                  {showAllSkills
-                    ? "Show less"
-                    : `Show more (${Math.max(
-                        0,
-                        skills.length - SHOW_OR_LESS_SIZE,
-                      )})`}
-                </button>
-              )}
+                  {skills.length > SHOW_OR_LESS_SIZE && (
+                    <button
+                      onClick={() => setShowAllSkills(!showAllSkills)}
+                      className="border px-3 border-black/10 h-8 rounded-lg text-sm text-black/70 hover:bg-black/5 transition-colors"
+                    >
+                      {showAllSkills
+                        ? "Show less"
+                        : `Show more (${Math.max(
+                            0,
+                            skills.length - SHOW_OR_LESS_SIZE,
+                          )})`}
+                    </button>
+                  )}
+                </Fragment>
+              ) : null}
             </div>
           </div>
         </div>
