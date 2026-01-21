@@ -155,8 +155,7 @@ function ModalJob() {
 
                 {description ? (
                   <Fragment>
-                    <Markdown>{description}</Markdown>
-
+                    <Markdown>{formatDescription(description)}</Markdown>
                     <div
                       className={cn(
                         "flex flex-wrap [&_section]:sm:px-5 [&_section]:sm:py-2 px-6 sm:px-2 pb-6 sm:pb-5 pt-5 mb-12 bg-black/3 rounded-2xl gap-4",
@@ -285,6 +284,11 @@ function DefaultEmptyState() {
       </p>
     </section>
   )
+}
+
+function formatDescription(description: string) {
+  // Sometimes clients use "CONFIDENTIAL CLIENT" in place of company name
+  return description.replaceAll(/CONFIDENTIAL CLIENT/gi, "\n")
 }
 
 export default function ModalJobWithSuspense() {
