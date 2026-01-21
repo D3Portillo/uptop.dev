@@ -1,6 +1,5 @@
 import { formatJobTitles } from "@/app/actions/textFormatter"
 import { acquireBrowserLock, releaseLockedBrowser } from "@/lib/chromium"
-import { formatID } from "@/lib/id"
 import { redis, CACHE_KEYS } from "@/lib/redis"
 import { staledResponse } from "@/lib/routes"
 import { formatTitleCase } from "@/lib/utils"
@@ -65,7 +64,7 @@ async function fetchListings() {
           id: ID,
           rowIndex,
           // Notion removes dashes from IDs in URLs
-          formattedId: formatID(ID),
+          formattedId: ID.replaceAll("-", ""),
           applyLink: `https://noteforms.com/forms/top-shelf-job-application-cheqot?084f5395-fbce-48de-81e2-ca34d396c6a0%5B%5D=${ID}`,
           properties: Array.from(rowItems || []).map((item) => {
             const popUps = Array.from(
