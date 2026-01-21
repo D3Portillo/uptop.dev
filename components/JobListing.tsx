@@ -1,10 +1,14 @@
 "use client"
 
 import type { JobsList } from "@/lib/jobs"
-import { blo } from "blo"
+
+import { Fragment } from "react/jsx-runtime"
+import { useAtom } from "jotai"
 import { differenceInDays } from "date-fns"
-import useSWR from "swr"
+import { blo } from "blo"
+import { atomWithStorage } from "jotai/utils"
 import { keccak256, toHex } from "viem"
+import useSWR from "swr"
 
 import { useRouter } from "next/navigation"
 import { useOpenJobID } from "./ModalJob"
@@ -14,14 +18,19 @@ import { cn, jsonify, normalizeLocation } from "@/lib/utils"
 
 import { CRYPTO_JOB_LOCATIONS } from "@/lib/constants/countries"
 
+const atomViewededJobs = atomWithStorage("ut.jobs.viewedJobs", [] as string[])
+export const useViewededJobs = () => useAtom(atomViewededJobs)
 export default function JobListing({
   listing: { id, properties, rowIndex },
 }: {
   listing: JobsList[number]
 }) {
   const router = useRouter()
+
+  const [viewededJobs, setViewedJobs] = useViewededJobs()
   const [, setOpenJobID] = useOpenJobID()
 
+  const isViewed = viewededJobs.includes(id)
   const isPriority = properties.status === "PRIORITY"
   const isLastPotedItem = rowIndex === 0
   const daysSincePosted = properties.datePosted
@@ -32,6 +41,7 @@ export default function JobListing({
     isLastPotedItem || (daysSincePosted != null && daysSincePosted <= 5)
 
   const openDrawer = () => {
+    if (!isViewed) setViewedJobs((current) => [...current, id])
     setOpenJobID(id)
     router.push(`?job=${id}`, { scroll: false })
   }
@@ -151,8 +161,16 @@ export default function JobListing({
           </div>
         </div>
       </div>
-      <nav className="flex items-center justify-end">
-        <p className="opacity-50 text-sm">
+      <nav className="flex opacity-50 items-center gap-1 justify-end">
+        {isViewed && (
+          <Fragment>
+            <p title="You've already viewed this job" className="text-sm">
+              viewed
+            </p>
+            <p>•</p>
+          </Fragment>
+        )}
+        <p title="Time posted" className="text-sm">
           {daysSincePosted != null
             ? daysSincePosted == 0
               ? "now"

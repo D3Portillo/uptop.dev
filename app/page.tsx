@@ -230,7 +230,8 @@ export default function Home() {
                 <figure className="text-2xl scale-110">🦄</figure>
               </Link>
               <h1 className="font-bold whitespace-nowrap text-lg">
-                UpTop Job Board ( Community{" "}
+                UpTop <span className="hidden sm:inline-block">Job</span> Board
+                ( Community{" "}
                 <span className="hidden sm:inline-block">Edition</span> )
               </h1>
             </nav>
