@@ -109,6 +109,11 @@ async function fetchListings() {
             .replace("No access", "")
             .trim() || null
 
+        let POLICY = fetchBlockProperty(block, "OFFICE_POLICY")
+          ?.toUpperCase()
+          // Standardize wording
+          ?.replace("IRL PREFERRED - REMOTE OK", "HYBRID")
+
         return {
           ...block,
           properties: {
@@ -116,7 +121,7 @@ async function fetchListings() {
             status: fetchBlockProperty(block, "STATUS"),
             location: fetchBlockProperty(block, "LOCATION"),
             category: fetchBlockProperty(block, "CATEGORY"),
-            remotePolicy: fetchBlockProperty(block, "OFFICE_POLICY"),
+            remotePolicy: POLICY,
             skills: tagify(fetchBlockProperty(block, "SKILLS") || ""),
             // Null when salary not present
             salaryRange: SALARY_RANGE.length ? SALARY_RANGE : null,

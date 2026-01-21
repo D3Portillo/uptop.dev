@@ -1,6 +1,7 @@
 "use client"
 
 import Link from "next/link"
+import dynamic from "next/dynamic"
 import { Fragment, useEffect, useState } from "react"
 
 import {
@@ -25,6 +26,10 @@ import {
 import JobListing from "@/components/JobListing"
 import ModalJob from "@/components/ModalJob"
 import SelectSortBy from "@/components/SelectSortBy"
+
+const Announcement = dynamic(() => import("@/components/Announcement"), {
+  ssr: false,
+})
 
 const SORT_BY = {
   MOST_RECENT: "Most Recent",
@@ -486,6 +491,7 @@ export default function Home() {
       </div>
 
       <ModalJob />
+      <Announcement />
     </Fragment>
   )
 }
