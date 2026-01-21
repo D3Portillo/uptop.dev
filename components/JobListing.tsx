@@ -11,7 +11,7 @@ import { keccak256, toHex } from "viem"
 import useSWR from "swr"
 
 import { useRouter } from "next/navigation"
-import { useOpenJobID } from "./ModalJob"
+import { useOpenJobID, useAppliedJobs } from "./ModalJob"
 
 import { IoLocationOutline } from "react-icons/io5"
 import { cn, jsonify, normalizeLocation } from "@/lib/utils"
@@ -26,11 +26,15 @@ export default function JobListing({
   listing: JobsList[number]
 }) {
   const router = useRouter()
-
-  const [viewededJobs, setViewedJobs] = useViewededJobs()
   const [, setOpenJobID] = useOpenJobID()
 
+  const [viewededJobs, setViewedJobs] = useViewededJobs()
+  const [appliedJobs] = useAppliedJobs()
+
+  // User-specific states
+  const isApplied = appliedJobs.includes(id)
   const isViewed = viewededJobs.includes(id)
+
   const isPriority = properties.status === "PRIORITY"
   const isLastPotedItem = rowIndex === 0
   const daysSincePosted = properties.datePosted
@@ -161,16 +165,20 @@ export default function JobListing({
           </div>
         </div>
       </div>
-      <nav className="flex opacity-50 items-center gap-1 justify-end">
-        {isViewed && (
+      <nav className="flex mt-2 text-sm sm:mt-0 opacity-50 items-center gap-2 justify-end">
+        {isApplied ? (
           <Fragment>
-            <p title="You've already viewed this job" className="text-sm">
-              viewed
-            </p>
+            <p title="You've already applied to this job">applied</p>
             <p>•</p>
           </Fragment>
-        )}
-        <p title="Time posted" className="text-sm">
+        ) : isViewed ? (
+          <Fragment>
+            <p title="You've already viewed this job">viewed</p>
+            <p>•</p>
+          </Fragment>
+        ) : null}
+
+        <p title="Time posted">
           {daysSincePosted != null
             ? daysSincePosted == 0
               ? "now"

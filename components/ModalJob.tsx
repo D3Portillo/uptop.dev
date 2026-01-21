@@ -3,6 +3,7 @@
 import { Fragment, Suspense, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { atom, useAtom } from "jotai"
+import { atomWithStorage } from "jotai/utils"
 
 import { IoCloseOutline } from "react-icons/io5"
 import { useJobsList, useJobDetails } from "@/lib/jobs"
@@ -12,19 +13,23 @@ import Markdown from "@/components/Markdown"
 import { cn } from "@/lib/utils"
 import { GEOGRAPHIC_REGIONS } from "@/lib/constants/countries"
 
+const atomAppliedJobs = atomWithStorage("ut.jobs.appliedJobs", [] as string[])
 const atomJobUpdated = atom({} as Record<string, boolean>)
 const atomOpenJobID = atom("")
 
 export const useOpenJobID = () => useAtom(atomOpenJobID)
+export const useAppliedJobs = () => useAtom(atomAppliedJobs)
 
 function ModalJob() {
   const [updatedJobs, setUpdatedJobs] = useAtom(atomJobUpdated)
   const [openJobID, setOpenJobID] = useOpenJobID()
+  const [appliedJobs, setAppliedJobs] = useAppliedJobs()
 
   const searchParams = useSearchParams()
   const queryJobID = searchParams.get("job")
 
   const isUpdated = updatedJobs[openJobID] === true
+  const isApplied = appliedJobs.includes(openJobID)
 
   const router = useRouter()
   const { jobs } = useJobsList()
@@ -253,9 +258,13 @@ function ModalJob() {
                 href={applyLink}
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={() => {
+                  if (isApplied) return
+                  setAppliedJobs((current) => [...current, openJobID])
+                }}
                 className="flex w-full items-center justify-center gap-4 p-4 bg-ut-purple text-white text-center rounded-lg hover:bg-ut-purple/90 transition-colors font-black"
               >
-                <span>Apply Now</span>
+                <span>{isApplied ? "Applied" : "Apply Now"}</span>
                 <MdArrowOutward className="text-xl" />
               </a>
             </nav>
