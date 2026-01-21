@@ -1,12 +1,11 @@
 "use client"
 
-import { Fragment, useState } from "react"
-import { IoCloseOutline } from "react-icons/io5"
+import { Fragment, useState, useEffect } from "react"
 import dynamic from "next/dynamic"
-import {
-  MdNotificationsActive,
-  MdOutlineNotificationsActive,
-} from "react-icons/md"
+import { useSearchParams } from "next/navigation"
+
+import { IoCloseOutline } from "react-icons/io5"
+import { MdOutlineNotificationsActive } from "react-icons/md"
 
 const QRCode = dynamic(() => import("react-qr-code"), {
   ssr: false,
@@ -22,6 +21,8 @@ const QRCode = dynamic(() => import("react-qr-code"), {
 const TELEGRAM_CHANNEL = "https://t.me/+sYrwGzNRWQI5NGIx"
 
 export default function Announcement() {
+  const searchParams = useSearchParams()
+
   const [isOpen, setIsOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -40,14 +41,19 @@ export default function Announcement() {
     />
   )
 
+  useEffect(() => {
+    // Close modal when URL params change
+    if (searchParams.size > 0) closeModal()
+  }, [searchParams.size])
+
   return (
     <Fragment>
       {/* Fixed Bell Button */}
       <button
         onClick={openModal}
-        className="fixed animate-in fade-in duration-100 group grid place-items-center bottom-3 sm:bottom-6 right-3 sm:right-8 z-5 size-15 border border-black/10 bg-linear-to-br from-black/10 to-black/5 backdrop-blur-md drop-shadow-2xl rounded-2xl"
+        className="fixed animate-in fade-in duration-100 group grid place-items-center bottom-3 sm:bottom-6 right-3 sm:right-8 z-5 size-15 border border-black/10 bg-gray-200/90 backdrop-blur drop-shadow-2xl rounded-2xl"
       >
-        <div className="absolute size-2 rounded-full bg-[#2c00ff] top-1.5 right-1.5" />
+        <div className="absolute size-2 rounded-full bg-[#2c00ff] top-2 right-2" />
         <MdOutlineNotificationsActive className="text-3xl group-hover:scale-103 opacity-80" />
       </button>
 
