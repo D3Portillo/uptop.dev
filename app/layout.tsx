@@ -1,6 +1,7 @@
 import "./globals.css"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import MainLayout from "./MainLayout"
 
 const nextFont = Inter({
   subsets: [],
@@ -23,7 +24,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${nextFont.className} antialiased`}>{children}</body>
+      <body className={`${nextFont.className} antialiased`}>
+        <MainLayout>{children}</MainLayout>
+      </body>
     </html>
   )
 }

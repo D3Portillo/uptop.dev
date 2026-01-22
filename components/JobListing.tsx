@@ -21,7 +21,7 @@ import { CRYPTO_JOB_LOCATIONS } from "@/lib/constants/countries"
 const atomViewededJobs = atomWithStorage("ut.jobs.viewedJobs", [] as string[])
 export const useViewededJobs = () => useAtom(atomViewededJobs)
 export default function JobListing({
-  listing: { id, properties, rowIndex },
+  listing: { id, formattedId, properties, rowIndex },
 }: {
   listing: JobsList[number]
 }) {
@@ -54,8 +54,9 @@ export default function JobListing({
     properties.faviconBaseDomain,
   )
 
-  // Fallback to job ID to avoid generics
-  const gravatar = blo(keccak256(toHex(properties.company || id)), 16)
+  // Fallback to job ID to avoid generics (formatted to reduce collisions)
+  const gravatarSeed = properties.company || formattedId
+  const gravatar = blo(keccak256(toHex(gravatarSeed)), 16)
 
   return (
     <button
@@ -71,6 +72,7 @@ export default function JobListing({
       <div className="flex min-h-20 gap-6">
         {/* Company Image */}
         <div
+          data-gravatar-seed={gravatarSeed}
           data-company-image={unsafeFaviconURL || "null"}
           style={{
             backgroundImage: `url(${gravatar})`,
