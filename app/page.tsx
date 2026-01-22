@@ -6,6 +6,7 @@ import {
   IoSearchOutline,
   IoChevronDownOutline,
   IoCloseOutline,
+  IoChevronForwardSharp,
 } from "react-icons/io5"
 import { MdCheck, MdOutlineClose } from "react-icons/md"
 
@@ -217,9 +218,9 @@ export default function Home() {
       {/* Header Section */}
       <div className="bg-white border-b border-black/10">
         <div className="max-w-6xl mx-auto px-6 py-6">
-          <nav className="flex sm:mt-4 mb-5 sm:mb-7 items-center">
+          <nav className="flex gap-1 text-lg whitespace-nowrap sm:mt-4 mb-5 sm:mb-7 items-center">
             <button
-              className="pr-4 active:scale-95"
+              className="flex items-center gap-3 active:scale-98"
               onClick={() => {
                 // Simulate re-load page
                 resetFilters()
@@ -228,12 +229,20 @@ export default function Home() {
               }}
             >
               <figure className="text-2xl scale-110">🦄</figure>
+              <strong>UpTop /</strong>
             </button>
-            <h1 className="font-bold whitespace-nowrap text-lg">
-              UpTop <span className="hidden sm:inline-block">Job</span> Board (
-              Community <span className="hidden sm:inline-block">Edition</span>{" "}
-              )
-            </h1>
+            <h1>JobBoard</h1>
+
+            <div className="grow" />
+
+            <button
+              // Simulate "Connect" action
+              onClick={() => window.open("/?connect=", "_blank")}
+              className="h-9 active:scale-98 outline-2 shadow-lg shadow-pink-600/10 hover:shadow-pink-600/20 outline-pink-600/15 text-sm pr-3 relative pl-4 flex gap-1.5 items-center bg-linear-to-br from-pink-600 to-ut-purple rounded-full text-white font-semibold transition-colors"
+            >
+              <span>Connect</span>
+              <IoChevronForwardSharp className="scale-115" />
+            </button>
           </nav>
 
           {/* Search Filters */}
@@ -468,17 +477,17 @@ export default function Home() {
       </div>
 
       <footer className="max-w-6xl mx-auto px-6 pt-8 pb-16">
-        <p className="text-center max-w-xl mx-auto text-sm text-black/50">
-          This is a community project and is not affiliated with UpTop. To find
-          the job posts from UpTop, visit{" "}
+        <p className="text-center max-w-lg mx-auto text-sm text-black/50">
+          This is a community project and is not affiliated with UpTop. Visit{" "}
           <a
             href="https://uptop.notion.site/job-board"
             target="_blank"
             rel="noopener noreferrer"
             className="underline underline-offset-4"
           >
-            UpTop's Notion Job Board
-          </a>
+            UpTop's Notion Page
+          </a>{" "}
+          for the official listings.
         </p>
       </footer>
     </div>
