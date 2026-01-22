@@ -68,7 +68,7 @@ export default function JobListing({
           : "bg-white",
       )}
     >
-      <div className="flex min-h-24 gap-6">
+      <div className="flex min-h-20 gap-6">
         {/* Company Image */}
         <div
           data-company-image={unsafeFaviconURL || "null"}
@@ -96,27 +96,29 @@ export default function JobListing({
         </div>
 
         {/* Job Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-3 mb-2">
-            <h3 className="text-lg font-semibold text-black">
+        <div className="flex-1">
+          <div className="flex items-start gap-3 mb-4 sm:mb-3">
+            <h3 className="text-lg w-2/3 sm:w-auto font-semibold text-black">
               {properties.title}
             </h3>
 
-            {isPriority && (
-              <span className="px-3 py-1 border border-transparent text-xs font-bold bg-ut-purple text-white rounded-full uppercase">
-                PRIORITY
-              </span>
-            )}
+            <div className="grow flex flex-wrap justify-end items-center gap-2">
+              {isPriority && (
+                <span className="px-3 py-1 border border-black text-xs font-bold bg-ut-purple text-white rounded-full uppercase">
+                  PRIORITY
+                </span>
+              )}
 
-            {isLatest && (
-              <span className="px-3 py-1 border border-black text-xs font-bold bg-ut-green text-black rounded-full uppercase">
-                NEW
-              </span>
-            )}
+              {isLatest && (
+                <span className="px-3 py-1 border border-black text-xs font-bold bg-ut-green text-black rounded-full uppercase">
+                  NEW
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Job Details */}
-          <div className="flex *:min-h-10 pb-6 max-w-xl flex-wrap items-center gap-3 text-sm text-black/50">
+          <div className="flex *:min-h-10 max-w-xl flex-wrap items-center gap-3 text-sm text-black/50">
             {properties.formattedJobPolicy && (
               <div className="flex rounded-lg px-3 py-2 text-black bg-black/5 items-center">
                 <span>
@@ -165,7 +167,7 @@ export default function JobListing({
           </div>
         </div>
       </div>
-      <nav className="flex mt-2 text-sm sm:mt-0 opacity-50 items-center gap-2 justify-end">
+      <nav className="flex mt-10 sm:mt-0 text-sm opacity-50 items-center gap-2 justify-end">
         {isApplied ? (
           <Fragment>
             <p title="You've already applied to this job">applied</p>
