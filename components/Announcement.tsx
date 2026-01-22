@@ -65,6 +65,25 @@ export default function Announcement() {
             html {
               overflow: hidden;
             }
+
+            @keyframes bell-ring {
+              0% { transform: rotate(0deg); }
+              10% { transform: rotate(15deg); }
+              20% { transform: rotate(-15deg); }
+              30% { transform: rotate(15deg); }
+              40% { transform: rotate(-15deg); }
+              50% { transform: rotate(10deg); }
+              60% { transform: rotate(-10deg); }
+              70% { transform: rotate(5deg); }
+              80% { transform: rotate(-5deg); }
+              90% { transform: rotate(0deg); }
+              100% { transform: rotate(0deg); }
+            }
+            .bell-animate {
+              animation: bell-ring 1s ease-in-out;
+              transform-origin: top center;
+              display: inline-block;
+            }
           `}</style>
 
           {/* Backdrop */}
@@ -89,7 +108,9 @@ export default function Announcement() {
               {/* Content */}
               <div className="text-center space-y-6 pt-2">
                 <div className="space-y-1">
-                  <div className="text-4xl mb-4">🔔</div>
+                  <div className="text-4xl mb-4">
+                    <span className="bell-animate">🔔</span>
+                  </div>
 
                   <h2 className="text-2xl font-bold text-black">
                     Follow UpTop on Telegram!
