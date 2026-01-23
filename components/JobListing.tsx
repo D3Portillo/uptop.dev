@@ -17,6 +17,7 @@ import { IoLocationOutline } from "react-icons/io5"
 import { cn, jsonify, normalizeLocation } from "@/lib/utils"
 
 import { CRYPTO_JOB_LOCATIONS } from "@/lib/constants/countries"
+import { useCompanyAppData } from "@/lib/company"
 
 const atomViewededJobs = atomWithStorage("ut.jobs.viewedJobs", [] as string[])
 export const useViewededJobs = () => useAtom(atomViewededJobs)
@@ -50,13 +51,21 @@ export default function JobListing({
     router.push(`?job=${id}`, { scroll: false })
   }
 
+  const { companyData } = useCompanyAppData(properties.company || "")
+
   const { favicon, unsafeFaviconURL, dominantColor } = useDomainFavicon(
     properties.faviconBaseDomain,
   )
 
+  const COMPANY_IMAGE = companyData?.logoImage || favicon
+  const COMPANY_COLOR = companyData?.hexColor || dominantColor || "#ffffff"
+
   // Fallback to job ID to avoid generics (formatted to reduce collisions)
   const gravatarSeed = properties.company || formattedId
   const gravatar = blo(keccak256(toHex(gravatarSeed)), 16)
+
+  // Show when no local company data available
+  const shouldShowBorderedColor = !companyData?.hexColor
 
   return (
     <button
@@ -76,7 +85,7 @@ export default function JobListing({
           data-company-image={unsafeFaviconURL || "null"}
           style={{
             backgroundImage: `url(${gravatar})`,
-            filter: favicon
+            filter: COMPANY_IMAGE
               ? undefined
               : "saturate(1.2) brightness(0.7) contrast(1.2)",
           }}
@@ -84,15 +93,18 @@ export default function JobListing({
         >
           <div
             style={{
-              backgroundColor: dominantColor || "white",
+              backgroundColor: COMPANY_COLOR,
             }}
             className={cn(
-              "grid p-1.5 size-full place-items-center",
-              favicon ? "opacity-100" : "opacity-0 pointer-events-none",
+              shouldShowBorderedColor && "p-1.5",
+              "grid size-full place-items-center",
+              COMPANY_IMAGE ? "opacity-100" : "opacity-0 pointer-events-none",
             )}
           >
             <figure className="rounded-md overflow-hidden">
-              {favicon ? <img src={favicon} alt="" /> : null}
+              {COMPANY_IMAGE ? (
+                <img loading="lazy" src={COMPANY_IMAGE} alt="" />
+              ) : null}
             </figure>
           </div>
         </div>
