@@ -220,7 +220,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-6 py-6">
           <nav className="flex gap-1 text-lg whitespace-nowrap sm:mt-4 mb-5 sm:mb-7 items-center">
             <button
-              className="flex items-center gap-3 active:scale-98"
+              className="flex items-center gap-2 active:scale-98"
               onClick={() => {
                 // Simulate re-load page
                 resetFilters()
