@@ -6,13 +6,14 @@ import { Drawer } from "vaul"
 
 import { atom, useAtom } from "jotai"
 import { atomWithStorage } from "jotai/utils"
+import { useJobsList, useJobDetails } from "@/lib/jobs"
+import { formatID } from "@/lib/id"
+import { cn } from "@/lib/utils"
 
 import { IoCloseOutline } from "react-icons/io5"
-import { useJobsList, useJobDetails } from "@/lib/jobs"
-
 import { MdArrowOutward } from "react-icons/md"
+
 import Markdown from "@/components/Markdown"
-import { cn } from "@/lib/utils"
 import { GEOGRAPHIC_REGIONS } from "@/lib/constants/countries"
 
 const atomAppliedJobs = atomWithStorage("ut.jobs.appliedJobs", [] as string[])
@@ -236,11 +237,11 @@ function ModalJob() {
                       </div>
                     </Fragment>
                   ) : (
-                    <DefaultEmptyState />
+                    <DefaultEmptyState formattedID={formatID(openJobID)} />
                   )}
                 </div>
               ) : (
-                <DefaultEmptyState />
+                <DefaultEmptyState formattedID={formatID(openJobID)} />
               )}
             </div>
 
@@ -270,13 +271,30 @@ function ModalJob() {
   )
 }
 
-function DefaultEmptyState() {
+function DefaultEmptyState({ formattedID }: { formattedID?: string }) {
   return (
     <section>
-      <p className="text-black/50 pt-20 text-center max-w-md mx-auto">
-        We haven't create an AI summary for this job yet. Please check back
-        later. Or click "apply" if you wish to continue with the application
-        process
+      <p
+        className={cn(
+          "text-black/50 pt-20 text-center mx-auto",
+          formattedID ? "max-w-md" : "max-w-xs",
+        )}
+      >
+        No AI-summary created for this job yet. Please check back later.{" "}
+        {formattedID ? (
+          <>
+            Or view the{" "}
+            <a
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-4"
+              href={`https://uptop.notion.site/${formattedID}`}
+            >
+              original job posting
+            </a>{" "}
+            for more details.
+          </>
+        ) : null}
       </p>
     </section>
   )
