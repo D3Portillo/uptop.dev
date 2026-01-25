@@ -1,17 +1,32 @@
 "use client"
 
-import { Fragment, useState } from "react"
+import { Fragment, useEffect, useState } from "react"
 import { SignedIn, SignedOut, SignIn, useAuth } from "@clerk/nextjs"
-import { Drawer } from "vaul"
-import { IoChevronForwardSharp, IoCloseOutline } from "react-icons/io5"
+import {
+  IoChevronDownOutline,
+  IoChevronForwardSharp,
+  IoCloseOutline,
+} from "react-icons/io5"
+import AddressBlock from "./AddressBlock"
+import { toHex } from "viem"
 
 export default function Auth() {
-  const { signOut } = useAuth()
-  const [isSignInOpen, setIsSignInOpen] = useState(false)
+  const { signOut, isSignedIn, userId } = useAuth()
+  const [_isSignInOpen, setIsSignInOpen] = useState(false)
 
+  useEffect(() => {
+    // Close modal when signed in
+    if (isSignedIn) setIsSignInOpen(false)
+  }, [isSignedIn])
+
+  // We won't show modal if already signed in
+  const isSignInOpen = isSignedIn ? false : _isSignInOpen
   const AUTH_URL = typeof window !== "undefined" ? location.href : undefined
+
   return (
     <Fragment>
+      <div className="h-9" />
+
       <SignedOut>
         <button
           onClick={() => setIsSignInOpen(true)}
@@ -24,55 +39,76 @@ export default function Auth() {
 
       <SignedIn>
         <button
+          data-user-id={userId || "null"}
           onClick={() => signOut()}
-          className="text-sm font-semibold text-black/70"
+          className="h-9 rounded-lg pl-1 pr-2 bg-black/3 hover:bg-black/5 transition-colors flex items-center gap-1"
         >
-          Disconnect
+          <AddressBlock
+            address={toHex(userId?.replace("user_", "") || "DEFEAULT_ADDRESS")}
+            className="size-7 rounded-full border border-black"
+          />
+          <span className="text-xs ml-1 font-semibold">Profile</span>
+          <IoChevronDownOutline />
         </button>
       </SignedIn>
 
       {/* Sign-In Modal */}
-      <Drawer.Root open={isSignInOpen} onOpenChange={setIsSignInOpen}>
-        <Drawer.Portal>
-          <Drawer.Overlay className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50" />
-          <Drawer.Content className="fixed inset-x-0 bottom-0 top-14 sm:top-20 z-50 max-w-md mx-auto px-2 sm:px-6 flex outline-none">
-            <div className="h-full bg-white rounded-t-2xl shadow-2xl border border-black/10 flex flex-col w-full">
-              {/* Modal Header */}
-              <div className="flex items-center justify-between p-6 pr-3 border-b border-black/10 shrink-0">
-                <h2 className="text-lg font-semibold text-black">
-                  Sign in to UpTop
+      {isSignInOpen && (
+        <Fragment>
+          <style>{`body,html{overflow:hidden}`}</style>
+
+          {/* Backdrop */}
+          <div
+            role="button"
+            tabIndex={-1}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 animate-in fade-in duration-200"
+            onClick={() => setIsSignInOpen(false)}
+          />
+
+          {/* Modal Content */}
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200 pointer-events-none">
+            <div className="bg-white overflow-hidden rounded-3xl shadow-2xl border border-black/10 max-w-md w-full relative pointer-events-auto">
+              {/* Close Button */}
+              <button
+                onClick={() => setIsSignInOpen(false)}
+                className="absolute top-5 right-5 p-2 text-black/50 hover:text-black transition-colors rounded-full hover:bg-black/5"
+              >
+                <IoCloseOutline className="text-2xl" />
+              </button>
+
+              {/* Content */}
+              <div className="text-center w-full">
+                <h2 className="pt-12 mb-2 text-2xl font-bold text-black">
+                  Welcome back
                 </h2>
 
-                <button
-                  onClick={() => setIsSignInOpen(false)}
-                  className="p-2 text-black/70 hover:text-black"
-                >
-                  <IoCloseOutline className="text-2xl" />
-                </button>
-              </div>
-
-              {/* Modal Content */}
-              <div className="flex-1 overflow-y-auto p-6 flex items-center justify-center">
-                <SignIn
-                  routing="virtual"
-                  oauthFlow="popup"
-                  forceRedirectUrl={AUTH_URL}
-                  signUpForceRedirectUrl={AUTH_URL}
-                  appearance={{
-                    elements: {
-                      rootBox: "w-full",
-                      cardBox: "w-full !shadow-none",
-                      card: "bg-transparent !pt-0 shadow-none border-none",
-                      headerTitle: "hidden",
-                      headerSubtitle: "hidden",
-                    },
-                  }}
-                />
+                <div className="flex min-h-48 items-center justify-center">
+                  <SignIn
+                    routing="virtual"
+                    oauthFlow="popup"
+                    fallback={
+                      <div className="p-8 animate-pulse w-full h-48">
+                        <div className="size-full bg-black/5 rounded-2xl" />
+                      </div>
+                    }
+                    forceRedirectUrl={AUTH_URL}
+                    signUpForceRedirectUrl={AUTH_URL}
+                    appearance={{
+                      elements: {
+                        rootBox: "!w-full",
+                        cardBox: "!w-full !max-w-none !shadow-none",
+                        card: "bg-transparent !pt-0 shadow-none border-none",
+                        headerTitle: "hidden",
+                        headerSubtitle: "hidden",
+                      },
+                    }}
+                  />
+                </div>
               </div>
             </div>
-          </Drawer.Content>
-        </Drawer.Portal>
-      </Drawer.Root>
+          </div>
+        </Fragment>
+      )}
     </Fragment>
   )
 }
