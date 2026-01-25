@@ -1,12 +1,12 @@
 "use client"
 
 import { Fragment, useEffect, useState } from "react"
+import dynamic from "next/dynamic"
 
 import {
   IoSearchOutline,
   IoChevronDownOutline,
   IoCloseOutline,
-  IoChevronForwardSharp,
 } from "react-icons/io5"
 import { MdCheck, MdOutlineClose } from "react-icons/md"
 
@@ -24,6 +24,13 @@ import {
 } from "@/lib/constants/countries"
 import JobListing from "@/components/JobListing"
 import SelectSortBy from "@/components/SelectSortBy"
+
+const Auth = dynamic(() => import("@/components/Auth"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-9 w-28 animate-pulse bg-pink-600/15 rounded-full" />
+  ),
+})
 
 const SORT_BY = {
   MOST_RECENT: "Most Recent",
@@ -235,14 +242,7 @@ export default function Home() {
 
             <div className="grow" />
 
-            <button
-              // Simulate "Connect" action
-              onClick={() => window.open("/?connect=", "_blank")}
-              className="h-9 active:scale-98 outline-2 shadow-lg shadow-pink-600/10 hover:shadow-pink-600/20 outline-pink-600/15 text-sm pr-3 relative pl-4 flex gap-1.5 items-center bg-linear-to-br from-pink-600 to-ut-purple rounded-full text-white font-semibold transition-colors"
-            >
-              <span>Connect</span>
-              <IoChevronForwardSharp className="scale-115" />
-            </button>
+            <Auth />
           </nav>
 
           {/* Search Filters */}

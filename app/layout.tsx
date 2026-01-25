@@ -1,6 +1,7 @@
 import "./globals.css"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import { ClerkProvider } from "@clerk/nextjs"
 import MainLayout from "./MainLayout"
 
 const nextFont = Inter({
@@ -23,10 +24,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`${nextFont.className} antialiased`}>
-        <MainLayout>{children}</MainLayout>
-      </body>
-    </html>
+    <ClerkProvider>
+      <html lang="en">
+        <body className={`${nextFont.className} antialiased`}>
+          <MainLayout>{children}</MainLayout>
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }
