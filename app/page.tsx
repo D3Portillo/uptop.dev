@@ -236,10 +236,9 @@ export default function Home() {
               }}
             >
               <figure className="text-2xl scale-110">🦄</figure>
-              <strong>UpTop /</strong>
+              <strong>Up Top /</strong>
             </button>
-            <h1>JobBoard</h1>
-
+            <h1>Jobs</h1>
             <div className="grow" />
 
             <Auth />
@@ -478,14 +477,14 @@ export default function Home() {
 
       <footer className="max-w-6xl mx-auto px-6 pt-8 pb-16">
         <p className="text-center max-w-lg mx-auto text-sm text-black/50">
-          This is a community project and is not affiliated with UpTop. Visit{" "}
+          This is a community project and is not affiliated with Up Top. Visit{" "}
           <a
             href="https://uptop.notion.site/job-board"
             target="_blank"
             rel="noopener noreferrer"
             className="underline underline-offset-4"
           >
-            UpTop's Notion Page
+            Up Top's Notion Page
           </a>{" "}
           for the official listings.
         </p>

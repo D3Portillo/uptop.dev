@@ -1,6 +1,6 @@
-# UpTop Job Board
+# Up Top Job Board
 
-Started as an experiment with [Firecrawl](https://www.firecrawl.dev/) (a $10M+ valued YC company) that failed to parse a simple Notion page for [UpTop's Job Board](https://uptop.notion.site/job-board) where a friend works. That failure turned into this AI-assisted weekend project.
+Started as an experiment with [Firecrawl](https://www.firecrawl.dev/) (a $10M+ valued YC company) that failed to parse a simple Notion page for [Up Top's Job Board](https://uptop.notion.site/job-board) where a friend works. That failure turned into this AI-assisted weekend project.
 
 ## Stack
 

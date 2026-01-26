@@ -113,7 +113,7 @@ export default function Announcement() {
                   </div>
 
                   <h2 className="text-2xl font-bold text-black">
-                    Follow UpTop on Telegram!
+                    Follow Up Top on Telegram
                   </h2>
 
                   <p className="text-black/60 mt-6 sm:mt-0 leading-relaxed">

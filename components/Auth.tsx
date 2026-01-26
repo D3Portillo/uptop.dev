@@ -13,6 +13,7 @@ import { toHex } from "viem"
 export default function Auth() {
   const { signOut, isSignedIn, userId } = useAuth()
   const [_isSignInOpen, setIsSignInOpen] = useState(false)
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
 
   useEffect(() => {
     // Close modal when signed in
@@ -38,18 +39,54 @@ export default function Auth() {
       </SignedOut>
 
       <SignedIn>
-        <button
-          data-user-id={userId || "null"}
-          onClick={() => signOut()}
-          className="h-9 rounded-lg pl-1 pr-2 bg-black/3 hover:bg-black/5 transition-colors flex items-center gap-1"
-        >
-          <AddressBlock
-            address={toHex(userId?.replace("user_", "") || "DEFEAULT_ADDRESS")}
-            className="size-7 rounded-full border border-black"
-          />
-          <span className="text-xs ml-1 font-semibold">Profile</span>
-          <IoChevronDownOutline />
-        </button>
+        <div className="relative">
+          <button
+            data-user-id={userId || "null"}
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            className="h-9 rounded-lg pl-1 pr-2 bg-black/3 hover:bg-black/5 transition-colors flex items-center gap-1"
+          >
+            <AddressBlock
+              address={toHex(
+                userId?.replace("user_", "") || "DEFEAULT_ADDRESS",
+              )}
+              className="size-7 rounded-full border border-black"
+            />
+            <span className="text-xs ml-1 font-semibold">Profile</span>
+            <IoChevronDownOutline />
+          </button>
+
+          {showProfileMenu && (
+            <Fragment>
+              <div
+                tabIndex={-1}
+                role="button"
+                onClick={() => setShowProfileMenu(false)}
+                className="fixed z-5 inset-0"
+              />
+
+              <div className="absolute right-0 mt-2 w-36 bg-white border border-black/10 rounded-lg shadow-lg z-10 flex flex-col">
+                <button
+                  onClick={() => {
+                    setShowProfileMenu(false)
+                    // TODO: Navigate to profile page
+                  }}
+                  className="w-full text-left px-4 py-3 text-sm hover:bg-black/5 first:rounded-t-lg text-black/70 font-medium"
+                >
+                  Manage Profile
+                </button>
+                <button
+                  onClick={() => {
+                    setShowProfileMenu(false)
+                    signOut()
+                  }}
+                  className="w-full text-left px-4 py-3 text-sm hover:bg-black/5 last:rounded-b-lg text-black/70 font-medium"
+                >
+                  Disconnect
+                </button>
+              </div>
+            </Fragment>
+          )}
+        </div>
       </SignedIn>
 
       {/* Sign-In Modal */}
