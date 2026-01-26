@@ -18,7 +18,8 @@ export const CRYPTO_JOB_LOCATIONS = {
   DUBAI: { emoji: "🇦🇪", name: "Dubai" },
   TORONTO: { emoji: "🇨🇦", name: "Toronto" },
   BERLIN: { emoji: "🇩🇪", name: "Berlin" },
-  TOKYO: { emoji: "🇯🇵", name: "Tokyo" },
+  KOREA: { emoji: "🇰🇷", name: "Korea" },
+  JAPAN: { emoji: "🇯🇵", name: "Japan" },
 } as const
 
 export const LOCATION_KEYS = Object.keys(CRYPTO_JOB_LOCATIONS) as LocationKey[]
