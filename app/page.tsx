@@ -351,11 +351,14 @@ export default function Home() {
                     setSelectedSkills(isAllSkillsSelected ? [] : skills)
                   }}
                   className={cn(
-                    "px-3 py-1 flex items-center gap-2 h-8 border border-transparent rounded-lg text-sm transition-colors",
+                    "min-w-30",
+                    "px-3 py-1 flex items-center justify-between gap-2 h-8 border border-transparent rounded-lg text-sm transition-colors",
                     "bg-black/3 text-black/50 border-black/10 hover:bg-black/5",
                   )}
                 >
-                  <span>{isAllSkillsSelected ? "Clear" : "Everything"}</span>
+                  <span>
+                    {isAllSkillsSelected ? "Remove all" : "Everything"}
+                  </span>
                   {isAllSkillsSelected ? (
                     <MdOutlineClose className="scale-125" />
                   ) : (
