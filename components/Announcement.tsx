@@ -51,9 +51,9 @@ export default function Announcement() {
       {/* Fixed Bell Button */}
       <button
         onClick={openModal}
-        className="fixed dark:text-black animate-in fade-in duration-100 group grid place-items-center bottom-3 sm:bottom-6 right-3 sm:right-8 z-5 size-15 border border-black/10 bg-gray-200/90 dark:bg-white backdrop-blur drop-shadow-2xl rounded-2xl"
+        className="fixed animate-in fade-in duration-100 group grid place-items-center bottom-3 sm:bottom-6 right-3 sm:right-8 z-5 size-15 border border-black/10 dark:border-white/10 bg-gray-200/90 dark:bg-white/15 backdrop-blur drop-shadow-2xl rounded-2xl"
       >
-        <div className="absolute size-2 rounded-full bg-[#2c00ff] top-2 right-2" />
+        <div className="absolute size-2 rounded-full bg-[#2c00ff] dark:bg-yellow-200 top-2 right-2" />
         <MdOutlineNotificationsActive className="text-3xl group-hover:scale-103 opacity-80" />
       </button>
 

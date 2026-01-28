@@ -1,32 +1,17 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useTheme } from "next-themes"
 import { FaMoon, FaSun } from "react-icons/fa"
 
-const isDarkThemeActive = () => {
-  if (typeof window === "undefined") return false
-  return document.documentElement.classList.contains("dark")
-}
-
 export default function ThemeToggle() {
-  const [isDarkTheme, setIsDarkTheme] = useState(false)
-
-  useEffect(() => setIsDarkTheme(isDarkThemeActive()), [])
-
-  const toggleTheme = () => {
-    const isDarkTheme = isDarkThemeActive()
-    const theme = isDarkTheme ? "light" : "dark"
-
-    document.documentElement.classList.toggle("dark")
-    localStorage.setItem("theme", theme)
-    setIsDarkTheme(!isDarkTheme)
-  }
+  const { theme, setTheme } = useTheme()
+  const isDarkTheme = theme === "dark"
 
   return (
     <button
-      onClick={toggleTheme}
+      onClick={() => setTheme(isDarkTheme ? "light" : "dark")}
       className="size-9 text-base grid place-items-center rounded-xl border border-black/7 dark:border-white/7"
-      aria-label="Toggle theme"
+      aria-label="Toggle dark/light theme"
     >
       {isDarkTheme ? (
         <FaMoon className="opacity-80" />

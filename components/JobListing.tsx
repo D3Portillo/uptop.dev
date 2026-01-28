@@ -91,7 +91,7 @@ export default function JobListing({
               ? undefined
               : "saturate(1.2) brightness(0.7) contrast(1.2)",
           }}
-          className="size-16 overflow-hidden bg-cover sm:size-20 bg-white border-2 border-black rounded-lg flex items-center justify-center font-bold text-xl shrink-0"
+          className="size-16 overflow-hidden bg-cover sm:size-20 bg-white border-2 border-black dark:border-white rounded-lg flex items-center justify-center font-bold text-xl shrink-0"
         >
           <div
             style={{

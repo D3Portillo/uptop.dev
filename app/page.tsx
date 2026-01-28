@@ -228,7 +228,7 @@ export default function Home() {
         <div className="flex gap-3">
           <label
             tabIndex={-1}
-            className="flex-1 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg focus-within:border-ut-purple focus-within:ring-2 focus-within:ring-ut-purple/20 transition-all relative"
+            className="flex-1 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg focus-within:border-ut-purple focus-within:ring-2 focus-within:ring-ut-purple/20 transition-all relative"
           >
             {isGlobalSearch ? (
               <div
@@ -264,7 +264,7 @@ export default function Home() {
                 resetSkillSelection()
                 setLocationQuery(e.target.value as LocationKey)
               }}
-              className="w-full md:pl-4 pl-4 pr-10 py-3.5 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm appearance-none cursor-pointer"
+              className="w-full md:pl-4 pl-4 pr-10 py-3.5 bg-white/0 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm appearance-none cursor-pointer"
             >
               {locationOptions.map((locationKey) => {
                 const locationData = CRYPTO_JOB_LOCATIONS[locationKey]
@@ -298,7 +298,7 @@ export default function Home() {
             ? Array.from({ length: MIN_DESKTOP_SHOW_SIZE }).map((_, i) => (
                 <div
                   key={`mock-skill-${i}`}
-                  className="h-8 min-w-16 max-w-28 animate-pulse border border-black/3 bg-black/3 grow rounded-lg"
+                  className="h-8 min-w-16 max-w-28 animate-pulse border border-black/3 dark:border-white/1 bg-black/3 dark:bg-white/3 grow rounded-lg"
                 />
               ))
             : displayedSkills.map((skill) => (
@@ -316,7 +316,7 @@ export default function Home() {
                     skill.length > 3 ? "capitalize" : "uppercase",
                     selectedSkills.includes(skill)
                       ? "bg-ut-blue/20 dark:bg-ut-blue/30 text-black/90 dark:text-white/80 border-black/10 dark:border-ut-blue/30"
-                      : "bg-black/3 dark:bg-white/3 text-black/50 dark:text-white/30 border-black/5 dark:border-white/3 hover:bg-black/5 dark:hover:bg-ut-blue/10 dark:hover:text-white/50",
+                      : "bg-black/3 dark:bg-white/3 text-black/50 dark:text-white/40 border-black/5 dark:border-white/3 hover:bg-black/5 dark:hover:bg-ut-blue/10 dark:hover:text-white/50",
                   )}
                 >
                   {skill.toLowerCase()}
@@ -333,7 +333,7 @@ export default function Home() {
                 className={cn(
                   "min-w-30",
                   "px-3 py-1 flex items-center justify-between gap-2 h-8 border border-transparent rounded-lg text-sm transition-colors",
-                  "bg-black/3 dark:bg-white/3 text-black/50 dark:text-white/30 border-black/5 dark:border-white/3 hover:bg-black/5 dark:hover:bg-ut-blue/10 dark:hover:text-white/50",
+                  "bg-black/3 dark:bg-white/3 text-black/50 dark:text-white/40 border-black/5 dark:border-white/3 hover:bg-black/5 dark:hover:bg-ut-blue/10 dark:hover:text-white/50",
                 )}
               >
                 <span>{isAllSkillsSelected ? "Remove all" : "Everything"}</span>
@@ -400,7 +400,9 @@ export default function Home() {
                 onClick={() => setPolicy("ONSITE")}
                 className={cn(
                   "text-sm pl-3",
-                  policy === "ONSITE" ? "font-semibold" : "opacity-60",
+                  policy === "ONSITE"
+                    ? "font-semibold dark:opacity-90"
+                    : "opacity-60",
                 )}
               >
                 📒 On-site
@@ -410,7 +412,9 @@ export default function Home() {
                 onClick={() => setPolicy("REMOTE")}
                 className={cn(
                   "text-sm pr-3",
-                  policy === "REMOTE" ? "font-semibold" : "opacity-60",
+                  policy === "REMOTE"
+                    ? "font-semibold dark:opacity-90"
+                    : "opacity-60",
                 )}
               >
                 <span>💻 Remote</span>

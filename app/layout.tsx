@@ -1,6 +1,8 @@
 import "./globals.css"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+
+import { ThemeProvider } from "next-themes"
 import { ClerkProvider } from "@clerk/nextjs"
 import MainLayout from "./MainLayout"
 
@@ -32,9 +34,11 @@ export default function RootLayout({
         },
       }}
     >
-      <html lang="en">
+      <html lang="en" suppressHydrationWarning>
         <body className={`${nextFont.className} antialiased`}>
-          <MainLayout>{children}</MainLayout>
+          <ThemeProvider attribute="class" defaultTheme="light">
+            <MainLayout>{children}</MainLayout>
+          </ThemeProvider>
         </body>
       </html>
     </ClerkProvider>
