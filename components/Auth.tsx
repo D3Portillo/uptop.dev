@@ -2,16 +2,20 @@
 
 import { Fragment, useEffect, useState } from "react"
 import { SignedIn, SignedOut, SignIn, useAuth } from "@clerk/nextjs"
+import { useRouter } from "next/navigation"
+import { toHex } from "viem"
+
 import {
   IoChevronDownOutline,
   IoChevronForwardSharp,
   IoCloseOutline,
 } from "react-icons/io5"
 import AddressBlock from "./AddressBlock"
-import { toHex } from "viem"
 
 export default function Auth() {
+  const router = useRouter()
   const { signOut, isSignedIn, userId } = useAuth()
+
   const [_isSignInOpen, setIsSignInOpen] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
 
@@ -68,7 +72,7 @@ export default function Auth() {
                 <button
                   onClick={() => {
                     setShowProfileMenu(false)
-                    // TODO: Navigate to profile page
+                    router.push("/profile")
                   }}
                   className="w-full text-left px-4 py-3 text-sm hover:bg-black/5 first:rounded-t-lg text-black/70 font-medium"
                 >

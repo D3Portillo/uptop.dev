@@ -1,7 +1,6 @@
 "use client"
 
 import { Fragment, useEffect, useState } from "react"
-import dynamic from "next/dynamic"
 
 import {
   IoSearchOutline,
@@ -24,13 +23,7 @@ import {
 } from "@/lib/constants/countries"
 import JobListing from "@/components/JobListing"
 import SelectSortBy from "@/components/SelectSortBy"
-
-const Auth = dynamic(() => import("@/components/Auth"), {
-  ssr: false,
-  loading: () => (
-    <div className="h-9 w-28 animate-pulse bg-pink-600/15 rounded-full" />
-  ),
-})
+import TopNavigation from "@/components/TopNavigation"
 
 const SORT_BY = {
   MOST_RECENT: "Most Recent",
@@ -222,168 +215,152 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header Section */}
-      <div className="bg-white border-b border-black/10">
-        <div className="max-w-6xl mx-auto px-6 py-6">
-          <nav className="flex gap-1 text-lg whitespace-nowrap sm:mt-4 mb-5 sm:mb-7 items-center">
-            <button
-              className="flex items-center gap-2 active:scale-98"
-              onClick={() => {
-                // Simulate re-load page
-                resetFilters()
-                setIsGlobalLoading(true)
-                setTimeout(() => setIsGlobalLoading(false), 500)
-              }}
-            >
-              <figure className="text-2xl scale-110">🦄</figure>
-              <strong>Up Top /</strong>
-            </button>
-            <h1>Jobs</h1>
-            <div className="grow" />
-
-            <Auth />
-          </nav>
-
-          {/* Search Filters */}
-          <div className="flex gap-3">
-            <label
-              tabIndex={-1}
-              className="flex-1 bg-white border border-black/10 rounded-lg focus-within:border-ut-purple focus-within:ring-2 focus-within:ring-ut-purple/20 transition-all relative"
-            >
-              {isGlobalSearch ? (
-                <div
-                  role="button"
-                  className="absolute cursor-pointer left-4 py-2 top-1/2 -translate-y-1/2"
-                  onClick={() => {
-                    setSearchQuery("")
-                  }}
-                >
-                  <IoCloseOutline className="text-black/50 text-xl scale-110" />
-                </div>
-              ) : (
-                <IoSearchOutline className="absolute pointer-events-none left-4 top-1/2 -translate-y-1/2 text-black/50 text-xl" />
-              )}
-              <input
-                type="text"
-                placeholder="Filter jobs by title, company or keyword"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full outline-none pl-12 pr-4 py-3.5 bg-transparent text-sm"
-              />
-            </label>
-
-            <div className="w-17 md:w-52 relative">
-              {/* Display emoji on mobile */}
-              <span className="absolute z-1 left-4 top-1/2 -translate-y-1/2 text-xl pointer-events-none md:hidden">
-                {CRYPTO_JOB_LOCATIONS[locationQuery].emoji}
-              </span>
-
-              <select
-                value={locationQuery}
-                onChange={(e) => {
-                  resetSkillSelection()
-                  setLocationQuery(e.target.value as LocationKey)
-                }}
-                className="w-full md:pl-4 pl-4 pr-10 py-3.5 bg-white border border-black/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm appearance-none cursor-pointer"
-              >
-                {locationOptions.map((locationKey) => {
-                  const locationData = CRYPTO_JOB_LOCATIONS[locationKey]
-                  return (
-                    <option key={locationKey} value={locationKey}>
-                      <span className="md:inline hidden">
-                        {locationData.emoji}
-                      </span>{" "}
-                      {locationData.name}
-                    </option>
-                  )
-                })}
-              </select>
-              <IoChevronDownOutline className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-black/50 pointer-events-none" />
-            </div>
-          </div>
-
-          {/* Category Filters */}
-          <div
-            className={cn(
-              "flex transition-all flex-wrap gap-2 items-center",
-              isGlobalLoading &&
-                "min-h-18 sm:min-h-0 items-start sm:items-center",
-              // Hide all section when loaded and few skills to show
-              skills.length < 3 && !isGlobalLoading
-                ? "opacity-0 h-[0%] max-h-0 mt-2 pointer-events-none"
-                : "opacity-100 h-full mt-6",
-            )}
+      <TopNavigation
+        className="[&_nav]:sm:mb-7"
+        onHomeButtonPress={() => {
+          // Simulate re-load page
+          resetFilters()
+          setIsGlobalLoading(true)
+          setTimeout(() => setIsGlobalLoading(false), 500)
+        }}
+      >
+        {/* Search Filters */}
+        <div className="flex gap-3">
+          <label
+            tabIndex={-1}
+            className="flex-1 bg-white border border-black/10 rounded-lg focus-within:border-ut-purple focus-within:ring-2 focus-within:ring-ut-purple/20 transition-all relative"
           >
-            {isGlobalLoading
-              ? Array.from({ length: MIN_DESKTOP_SHOW_SIZE }).map((_, i) => (
-                  <div
-                    key={`mock-skill-${i}`}
-                    className="h-8 min-w-16 max-w-28 animate-pulse border border-black/3 bg-black/3 grow rounded-lg"
-                  />
-                ))
-              : displayedSkills.map((skill) => (
-                  <button
-                    key={`f-skill-${skill}`}
-                    onClick={() => {
-                      setSelectedSkills((prev) =>
-                        prev.includes(skill)
-                          ? prev.filter((c) => c !== skill)
-                          : [...prev, skill],
-                      )
-                    }}
-                    className={cn(
-                      "px-3 py-1 h-8 border border-transparent rounded-lg text-sm transition-colors",
-                      skill.length > 3 ? "capitalize" : "uppercase",
-                      selectedSkills.includes(skill)
-                        ? "bg-ut-blue/20 text-black/90 border-black/10"
-                        : "bg-black/3 text-black/50 border-black/5 hover:bg-black/5",
-                    )}
-                  >
-                    {skill.toLowerCase()}
-                  </button>
-                ))}
+            {isGlobalSearch ? (
+              <div
+                role="button"
+                className="absolute cursor-pointer left-4 py-2 top-1/2 -translate-y-1/2"
+                onClick={() => {
+                  setSearchQuery("")
+                }}
+              >
+                <IoCloseOutline className="text-black/50 text-xl scale-110" />
+              </div>
+            ) : (
+              <IoSearchOutline className="absolute pointer-events-none left-4 top-1/2 -translate-y-1/2 text-black/50 text-xl" />
+            )}
+            <input
+              type="text"
+              placeholder="Filter jobs by title, company or keyword"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full outline-none pl-12 pr-4 py-3.5 bg-transparent text-sm"
+            />
+          </label>
 
-            {/* Show "Select All" / "Show More" options only when enough skills */}
-            {!isGlobalLoading && skills.length > MIN_MOBILE_SHOW_SIZE ? (
-              <Fragment>
-                <button
-                  onClick={() => {
-                    setSelectedSkills(isAllSkillsSelected ? [] : skills)
-                  }}
-                  className={cn(
-                    "min-w-30",
-                    "px-3 py-1 flex items-center justify-between gap-2 h-8 border border-transparent rounded-lg text-sm transition-colors",
-                    "bg-black/3 text-black/50 border-black/10 hover:bg-black/5",
-                  )}
-                >
-                  <span>
-                    {isAllSkillsSelected ? "Remove all" : "Everything"}
-                  </span>
-                  {isAllSkillsSelected ? (
-                    <MdOutlineClose className="scale-125" />
-                  ) : (
-                    <MdCheck className="scale-110" />
-                  )}
-                </button>
+          <div className="w-17 md:w-52 relative">
+            {/* Display emoji on mobile */}
+            <span className="absolute z-1 left-4 top-1/2 -translate-y-1/2 text-xl pointer-events-none md:hidden">
+              {CRYPTO_JOB_LOCATIONS[locationQuery].emoji}
+            </span>
 
-                {skills.length > SHOW_OR_LESS_SIZE && (
-                  <button
-                    onClick={() => setShowAllSkills(!showAllSkills)}
-                    className="border px-3 border-black/10 h-8 rounded-lg text-sm text-black/70 hover:bg-black/5 transition-colors"
-                  >
-                    {showAllSkills
-                      ? "Show less"
-                      : `Show more (${Math.max(
-                          0,
-                          skills.length - SHOW_OR_LESS_SIZE,
-                        )})`}
-                  </button>
-                )}
-              </Fragment>
-            ) : null}
+            <select
+              value={locationQuery}
+              onChange={(e) => {
+                resetSkillSelection()
+                setLocationQuery(e.target.value as LocationKey)
+              }}
+              className="w-full md:pl-4 pl-4 pr-10 py-3.5 bg-white border border-black/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm appearance-none cursor-pointer"
+            >
+              {locationOptions.map((locationKey) => {
+                const locationData = CRYPTO_JOB_LOCATIONS[locationKey]
+                return (
+                  <option key={locationKey} value={locationKey}>
+                    <span className="md:inline hidden">
+                      {locationData.emoji}
+                    </span>{" "}
+                    {locationData.name}
+                  </option>
+                )
+              })}
+            </select>
+            <IoChevronDownOutline className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-black/50 pointer-events-none" />
           </div>
         </div>
-      </div>
+
+        {/* Category Filters */}
+        <div
+          className={cn(
+            "flex transition-all flex-wrap gap-2 items-center",
+            isGlobalLoading &&
+              "min-h-18 sm:min-h-0 items-start sm:items-center",
+            // Hide all section when loaded and few skills to show
+            skills.length < 3 && !isGlobalLoading
+              ? "opacity-0 h-[0%] max-h-0 mt-2 pointer-events-none"
+              : "opacity-100 h-full mt-6",
+          )}
+        >
+          {isGlobalLoading
+            ? Array.from({ length: MIN_DESKTOP_SHOW_SIZE }).map((_, i) => (
+                <div
+                  key={`mock-skill-${i}`}
+                  className="h-8 min-w-16 max-w-28 animate-pulse border border-black/3 bg-black/3 grow rounded-lg"
+                />
+              ))
+            : displayedSkills.map((skill) => (
+                <button
+                  key={`f-skill-${skill}`}
+                  onClick={() => {
+                    setSelectedSkills((prev) =>
+                      prev.includes(skill)
+                        ? prev.filter((c) => c !== skill)
+                        : [...prev, skill],
+                    )
+                  }}
+                  className={cn(
+                    "px-3 py-1 h-8 border border-transparent rounded-lg text-sm transition-colors",
+                    skill.length > 3 ? "capitalize" : "uppercase",
+                    selectedSkills.includes(skill)
+                      ? "bg-ut-blue/20 text-black/90 border-black/10"
+                      : "bg-black/3 text-black/50 border-black/5 hover:bg-black/5",
+                  )}
+                >
+                  {skill.toLowerCase()}
+                </button>
+              ))}
+
+          {/* Show "Select All" / "Show More" options only when enough skills */}
+          {!isGlobalLoading && skills.length > MIN_MOBILE_SHOW_SIZE ? (
+            <Fragment>
+              <button
+                onClick={() => {
+                  setSelectedSkills(isAllSkillsSelected ? [] : skills)
+                }}
+                className={cn(
+                  "min-w-30",
+                  "px-3 py-1 flex items-center justify-between gap-2 h-8 border border-transparent rounded-lg text-sm transition-colors",
+                  "bg-black/3 text-black/50 border-black/10 hover:bg-black/5",
+                )}
+              >
+                <span>{isAllSkillsSelected ? "Remove all" : "Everything"}</span>
+                {isAllSkillsSelected ? (
+                  <MdOutlineClose className="scale-125" />
+                ) : (
+                  <MdCheck className="scale-110" />
+                )}
+              </button>
+
+              {skills.length > SHOW_OR_LESS_SIZE && (
+                <button
+                  onClick={() => setShowAllSkills(!showAllSkills)}
+                  className="border px-3 border-black/10 h-8 rounded-lg text-sm text-black/70 hover:bg-black/5 transition-colors"
+                >
+                  {showAllSkills
+                    ? "Show less"
+                    : `Show more (${Math.max(
+                        0,
+                        skills.length - SHOW_OR_LESS_SIZE,
+                      )})`}
+                </button>
+              )}
+            </Fragment>
+          ) : null}
+        </div>
+      </TopNavigation>
 
       {/* Main Content */}
       <div
