@@ -7,8 +7,12 @@ import { cn } from "@/lib/utils"
 const Auth = dynamic(() => import("./Auth"), {
   ssr: false,
   loading: () => (
-    <div className="h-9 w-28 animate-pulse bg-pink-600/15 rounded-full" />
+    <div className="h-9 w-28 animate-pulse bg-pink-600/15 dark:bg-white/10 rounded-full" />
   ),
+})
+
+const ThemeToggle = dynamic(() => import("./ThemeToggle"), {
+  ssr: false,
 })
 
 export default function TopNavigation({
@@ -20,7 +24,12 @@ export default function TopNavigation({
   className?: string
 }>) {
   return (
-    <div className={cn("bg-white border-b border-black/10", className)}>
+    <div
+      className={cn(
+        "bg-white dark:bg-white/10 border-b border-black/10 dark:border-white/10",
+        className,
+      )}
+    >
       <div className="max-w-6xl mx-auto px-6 py-6">
         <nav className="flex mt-1 sm:mt-4 mb-5 gap-1 text-lg whitespace-nowrap items-center">
           <button
@@ -33,7 +42,10 @@ export default function TopNavigation({
           <h1>Jobs</h1>
           <div className="grow" />
 
-          <Auth />
+          <div className="flex gap-1 items-center">
+            <ThemeToggle />
+            <Auth />
+          </div>
         </nav>
 
         {children}

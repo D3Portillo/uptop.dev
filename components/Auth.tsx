@@ -47,7 +47,7 @@ export default function Auth() {
           <button
             data-user-id={userId || "null"}
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="h-9 rounded-lg pl-1 pr-2 bg-black/3 hover:bg-black/5 transition-colors flex items-center gap-1"
+            className="h-9 rounded-lg pl-1 pr-2 bg-black/3 dark:bg-white/3 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center gap-1"
           >
             <AddressBlock
               address={toHex(

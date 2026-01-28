@@ -5,9 +5,18 @@ button {
   @apply cursor-pointer;
 }
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-ut-purple: #9f29fe;
   --color-ut-red: #f93943;
   --color-ut-green: #00ff04;
   --color-ut-blue: #2ec0f9;
+}
+
+/* Dark mode base styles */
+.dark {
+  color-scheme: dark;
+  background: black;
+  color: white;
 }

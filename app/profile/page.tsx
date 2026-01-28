@@ -77,7 +77,7 @@ export default function ProfilePage() {
   const fullName = user?.fullName || "Anonymous User"
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-black">
       <TopNavigation
         className="[&_nav]:mb-1 [&_nav]:sm:mb-3"
         onHomeButtonPress={() => router.push("/")}

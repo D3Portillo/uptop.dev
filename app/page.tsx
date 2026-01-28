@@ -214,7 +214,7 @@ export default function Home() {
   const isEmpty = !isGlobalLoading && filteredListings.length === 0
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-black">
       <TopNavigation
         className="[&_nav]:sm:mb-7"
         onHomeButtonPress={() => {
@@ -228,7 +228,7 @@ export default function Home() {
         <div className="flex gap-3">
           <label
             tabIndex={-1}
-            className="flex-1 bg-white border border-black/10 rounded-lg focus-within:border-ut-purple focus-within:ring-2 focus-within:ring-ut-purple/20 transition-all relative"
+            className="flex-1 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg focus-within:border-ut-purple focus-within:ring-2 focus-within:ring-ut-purple/20 transition-all relative"
           >
             {isGlobalSearch ? (
               <div
@@ -238,10 +238,10 @@ export default function Home() {
                   setSearchQuery("")
                 }}
               >
-                <IoCloseOutline className="text-black/50 text-xl scale-110" />
+                <IoCloseOutline className="opacity-50 text-xl scale-110" />
               </div>
             ) : (
-              <IoSearchOutline className="absolute pointer-events-none left-4 top-1/2 -translate-y-1/2 text-black/50 text-xl" />
+              <IoSearchOutline className="absolute pointer-events-none left-4 top-1/2 -translate-y-1/2 opacity-50 text-xl" />
             )}
             <input
               type="text"
@@ -264,7 +264,7 @@ export default function Home() {
                 resetSkillSelection()
                 setLocationQuery(e.target.value as LocationKey)
               }}
-              className="w-full md:pl-4 pl-4 pr-10 py-3.5 bg-white border border-black/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm appearance-none cursor-pointer"
+              className="w-full md:pl-4 pl-4 pr-10 py-3.5 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm appearance-none cursor-pointer"
             >
               {locationOptions.map((locationKey) => {
                 const locationData = CRYPTO_JOB_LOCATIONS[locationKey]
@@ -278,7 +278,7 @@ export default function Home() {
                 )
               })}
             </select>
-            <IoChevronDownOutline className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 text-black/50 pointer-events-none" />
+            <IoChevronDownOutline className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
           </div>
         </div>
 
@@ -315,8 +315,8 @@ export default function Home() {
                     "px-3 py-1 h-8 border border-transparent rounded-lg text-sm transition-colors",
                     skill.length > 3 ? "capitalize" : "uppercase",
                     selectedSkills.includes(skill)
-                      ? "bg-ut-blue/20 text-black/90 border-black/10"
-                      : "bg-black/3 text-black/50 border-black/5 hover:bg-black/5",
+                      ? "bg-ut-blue/20 dark:bg-ut-blue/30 text-black/90 dark:text-white/80 border-black/10 dark:border-ut-blue/30"
+                      : "bg-black/3 dark:bg-white/3 text-black/50 dark:text-white/30 border-black/5 dark:border-white/3 hover:bg-black/5 dark:hover:bg-ut-blue/10 dark:hover:text-white/50",
                   )}
                 >
                   {skill.toLowerCase()}
@@ -333,7 +333,7 @@ export default function Home() {
                 className={cn(
                   "min-w-30",
                   "px-3 py-1 flex items-center justify-between gap-2 h-8 border border-transparent rounded-lg text-sm transition-colors",
-                  "bg-black/3 text-black/50 border-black/10 hover:bg-black/5",
+                  "bg-black/3 dark:bg-white/3 text-black/50 dark:text-white/30 border-black/5 dark:border-white/3 hover:bg-black/5 dark:hover:bg-ut-blue/10 dark:hover:text-white/50",
                 )}
               >
                 <span>{isAllSkillsSelected ? "Remove all" : "Everything"}</span>
@@ -347,14 +347,16 @@ export default function Home() {
               {skills.length > SHOW_OR_LESS_SIZE && (
                 <button
                   onClick={() => setShowAllSkills(!showAllSkills)}
-                  className="border px-3 border-black/10 h-8 rounded-lg text-sm text-black/70 hover:bg-black/5 transition-colors"
+                  className="border px-3 border-black/10 dark:border-white/10 h-8 rounded-lg text-sm hover:underline underline-offset-3"
                 >
-                  {showAllSkills
-                    ? "Show less"
-                    : `Show more (${Math.max(
-                        0,
-                        skills.length - SHOW_OR_LESS_SIZE,
-                      )})`}
+                  <span className="opacity-70">
+                    {showAllSkills
+                      ? "Show less"
+                      : `Show more (${Math.max(
+                          0,
+                          skills.length - SHOW_OR_LESS_SIZE,
+                        )})`}
+                  </span>
                 </button>
               )}
             </Fragment>
@@ -371,7 +373,7 @@ export default function Home() {
       >
         {/* Results Header */}
         <div className="sm:flex gap-3 items-center mb-5">
-          <div className="text-black/70 whitespace-nowrap">
+          <div className="opacity-70 whitespace-nowrap">
             Showing{" "}
             <span className="font-semibold">
               {
@@ -383,7 +385,7 @@ export default function Home() {
             {isGlobalSearch && (
               <span
                 title="Search is global"
-                className="underline cursor-pointer decoration-black/25 underline-offset-4"
+                className="underline cursor-pointer decoration-black/25 dark:decoration-white/50 underline-offset-4"
               >
                 globally
               </span>
@@ -393,7 +395,7 @@ export default function Home() {
           <div className="grow" />
 
           <div className="flex mt-4 sm:mt-0 gap-3 items-center">
-            <div className="flex whitespace-nowrap h-10 gap-3.5 border border-black/10 rounded-lg bg-white">
+            <div className="flex whitespace-nowrap h-10 gap-3.5 border border-black/10 rounded-lg bg-white dark:bg-white/5 dark:border-white/10">
               <button
                 onClick={() => setPolicy("ONSITE")}
                 className={cn(
@@ -429,17 +431,17 @@ export default function Home() {
             {[...Array(10)].map((_, i) => (
               <div
                 key={`mock-load-${i}`}
-                className="h-52 sm:h-36 bg-white rounded-xl animate-pulse border border-black/10"
+                className="h-52 sm:h-36 bg-white dark:bg-white/10 rounded-xl animate-pulse border border-black/10"
               />
             ))}
           </div>
         ) : isEmpty ? (
           <section className="flex gap-2 py-16 flex-col items-center justify-center">
-            <div className="text-black/50">
+            <div className="opacity-50">
               Nothing found, try adjusting your search
             </div>
 
-            <button onClick={resetFilters} className="underline text-black/50">
+            <button onClick={resetFilters} className="underline opacity-50">
               Clear filters
             </button>
           </section>
@@ -456,7 +458,7 @@ export default function Home() {
       </div>
 
       <footer className="max-w-6xl mx-auto px-6 pt-8 pb-16">
-        <p className="text-center max-w-lg mx-auto text-sm text-black/50">
+        <p className="text-center max-w-lg mx-auto text-sm opacity-50">
           This is a community project and is not affiliated with Up Top. Visit{" "}
           <a
             href="https://uptop.notion.site/job-board"

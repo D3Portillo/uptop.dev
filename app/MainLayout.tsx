@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, type PropsWithChildren } from "react"
+import { Fragment, useLayoutEffect, type PropsWithChildren } from "react"
 import dynamic from "next/dynamic"
 
 const Announcement = dynamic(() => import("@/components/Announcement"), {
@@ -19,6 +19,13 @@ const ModalJobWithSuspense = dynamic(() => import("@/components/ModalJob"), {
 })
 
 export default function MainLayout({ children }: PropsWithChildren) {
+  useLayoutEffect(() => {
+    const theme = localStorage.getItem("theme")
+    if (theme === "dark") {
+      document.documentElement.classList.add("dark")
+    } else document.documentElement.classList.remove("dark")
+  }, [])
+
   return (
     <Fragment>
       <ModalJobWithSuspense />

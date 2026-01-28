@@ -72,10 +72,12 @@ export default function JobListing({
       key={`list-${id}`}
       onClick={openDrawer}
       className={cn(
-        "w-full text-left p-5 border border-black/10 rounded-2xl hover:border-black/15 shadow-black/5 hover:shadow transition-all",
+        "text-black dark:text-white",
+        "border-black/10 dark:border-white/5 hover:border-black/15 dark:hover:border-white/10",
+        "w-full text-left rounded-2xl p-5 border shadow-black/5 hover:shadow transition-all",
         isPriority
-          ? "bg-linear-to-bl border-black/7 from-ut-purple/10 to-black/3"
-          : "bg-white",
+          ? "bg-linear-to-bl border-black/7 dark:border-white/7 from-ut-purple/10 dark:from-ut-purple/15 to-black/3 dark:to-white/3"
+          : "bg-white dark:bg-white/5",
       )}
     >
       <div className="flex min-h-20 gap-6">
@@ -89,7 +91,7 @@ export default function JobListing({
               ? undefined
               : "saturate(1.2) brightness(0.7) contrast(1.2)",
           }}
-          className="size-16 overflow-hidden bg-cover sm:size-20 bg-white border-2 border-black rounded-lg flex items-center justify-center text-white font-bold text-xl shrink-0"
+          className="size-16 overflow-hidden bg-cover sm:size-20 bg-white border-2 border-black rounded-lg flex items-center justify-center font-bold text-xl shrink-0"
         >
           <div
             style={{
@@ -110,9 +112,9 @@ export default function JobListing({
         </div>
 
         {/* Job Info */}
-        <div className="flex-1">
+        <div className="flex-1 dark:text-white/80">
           <div className="flex items-start gap-3 mb-4 sm:mb-3">
-            <h3 className="text-lg w-2/3 sm:w-auto font-semibold text-black">
+            <h3 className="text-lg text-black dark:text-white w-2/3 sm:w-auto font-semibold">
               {properties.title}
             </h3>
 
@@ -132,9 +134,9 @@ export default function JobListing({
           </div>
 
           {/* Job Details */}
-          <div className="flex *:min-h-10 max-w-xl flex-wrap items-center gap-3 text-sm text-black/50">
+          <div className="flex *:min-h-10 max-w-xl flex-wrap items-center gap-3 text-sm">
             {properties.formattedJobPolicy && (
-              <div className="flex rounded-lg px-3 py-2 text-black bg-black/5 items-center">
+              <div className="flex rounded-lg px-3 py-2 bg-black/5 dark:bg-white/5 items-center">
                 <span>
                   {properties.formattedJobPolicy.emoji}{" "}
                   {properties.formattedJobPolicy.label}
@@ -143,11 +145,11 @@ export default function JobListing({
             )}
 
             {properties.location && (
-              <div className="flex rounded-lg pl-2 py-2 gap-2 pr-4 bg-black/5 items-center">
+              <div className="flex rounded-lg pl-2 py-2 gap-2 pr-4 bg-black/5 dark:bg-white/5 items-center">
                 <IoLocationOutline className="text-base shrink-0 hidden sm:block" />
                 <div
                   className={cn(
-                    "flex flex-wrap text-black items-center gap-2",
+                    "flex flex-wrap items-center gap-2",
                     properties.location.includes(",") && "py-2 sm:py-0",
                   )}
                 >
@@ -172,7 +174,7 @@ export default function JobListing({
             {properties.salaryRange?.map((range) => (
               <div
                 key={`salary-${range}`}
-                className="flex text-black rounded-lg pl-3 py-2 gap-2 pr-4 bg-black/5 items-center"
+                className="flex rounded-lg pl-3 py-2 gap-2 pr-4 bg-black/5 dark:bg-white/5 items-center"
               >
                 <span>💰</span>
                 <span className="font-medium">{range}</span>
