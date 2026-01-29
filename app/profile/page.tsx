@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation"
 import { toHex } from "viem"
 
 import { extractSkillsFromJobs, useJobsList } from "@/lib/jobs"
-import { cn } from "@/lib/utils"
-
 import { MdCheck } from "react-icons/md"
+
+import SkillChip from "@/components/SkillChip"
 import TopNavigation from "@/components/TopNavigation"
 import AddressBlock from "@/components/AddressBlock"
 
@@ -154,25 +154,18 @@ export default function ProfilePage() {
 
             <div className="flex flex-wrap gap-2 items-center">
               {skills.map((skill) => (
-                <button
-                  key={`skill-p-${skill}`}
-                  onClick={() => {
+                <SkillChip
+                  skill={skill}
+                  key={`p-skill-${skill}`}
+                  isSelected={selectedSkills.includes(skill)}
+                  onSelect={() => {
                     setSelectedSkills((prev) =>
                       prev.includes(skill)
                         ? prev.filter((s) => s !== skill)
                         : [...prev, skill],
                     )
                   }}
-                  className={cn(
-                    "px-3 py-1 h-8 border border-transparent rounded-lg text-sm transition-colors",
-                    skill.length > 3 ? "capitalize" : "uppercase",
-                    selectedSkills.includes(skill)
-                      ? "bg-ut-blue/20 text-black/90 border-black/10"
-                      : "bg-black/3 text-black/50 border-black/5 hover:bg-black/5",
-                  )}
-                >
-                  {skill.toLowerCase()}
-                </button>
+                />
               ))}
             </div>
           </div>
@@ -180,7 +173,7 @@ export default function ProfilePage() {
           {/* Crypto Experience */}
           <div className="pt-6 pb-12 flex justify-start border-t border-black/7 dark:border-white/7">
             <label className="flex items-start gap-4 cursor-pointer group">
-              <div className="relative pt-0.5">
+              <div className="relative pt-1">
                 <input
                   type="checkbox"
                   checked={hasCryptoExperience}
@@ -206,7 +199,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Action Buttons */}
-          <nav className="flex w-full mb-12">
+          <nav className="flex w-full mb-24 sm:mb-4">
             <button
               onClick={handleSave}
               className="px-6 w-full py-3 bg-ut-purple text-white rounded-lg font-semibold hover:bg-ut-purple/90 transition-colors shadow-lg shadow-ut-purple/20"

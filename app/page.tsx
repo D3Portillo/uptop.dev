@@ -24,6 +24,7 @@ import {
 import JobListing from "@/components/JobListing"
 import SelectSortBy from "@/components/SelectSortBy"
 import TopNavigation from "@/components/TopNavigation"
+import SkillChip from "@/components/SkillChip"
 
 const SORT_BY = {
   MOST_RECENT: "Most Recent",
@@ -302,25 +303,18 @@ export default function Home() {
                 />
               ))
             : displayedSkills.map((skill) => (
-                <button
+                <SkillChip
+                  skill={skill}
                   key={`f-skill-${skill}`}
-                  onClick={() => {
+                  isSelected={selectedSkills.includes(skill)}
+                  onSelect={() => {
                     setSelectedSkills((prev) =>
                       prev.includes(skill)
                         ? prev.filter((c) => c !== skill)
                         : [...prev, skill],
                     )
                   }}
-                  className={cn(
-                    "px-3 py-1 h-8 border border-transparent rounded-lg text-sm transition-colors",
-                    skill.length > 3 ? "capitalize" : "uppercase",
-                    selectedSkills.includes(skill)
-                      ? "bg-ut-blue/20 dark:bg-ut-blue/30 text-black/90 dark:text-white/80 border-black/10 dark:border-ut-blue/30"
-                      : "bg-black/3 dark:bg-white/3 text-black/50 dark:text-white/40 border-black/5 dark:border-white/3 hover:bg-black/5 dark:hover:bg-ut-blue/10 dark:hover:text-white/50",
-                  )}
-                >
-                  {skill.toLowerCase()}
-                </button>
+                />
               ))}
 
           {/* Show "Select All" / "Show More" options only when enough skills */}
