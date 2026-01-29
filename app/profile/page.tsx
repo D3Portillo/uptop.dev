@@ -1,6 +1,6 @@
 "use client"
 
-import { Fragment, useState } from "react"
+import { useState } from "react"
 import { useAuth, useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 import { toHex } from "viem"
@@ -8,14 +8,13 @@ import { toHex } from "viem"
 import { extractSkillsFromJobs, useJobsList } from "@/lib/jobs"
 import { cn } from "@/lib/utils"
 
-import { IoCloseOutline } from "react-icons/io5"
 import { MdCheck } from "react-icons/md"
 import TopNavigation from "@/components/TopNavigation"
 import AddressBlock from "@/components/AddressBlock"
 
 export default function ProfilePage() {
   const router = useRouter()
-  const { signOut, userId } = useAuth()
+  const { userId } = useAuth()
   const { user, isLoaded: isUserDataLoaded } = useUser()
 
   const { jobs, isLoading } = useJobsList()
@@ -27,7 +26,6 @@ export default function ProfilePage() {
   const [linkedin, setLinkedin] = useState("")
   const [cvFile, setCvFile] = useState<File | null>(null)
   const [cvPreviewUrl, setCvPreviewUrl] = useState<string | null>(null)
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const handleCvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -47,13 +45,6 @@ export default function ProfilePage() {
     }
   }
 
-  const handleDeleteProfile = () => {
-    // TODO: Implement actual profile deletion
-    console.log("Delete profile requested")
-    setShowDeleteConfirm(false)
-    signOut(() => router.push("/"))
-  }
-
   const handleSave = () => {
     // TODO: Implement actual save functionality
     console.log({
@@ -67,8 +58,8 @@ export default function ProfilePage() {
 
   if (!isUserDataLoaded || isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-black/60">Loading...</div>
+      <div className="min-h-screen bg-gray-50 dark:bg-black flex items-center justify-center">
+        <div className="text-black/60 dark:text-white/60">Loading...</div>
       </div>
     )
   }
@@ -84,11 +75,11 @@ export default function ProfilePage() {
       />
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto p-6">
-        <div className="bg-white rounded-xl border border-black/10 p-6 sm:p-8 mt-4 sm:mt-16 mb-24">
+      <div className="max-w-4xl mx-auto sm:px-8 sm:pt-8 sm:pb-32">
+        <div className="bg-white text-black dark:text-white dark:bg-white/5 sm:rounded-xl border border-black/0 sm:border-black/10 dark:sm:border-white/10 p-7 sm:p-16 sm:mt-16">
           {/* Profile Header */}
-          <div className="flex items-center gap-6 mb-8 pb-8 border-b border-black/7">
-            <figure className="size-18 sm:size-20 overflow-hidden rounded-full border-2 border-black">
+          <div className="flex items-center gap-6 mt-6 sm:mt-0 mb-8 pb-8 border-b border-black/7 dark:border-white/7">
+            <figure className="size-18 sm:size-20 overflow-hidden rounded-2xl sm:rounded-full border border-black dark:border-white/10">
               {profileImage ? (
                 <img
                   alt=""
@@ -103,93 +94,61 @@ export default function ProfilePage() {
               )}
             </figure>
             <div>
-              <h2 className="text-2xl font-bold text-black">{fullName}</h2>
-              <p className="text-black/50 text-sm mt-1">
+              <h2 className="text-xl sm:text-2xl font-bold">{fullName}</h2>
+              <p className="opacity-50 text-sm mt-1">
                 {user?.primaryEmailAddress?.emailAddress}
               </p>
             </div>
           </div>
 
           {/* Social Links */}
-          <div className="space-y-8 pb-12 border-b border-black/10">
+          <div className="space-y-8 pb-12 border-b border-black/10 dark:border-white/7">
             <div>
-              <h3 className="text-lg font-semibold text-black mb-4">Twitter</h3>
+              <h3 className="text-lg font-semibold mb-4">Twitter</h3>
               <input
                 type="text"
                 value={twitter}
                 onChange={(e) => setTwitter(e.target.value)}
                 placeholder="@username"
-                className="w-full px-4 h-12 bg-white border border-black/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
+                className="w-full px-4 h-12 bg-transparent border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
               />
             </div>
 
             <div>
-              <h3 className="text-lg font-semibold text-black mb-4">
-                LinkedIn
-              </h3>
+              <h3 className="text-lg font-semibold mb-4">LinkedIn</h3>
 
               <input
                 type="text"
                 value={linkedin}
                 onChange={(e) => setLinkedin(e.target.value)}
                 placeholder="https://linkedin.com/in/username"
-                className="w-full px-4 h-12 bg-white border border-black/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
+                className="w-full px-4 h-12 bg-transparent border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
               />
             </div>
 
             {/* CV Upload */}
             <div>
-              <h3 className="text-lg font-semibold text-black mb-4">
-                Resume / CV
-              </h3>
+              <h3 className="text-lg font-semibold mb-4">Resume / CV</h3>
 
-              {cvFile || cvPreviewUrl ? (
-                <div className="bg-gray-50 border border-black/10 rounded-lg p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="size-10 bg-ut-purple/20 rounded-lg flex items-center justify-center text-xl">
-                      📄
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-black">
-                        {cvFile?.name || "current-cv.pdf"}
-                      </p>
-                      <p className="text-xs text-black/50">
-                        {cvFile?.size
-                          ? `${(cvFile.size / 1024).toFixed(1)} KB`
-                          : "PDF Document"}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleRemoveCv}
-                    className="p-2 text-black/50 hover:text-black transition-colors rounded-lg hover:bg-black/5"
-                  >
-                    <IoCloseOutline className="text-xl" />
-                  </button>
+              <label className="block cursor-pointer">
+                <div className="border-2 border-dashed border-black/10 dark:border-white/10 rounded-lg p-8 text-center hover:border-ut-purple/50 hover:bg-ut-purple/5 transition-all">
+                  <div className="text-4xl mb-2">📤</div>
+                  <p className="text-sm font-medium opacity-70">Upload CV</p>
+                  <p className="text-xs opacity-50 mt-1">PDF (Max 5MB)</p>
                 </div>
-              ) : (
-                <label className="block cursor-pointer">
-                  <div className="border-2 border-dashed border-black/10 rounded-lg p-8 text-center hover:border-ut-purple/50 hover:bg-ut-purple/5 transition-all">
-                    <div className="text-4xl mb-2">📤</div>
-                    <p className="text-sm font-medium text-black/70">
-                      Upload CV
-                    </p>
-                    <p className="text-xs text-black/50 mt-1">PDF (Max 5MB)</p>
-                  </div>
-                  <input
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleCvUpload}
-                    className="hidden"
-                  />
-                </label>
-              )}
+                <input
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleCvUpload}
+                  className="hidden"
+                />
+              </label>
             </div>
           </div>
 
           {/* Skills Selection */}
           <div className="mb-8 mt-8">
-            <h3 className="text-lg font-semibold text-black mb-4">
+            <h3 className="text-lg font-semibold mb-4">
               Skills <span className="font-normal text-base">(Max 5)</span>
             </h3>
 
@@ -219,7 +178,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Crypto Experience */}
-          <div className="pt-6 pb-12 flex justify-start border-t border-black/7">
+          <div className="pt-6 pb-12 flex justify-start border-t border-black/7 dark:border-white/7">
             <label className="flex items-start gap-4 cursor-pointer group">
               <div className="relative pt-0.5">
                 <input
@@ -228,17 +187,17 @@ export default function ProfilePage() {
                   onChange={(e) => setHasCryptoExperience(e.target.checked)}
                   className="peer sr-only"
                 />
-                <div className="size-5 border-2 border-black/20 rounded group-hover:border-black/30 peer-checked:border-ut-purple peer-checked:bg-ut-purple transition-all flex items-center justify-center">
+                <div className="size-5 border-2 border-black/20 dark:border-white/20 rounded group-hover:border-black/35 dark:group-hover:border-ut-purple peer-checked:border-ut-purple peer-checked:bg-ut-purple transition-all flex items-center justify-center">
                   {hasCryptoExperience && (
                     <MdCheck className="text-white text-sm" />
                   )}
                 </div>
               </div>
               <div>
-                <p className="text-sm font-medium text-black">
+                <p className="text-sm font-medium">
                   Do you have experience working in the crypto/web3 industry?
                 </p>
-                <p className="text-xs text-black/50 mt-1">
+                <p className="text-xs opacity-50 mt-1">
                   This is not required, but helps us match you with relevant
                   opportunities.
                 </p>
@@ -247,7 +206,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Action Buttons */}
-          <nav className="flex w-full">
+          <nav className="flex w-full mb-12">
             <button
               onClick={handleSave}
               className="px-6 w-full py-3 bg-ut-purple text-white rounded-lg font-semibold hover:bg-ut-purple/90 transition-colors shadow-lg shadow-ut-purple/20"
@@ -257,52 +216,6 @@ export default function ProfilePage() {
           </nav>
         </div>
       </div>
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <Fragment>
-          <style>{`body,html{overflow:hidden}`}</style>
-
-          {/* Backdrop */}
-          <div
-            role="button"
-            tabIndex={-1}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 animate-in fade-in duration-200"
-            onClick={() => setShowDeleteConfirm(false)}
-          />
-
-          {/* Modal Content */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200 pointer-events-none">
-            <div className="bg-white rounded-2xl shadow-2xl border border-black/10 max-w-md w-full relative pointer-events-auto p-6">
-              <div className="text-center mb-6">
-                <div className="text-5xl mb-4">⚠️</div>
-                <h2 className="text-xl font-bold text-black mb-2">
-                  Delete Profile?
-                </h2>
-                <p className="text-sm text-black/60">
-                  This action cannot be undone. All your data will be
-                  permanently deleted.
-                </p>
-              </div>
-
-              <div className="flex gap-3">
-                <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  className="flex-1 px-4 py-3 bg-black/5 text-black/70 rounded-lg font-medium hover:bg-black/10 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleDeleteProfile}
-                  className="flex-1 px-4 py-3 bg-ut-red text-white rounded-lg font-semibold hover:bg-ut-red/90 transition-colors"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          </div>
-        </Fragment>
-      )}
     </div>
   )
 }

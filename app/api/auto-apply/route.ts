@@ -84,6 +84,7 @@ export async function POST(request: Request) {
       [FIELD_IDS.formType]: "JOB APPLICATION",
       [FIELD_IDS.email]: payload.email,
       [FIELD_IDS.linkedin]: payload.linkedin,
+      [FIELD_IDS.notes]: "Sent using uptop.dev auto-apply feature",
       [FIELD_IDS.resumeURL]: [payload.resumeURL],
       [FIELD_IDS.defaultBanner]: [
         "https://api.noteforms.com/forms/assets/TALENT-PROFILE-CLEAN_a8f38ad8-d25c-4b5a-bf27-83d091082417.jpg",
