@@ -1,17 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useAuth, useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 
+import { setProfileData } from "@/app/actions/profile"
 import { extractSkillsFromJobs, useJobsList } from "@/lib/jobs"
-import { toAddres } from "@/lib/profile"
+import { toAddres, useProfileData } from "@/lib/profile"
 import { MdCheck } from "react-icons/md"
 
 import SkillChip from "@/components/SkillChip"
 import TopNavigation from "@/components/TopNavigation"
 import AddressBlock from "@/components/AddressBlock"
 
+const MAX_SKILLS = 5
 export default function ProfilePage() {
   const router = useRouter()
   const { userId } = useAuth()
@@ -26,7 +28,18 @@ export default function ProfilePage() {
   const [telegram, setTelegram] = useState("")
   const [linkedin, setLinkedin] = useState("")
   const [cvFile, setCvFile] = useState<File | null>(null)
-  const [cvPreviewUrl, setCvPreviewUrl] = useState<string | null>(null)
+
+  const { profile } = useProfileData(userId)
+
+  useEffect(() => {
+    if (profile) {
+      setSelectedSkills(profile.selectedSkills || [])
+      setHasCryptoExperience(profile.hasCryptoExperience || false)
+      setTwitter(profile.twitter || "")
+      setTelegram(profile.telegram || "")
+      setLinkedin(profile.linkedin || "")
+    }
+  }, [profile])
 
   const handleCvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -34,27 +47,34 @@ export default function ProfilePage() {
       setCvFile(file)
       // Create preview URL for PDF
       const url = URL.createObjectURL(file)
-      setCvPreviewUrl(url)
     }
   }
 
-  const handleRemoveCv = () => {
-    setCvFile(null)
-    if (cvPreviewUrl) {
-      URL.revokeObjectURL(cvPreviewUrl)
-      setCvPreviewUrl(null)
-    }
-  }
+  const handleSave = async () => {
+    if (!userId) return
 
-  const handleSave = () => {
-    // TODO: Implement actual save functionality
-    console.log({
-      selectedSkills,
-      hasCryptoExperience,
-      twitter,
-      linkedin,
-      cvFile,
-    })
+    // Determine if we need to update remote profile data
+    const shouldUpdateRemote =
+      twitter !== (profile?.twitter || "") ||
+      telegram !== (profile?.telegram || "") ||
+      linkedin !== (profile?.linkedin || "") ||
+      hasCryptoExperience !== (profile?.hasCryptoExperience || false) ||
+      JSON.stringify(selectedSkills) !==
+        JSON.stringify(profile?.selectedSkills || [])
+
+    // Only update if there are changes
+    if (shouldUpdateRemote) {
+      console.debug(`Updating data for userId: ${userId}`)
+      await setProfileData(userId, {
+        email: user?.primaryEmailAddress?.emailAddress,
+        fullName: user?.fullName || undefined,
+        twitter,
+        linkedin,
+        telegram,
+        selectedSkills,
+        hasCryptoExperience,
+      })
+    }
   }
 
   if (!isUserDataLoaded || isLoading) {
@@ -83,7 +103,7 @@ export default function ProfilePage() {
               <AddressBlock
                 showAuthImage
                 address={toAddres(userId || "")}
-                className="size-full object-cover"
+                className="size-full rounded-none object-cover"
               />
             </figure>
             <div>
@@ -98,23 +118,26 @@ export default function ProfilePage() {
           <div className="space-y-8 pb-12 border-b border-black/10 dark:border-white/7">
             <section className="grid lg:grid-cols-2 gap-8">
               <div>
-                <h3 className="text-lg font-semibold mb-4">Twitter</h3>
-                <input
-                  type="text"
-                  value={twitter}
-                  onChange={(e) => setTwitter(e.target.value)}
-                  placeholder="@twitter"
-                  className="w-full px-4 h-12 bg-transparent border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
-                />
-              </div>
-
-              <div>
                 <h3 className="text-lg font-semibold mb-4">Telegram</h3>
                 <input
                   type="text"
                   value={telegram}
                   onChange={(e) => setTelegram(e.target.value)}
                   placeholder="@telegram"
+                  className="w-full px-4 h-12 bg-transparent border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
+                />
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-4">
+                  Twitter{" "}
+                  <span className="font-normal text-base">(Optional)</span>
+                </h3>
+                <input
+                  type="text"
+                  value={twitter}
+                  onChange={(e) => setTwitter(e.target.value)}
+                  placeholder="@twitter"
                   className="w-full px-4 h-12 bg-transparent border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
                 />
               </div>
@@ -155,7 +178,14 @@ export default function ProfilePage() {
           {/* Skills Selection */}
           <div className="mb-8 mt-8">
             <h3 className="text-lg font-semibold mb-4">
-              Skills <span className="font-normal text-base">(Max 5)</span>
+              Skills{" "}
+              {selectedSkills.length ? (
+                <span className="font-normal text-base">
+                  (Max {MAX_SKILLS})
+                </span>
+              ) : (
+                <span className="font-normal text-base">(Optional)</span>
+              )}
             </h3>
 
             <div className="flex flex-wrap gap-2 items-center">
@@ -165,11 +195,13 @@ export default function ProfilePage() {
                   key={`p-skill-${skill}`}
                   isSelected={selectedSkills.includes(skill)}
                   onSelect={() => {
-                    setSelectedSkills((prev) =>
-                      prev.includes(skill)
+                    setSelectedSkills((prev) => {
+                      const newSkills = prev.includes(skill)
                         ? prev.filter((s) => s !== skill)
-                        : [...prev, skill],
-                    )
+                        : [...prev, skill]
+
+                      return newSkills.slice(0, MAX_SKILLS)
+                    })
                   }}
                 />
               ))}
