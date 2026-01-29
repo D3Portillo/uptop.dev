@@ -3,8 +3,8 @@
 import { Fragment, useEffect, useState } from "react"
 import { SignedIn, SignedOut, SignIn, useAuth } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
-import { toHex } from "viem"
 
+import { toAddres } from "@/lib/profile"
 import {
   IoChevronDownOutline,
   IoChevronForwardSharp,
@@ -50,10 +50,9 @@ export default function Auth() {
             className="h-9 rounded-lg pl-1 pr-2 bg-black/3 dark:bg-white/3 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center gap-1"
           >
             <AddressBlock
-              address={toHex(
-                userId?.replace("user_", "") || "DEFEAULT_ADDRESS",
-              )}
-              className="size-7 rounded-full border border-black"
+              showAuthImage
+              address={toAddres(userId || "")}
+              className="size-7 rounded-full border border-black dark:border-stone-700"
             />
             <span className="text-xs ml-1 font-semibold">Profile</span>
             <IoChevronDownOutline />

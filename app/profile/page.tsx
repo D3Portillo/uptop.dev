@@ -3,9 +3,9 @@
 import { useState } from "react"
 import { useAuth, useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
-import { toHex } from "viem"
 
 import { extractSkillsFromJobs, useJobsList } from "@/lib/jobs"
+import { toAddres } from "@/lib/profile"
 import { MdCheck } from "react-icons/md"
 
 import SkillChip from "@/components/SkillChip"
@@ -23,6 +23,7 @@ export default function ProfilePage() {
   const [selectedSkills, setSelectedSkills] = useState<string[]>([])
   const [hasCryptoExperience, setHasCryptoExperience] = useState(false)
   const [twitter, setTwitter] = useState("")
+  const [telegram, setTelegram] = useState("")
   const [linkedin, setLinkedin] = useState("")
   const [cvFile, setCvFile] = useState<File | null>(null)
   const [cvPreviewUrl, setCvPreviewUrl] = useState<string | null>(null)
@@ -64,7 +65,6 @@ export default function ProfilePage() {
     )
   }
 
-  const profileImage = user?.imageUrl
   const fullName = user?.fullName || "Anonymous User"
 
   return (
@@ -80,18 +80,11 @@ export default function ProfilePage() {
           {/* Profile Header */}
           <div className="flex items-center gap-6 mt-6 sm:mt-0 mb-8 pb-8 border-b border-black/7 dark:border-white/7">
             <figure className="size-18 sm:size-20 overflow-hidden rounded-2xl sm:rounded-full border border-black dark:border-white/10">
-              {profileImage ? (
-                <img
-                  alt=""
-                  src={profileImage}
-                  className="size-full object-cover"
-                />
-              ) : (
-                <AddressBlock
-                  address={toHex(userId?.replace("user_", "") || "DEFAULT")}
-                  className="size-full object-cover"
-                />
-              )}
+              <AddressBlock
+                showAuthImage
+                address={toAddres(userId || "")}
+                className="size-full object-cover"
+              />
             </figure>
             <div>
               <h2 className="text-xl sm:text-2xl font-bold">{fullName}</h2>
@@ -103,16 +96,29 @@ export default function ProfilePage() {
 
           {/* Social Links */}
           <div className="space-y-8 pb-12 border-b border-black/10 dark:border-white/7">
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Twitter</h3>
-              <input
-                type="text"
-                value={twitter}
-                onChange={(e) => setTwitter(e.target.value)}
-                placeholder="@username"
-                className="w-full px-4 h-12 bg-transparent border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
-              />
-            </div>
+            <section className="grid lg:grid-cols-2 gap-8">
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Twitter</h3>
+                <input
+                  type="text"
+                  value={twitter}
+                  onChange={(e) => setTwitter(e.target.value)}
+                  placeholder="@twitter"
+                  className="w-full px-4 h-12 bg-transparent border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
+                />
+              </div>
+
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Telegram</h3>
+                <input
+                  type="text"
+                  value={telegram}
+                  onChange={(e) => setTelegram(e.target.value)}
+                  placeholder="@telegram"
+                  className="w-full px-4 h-12 bg-transparent border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
+                />
+              </div>
+            </section>
 
             <div>
               <h3 className="text-lg font-semibold mb-4">LinkedIn</h3>

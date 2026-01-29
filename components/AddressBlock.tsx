@@ -1,26 +1,35 @@
+"use client"
+
 import type { Address } from "viem"
 import { cn } from "@/lib/utils"
+import { useProfileImage } from "@/lib/profile"
 
 export default function AddressBlock({
   address,
   className,
+  showAuthImage,
 }: {
   address: Address
   className?: string
+  showAuthImage?: boolean
 }) {
-  const { from, to } = addressToGradient(address)
+  const { backgroundImageURL } = useProfileImage()
 
   return (
     <figure
       style={{
-        backgroundImage: `
-          radial-gradient(circle at 66% 33%, rgba(255, 255, 255, 0.4), transparent 50%),
-          linear-gradient(to bottom right, ${from}, ${to})
-        `,
+        backgroundImage: showAuthImage
+          ? backgroundImageURL
+          : addressToBackgroundImage(address),
       }}
-      className={cn("size-6 rounded-full", className)}
+      className={cn("size-6 bg-cover rounded-full", className)}
     />
   )
+}
+
+export const addressToBackgroundImage = (address: Address) => {
+  const { from, to } = addressToGradient(address)
+  return `radial-gradient(circle at 66% 33%, rgba(255, 255, 255, 0.4), transparent 50%), linear-gradient(to bottom right, ${from}, ${to})`
 }
 
 function addressToGradient(address: Address) {
