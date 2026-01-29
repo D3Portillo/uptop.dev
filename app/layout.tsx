@@ -15,7 +15,7 @@ const nextFont = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "Up Top - TOP SHELF JOBS",
+  title: "Up Top / TOP SHELF JOBS",
   description:
     "Find your next remote job with Up Top's curated job board. NOTE: This is a community owned project and is not affiliated with Up Top.",
 }
@@ -36,7 +36,7 @@ export default function RootLayout({
     >
       <html lang="en" suppressHydrationWarning>
         <body className={`${nextFont.className} antialiased`}>
-          <ThemeProvider attribute="class" defaultTheme="light">
+          <ThemeProvider attribute="class" defaultTheme="dark">
             <MainLayout>{children}</MainLayout>
           </ThemeProvider>
         </body>

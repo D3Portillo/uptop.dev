@@ -114,7 +114,7 @@ export default function JobListing({
         {/* Job Info */}
         <div className="flex-1 dark:text-white/80">
           <div className="flex items-start gap-3 mb-4 sm:mb-3">
-            <h3 className="text-lg text-black dark:text-white w-2/3 sm:w-auto font-semibold">
+            <h3 className="text-lg uppercase opacity-90 text-black dark:text-white w-2/3 sm:w-auto font-semibold">
               {properties.title}
             </h3>
 

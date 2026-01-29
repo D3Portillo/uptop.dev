@@ -36,10 +36,29 @@ export default function TopNavigation({
             className="flex items-center gap-2 active:scale-98"
             onClick={onHomeButtonPress}
           >
-            <figure className="text-2xl scale-110">🦄</figure>
-            <strong>Up Top /</strong>
+            <figure className="w-7 pt-px">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                className="w-full"
+                viewBox="0 0 500 400"
+              >
+                <path
+                  fill="#5F28FF"
+                  d="m487 70-79 46v59l-78 46v57l-82 47v59l239-136z"
+                />
+                <path
+                  fill="currentColor"
+                  d="m171 63 79-46 237 53-79 46zM91 168l80-46 237 53-78 46zM12 272l79-46 239 52-82 47z"
+                />
+              </svg>
+            </figure>
+            <strong>Up Top / </strong>
           </button>
-          <h1>Jobs</h1>
+          <h1>
+            <span className="sm:hidden">Jobs</span>
+            <span className="hidden sm:inline">TOP SHELF JOBS</span>
+          </h1>
           <div className="grow" />
 
           <div className="flex gap-1 items-center">

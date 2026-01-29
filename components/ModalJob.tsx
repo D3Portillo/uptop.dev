@@ -83,12 +83,12 @@ function ModalJob() {
           <div className="h-full bg-white text-black rounded-t-2xl shadow-2xl border border-black/10 flex flex-col w-full">
             {/* Drawer Header */}
             <div className="flex items-center justify-between p-6 pr-3 border-b border-black/10 shrink-0">
-              <h2 className="text-lg font-semibold text-black">
+              <h2 className="text-lg uppercase font-semibold text-black">
                 <button
                   className="text-black/50 hover:text-black/70"
                   onClick={closeModal}
                 >
-                  <span>Jobs /</span>
+                  <span>JOBS /</span>
                 </button>{" "}
                 {title || "Full Job Details"}
               </h2>
