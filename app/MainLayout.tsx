@@ -23,9 +23,9 @@ export default function MainLayout({ children }: PropsWithChildren) {
     <Fragment>
       <div
         style={{
-          backgroundImage: "url(/bg.svg)",
+          backgroundImage: `url(/bg.png)`,
         }}
-        className="top-0 -z-1 left-0 w-screen h-screen pointer-events-none opacity-15 dark:opacity-10 bg-cover fixed"
+        className="top-0 opacity-30 dark:opacity-45 blur-lg -z-1 left-0 w-screen h-screen pointer-events-none bg-cover fixed"
       />
 
       <ModalJobWithSuspense />

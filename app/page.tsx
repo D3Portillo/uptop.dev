@@ -215,7 +215,7 @@ export default function Home() {
   const isEmpty = !isGlobalLoading && filteredListings.length === 0
 
   return (
-    <div className="min-h-screen bg-gray-100/40 dark:bg-transparent">
+    <div className="min-h-screen bg-linear-to-br from-white/0 to-white/20 dark:from-ut-black/0 dark:to-black/25">
       <TopNavigation
         className="[&_nav]:sm:mb-7"
         onHomeButtonPress={() => {
@@ -429,7 +429,7 @@ export default function Home() {
             {[...Array(10)].map((_, i) => (
               <div
                 key={`mock-load-${i}`}
-                className="h-52 sm:h-36 bg-white dark:bg-white/10 rounded-xl animate-pulse border border-black/10"
+                className="h-52 sm:h-36 bg-white/30 backdrop-blur dark:bg-white/7 rounded-xl animate-pulse border border-black/10"
               />
             ))}
           </div>
