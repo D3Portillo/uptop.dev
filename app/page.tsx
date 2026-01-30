@@ -215,7 +215,7 @@ export default function Home() {
   const isEmpty = !isGlobalLoading && filteredListings.length === 0
 
   return (
-    <div className="min-h-screen bg-gray-100/40 dark:bg-transparent relative z-1">
+    <div className="min-h-screen bg-gray-100/40 dark:bg-transparent">
       <TopNavigation
         className="[&_nav]:sm:mb-7"
         onHomeButtonPress={() => {

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 const Auth = dynamic(() => import("./Auth"), {
   ssr: false,
   loading: () => (
-    <div className="h-9 w-28 animate-pulse bg-pink-600/15 dark:bg-white/10 rounded-full" />
+    <div className="h-9 w-28 animate-pulse bg-black/10 dark:bg-white/10 rounded-full" />
   ),
 })
 
@@ -44,7 +44,7 @@ export default function TopNavigation({
                 viewBox="0 0 500 400"
               >
                 <path
-                  fill="#5F28FF"
+                  fill="var(--color-ut-blue-dark)"
                   d="m487 70-79 46v59l-78 46v57l-82 47v59l239-136z"
                 />
                 <path

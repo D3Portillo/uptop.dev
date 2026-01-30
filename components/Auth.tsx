@@ -35,10 +35,10 @@ export default function Auth() {
       <SignedOut>
         <button
           onClick={() => setIsSignInOpen(true)}
-          className="h-9 active:scale-98 outline-2 shadow-lg shadow-pink-600/10 hover:shadow-pink-600/20 outline-pink-600/15 text-sm pr-3 relative pl-4 flex gap-1.5 items-center bg-linear-to-br from-pink-600 to-ut-purple rounded-full text-white font-semibold transition-colors"
+          className="h-9 group active:scale-98 outline-2 shadow-lg shadow-ut-blue-dark/10 hover:shadow-ut-blue-dark/15 outline-ut-blue-dark/15 text-sm pr-3 relative pl-4 flex gap-1.5 items-center bg-linear-to-br from-ut-blue-dark to-ut-purple rounded-full text-white font-semibold transition-colors"
         >
           <span>Connect</span>
-          <IoChevronForwardSharp className="scale-115" />
+          <IoChevronForwardSharp className="scale-115 group-hover:-translate-x-px" />
         </button>
       </SignedOut>
 

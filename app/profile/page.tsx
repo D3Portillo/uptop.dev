@@ -7,12 +7,14 @@ import { useRouter } from "next/navigation"
 import { setProfileData } from "@/app/actions/profile"
 import { extractSkillsFromJobs, useJobsList } from "@/lib/jobs"
 import { toAddres, useProfileData } from "@/lib/profile"
+
 import { MdCheck } from "react-icons/md"
+import { FaTrashAlt } from "react-icons/fa"
 
 import SkillChip from "@/components/SkillChip"
 import TopNavigation from "@/components/TopNavigation"
 import AddressBlock from "@/components/AddressBlock"
-import { FaTrashAlt } from "react-icons/fa"
+import Spinner from "@/components/Spinner"
 
 const MAX_SKILLS = 5
 export default function ProfilePage() {
@@ -86,7 +88,7 @@ export default function ProfilePage() {
   if (!isUserDataLoaded || isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-black flex items-center justify-center">
-        <div className="text-black/60 dark:text-white/60">Loading...</div>
+        <Spinner />
       </div>
     )
   }
@@ -94,7 +96,7 @@ export default function ProfilePage() {
   const fullName = user?.fullName || "Anonymous User"
 
   return (
-    <div className="min-h-screen bg-gray-100/40 dark:bg-transparent relative z-1">
+    <div className="min-h-screen bg-gray-100/40 dark:bg-transparent">
       <TopNavigation
         className="[&_nav]:mb-1 [&_nav]:sm:mb-3"
         onHomeButtonPress={() => router.push("/")}
