@@ -199,7 +199,7 @@ export default function ProfilePage() {
               <h3 className="text-lg font-semibold mb-4">Resume / CV</h3>
 
               <label className="block cursor-pointer">
-                <div className="border-2 relative flex flex-col items-center justify-center border-dashed border-black/10 dark:border-white/10 rounded-lg h-36 px-8 text-center hover:border-ut-purple/50 hover:bg-ut-purple/5 transition-all">
+                <div className="border-2 relative flex flex-col items-center justify-center border-dashed border-black/10 dark:border-white/10 rounded-lg h-36 sm:h-40 px-8 text-center hover:border-ut-purple/50 hover:bg-ut-purple/5 transition-all">
                   {cvFileURI ? (
                     <Fragment>
                       <div
@@ -210,7 +210,7 @@ export default function ProfilePage() {
                           e.preventDefault()
                           window.open(cvFileURI, "_blank")
                         }}
-                        className="absolute border border-transparent bg-black/3 hover:bg-black/5 hover:border-black/5 rounded-full flex items-center gap-1 top-2 right-2 py-1 px-2"
+                        className="absolute border border-transparent bg-black/3 dark:bg-white/5 hover:bg-black/5 dark:hover:bg-white/10 hover:border-black/5 rounded-full flex items-center gap-1 top-2 right-2 py-1 px-2"
                       >
                         <span className="text-xs font-semibold">View</span>
                         <FaEye />
@@ -246,11 +246,13 @@ export default function ProfilePage() {
             <h3 className="text-lg font-semibold mb-4">
               Skills{" "}
               {selectedSkills.length ? (
-                <span className="font-normal text-base opacity-60">
-                  ({selectedSkills.length}/{MAX_SKILLS}){" "}
+                <span className="font-normal text-base">
+                  <span className="opacity-60">
+                    ({selectedSkills.length}/{MAX_SKILLS})
+                  </span>{" "}
                   <button
                     onClick={() => setSelectedSkills([])}
-                    className="text-xs ml-1 inline-flex items-center gap-1 border border-black/10 dark:border-white/15 px-2 py-1 rounded-lg"
+                    className="text-xs opacity-60 hover:opacity-90 ml-1 inline-flex items-center gap-1 border border-black/10 dark:border-white/15 px-2 py-1 rounded-lg"
                   >
                     <FaTrashAlt />
                     <span>Clear</span>
