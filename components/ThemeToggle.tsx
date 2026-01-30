@@ -10,13 +10,13 @@ export default function ThemeToggle() {
   return (
     <button
       onClick={() => setTheme(isDarkTheme ? "light" : "dark")}
-      className="size-9 text-base grid place-items-center rounded-xl border border-black/7 dark:border-white/7"
+      className="size-9 active:scale-98 text-base grid place-items-center rounded-xl border border-black/7 dark:border-white/7"
       aria-label="Toggle dark/light theme"
     >
       {isDarkTheme ? (
-        <FaMoon className="opacity-80" />
+        <FaMoon className="opacity-80 hover:opacity-95 transition-opacity" />
       ) : (
-        <FaSun className="opacity-80" />
+        <FaSun className="opacity-80 hover:opacity-95 transition-opacity" />
       )}
     </button>
   )
