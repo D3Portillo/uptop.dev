@@ -25,7 +25,7 @@ export default function MainLayout({ children }: PropsWithChildren) {
         style={{
           backgroundImage: `url(/bg.png)`,
         }}
-        className="top-0 opacity-30 dark:opacity-45 blur-lg -z-1 left-0 w-screen h-screen pointer-events-none bg-cover fixed"
+        className="top-0 opacity-20 sm:opacity-30 dark:sm:opacity-50 dark:opacity-30 blur-lg -z-1 left-0 w-screen h-screen pointer-events-none bg-cover fixed"
       />
 
       <ModalJobWithSuspense />
