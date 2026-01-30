@@ -35,7 +35,12 @@ export default function RootLayout({
     >
       <html lang="en" suppressHydrationWarning>
         <body className={`${nextFont.className} antialiased`}>
-          <ThemeProvider attribute="class" defaultTheme="dark">
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem={false}
+            disableTransitionOnChange
+          >
             <MainLayout>{children}</MainLayout>
           </ThemeProvider>
         </body>
