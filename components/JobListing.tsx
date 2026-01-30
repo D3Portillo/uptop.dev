@@ -77,7 +77,7 @@ export default function JobListing({
         "w-full text-left rounded-2xl p-5 border shadow-black/5 hover:shadow transition-all",
         isPriority
           ? "bg-linear-to-bl border-black/7 dark:border-white/7 from-ut-purple/10 dark:from-ut-purple/15 to-black/3 dark:to-white/3"
-          : "bg-white dark:bg-white/5",
+          : "bg-white/30 backdrop-blur dark:bg-white/5",
       )}
     >
       <div className="flex min-h-20 gap-6">

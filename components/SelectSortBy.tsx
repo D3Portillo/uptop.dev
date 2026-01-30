@@ -18,7 +18,7 @@ export default function SelectSortBy({
     <div className="relative ml-auto">
       <button
         onClick={() => setShowSortMenu(!showSortMenu)}
-        className="flex h-10 items-center gap-2 px-3 border border-black/10 dark:border-white/10 rounded-lg bg-white dark:bg-white/5 hover:bg-black/5 transition-colors"
+        className="flex h-10 items-center gap-2 px-3 border border-black/10 dark:border-white/10 rounded-lg bg-white/50 dark:bg-white/5 hover:bg-white/30 dark:hover:bg-white/7 transition-colors"
       >
         <span className="text-sm whitespace-nowrap opacity-70">{value}</span>
         <IoChevronDownOutline className="opacity-50" />

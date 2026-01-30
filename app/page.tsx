@@ -215,7 +215,7 @@ export default function Home() {
   const isEmpty = !isGlobalLoading && filteredListings.length === 0
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-black">
+    <div className="min-h-screen bg-gray-100/40 dark:bg-transparent relative z-1">
       <TopNavigation
         className="[&_nav]:sm:mb-7"
         onHomeButtonPress={() => {
@@ -389,7 +389,7 @@ export default function Home() {
           <div className="grow" />
 
           <div className="flex mt-4 sm:mt-0 gap-3 items-center">
-            <div className="flex whitespace-nowrap h-10 gap-3.5 border border-black/10 rounded-lg bg-white dark:bg-white/5 dark:border-white/10">
+            <div className="flex whitespace-nowrap h-10 gap-3.5 border border-black/10 rounded-lg bg-white/50 dark:bg-white/5 dark:border-white/10">
               <button
                 onClick={() => setPolicy("ONSITE")}
                 className={cn(

@@ -26,7 +26,7 @@ export default function TopNavigation({
   return (
     <div
       className={cn(
-        "bg-white dark:bg-white/10 border-b border-black/10 dark:border-white/10",
+        "bg-white/40 dark:bg-white/10 border-b border-black/10 dark:border-white/10",
         className,
       )}
     >

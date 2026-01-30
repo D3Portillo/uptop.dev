@@ -94,7 +94,7 @@ export default function ProfilePage() {
   const fullName = user?.fullName || "Anonymous User"
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-black">
+    <div className="min-h-screen bg-gray-100/40 dark:bg-transparent relative z-1">
       <TopNavigation
         className="[&_nav]:mb-1 [&_nav]:sm:mb-3"
         onHomeButtonPress={() => router.push("/")}
@@ -102,7 +102,7 @@ export default function ProfilePage() {
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto sm:px-8 sm:pt-8 sm:pb-32">
-        <div className="bg-white text-black dark:text-white dark:bg-white/5 sm:rounded-xl border border-black/0 sm:border-black/10 dark:sm:border-white/10 p-7 sm:p-16 sm:mt-16">
+        <div className="bg-white/50 dark:bg-white/5 text-black dark:text-white sm:rounded-xl border border-black/0 sm:border-black/10 dark:sm:border-white/10 p-7 sm:p-16 sm:mt-16">
           {/* Profile Header */}
           <div className="flex items-center gap-6 mt-6 sm:mt-0 mb-8 pb-8 border-b border-black/7 dark:border-white/7">
             <figure className="size-18 sm:size-20 overflow-hidden rounded-2xl sm:rounded-full border border-black dark:border-white/10">
@@ -209,7 +209,7 @@ export default function ProfilePage() {
                   ({selectedSkills.length}/{MAX_SKILLS}){" "}
                   <button
                     onClick={() => setSelectedSkills([])}
-                    className="text-xs ml-1 inline-flex items-center gap-1 border border-white/15 px-2 py-1 rounded-lg"
+                    className="text-xs ml-1 inline-flex items-center gap-1 border border-black/10 dark:border-white/15 px-2 py-1 rounded-lg"
                   >
                     <FaTrashAlt />
                     <span>Clear</span>

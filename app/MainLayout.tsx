@@ -25,6 +25,12 @@ export default function MainLayout({ children }: PropsWithChildren) {
       <Announcement />
       <ListingsSentinel />
 
+      <div
+        style={{
+          backgroundImage: "url(/bg.svg)",
+        }}
+        className="top-0 left-0 w-screen h-screen pointer-events-none opacity-15 dark:opacity-10 bg-cover fixed"
+      />
       {children}
     </Fragment>
   )
