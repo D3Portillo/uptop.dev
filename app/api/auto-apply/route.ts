@@ -16,7 +16,7 @@
   --data-raw '{"084f5395-fbce-48de-81e2-ca34d396c6a0":["2eff30f9-bdff-8014-bcfa-f759dd5c23f8"],"713c5ec3-ad07-4d4c-ba06-d8ad89b0eb86":"JOB APPLICATION","3396155e-ded6-40c5-9d26-09ff591678b2":["https://api.noteforms.com/forms/assets/TALENT-PROFILE-CLEAN_a8f38ad8-d25c-4b5a-bf27-83d091082417.jpg"],"e9ec6ba9-7f0b-4fd0-b7da-9969fcb329a4":["https://api.noteforms.com/forms/assets/user_3397425_417a1064-512c-45e8-804c-7953fcc6e6d3.png"],"334bcfc2-17f0-4372-8a0a-06c302da61f4":"test@test.com","92c76303-f59e-4742-8551-a22704c504aa":"https://test.com","1a1a4462-5afb-477c-a5b0-d1709045ed34":"NO","c0545651-88f8-4f30-bfbf-34e4c3c0633e":"@test","f4afeaf4-b518-4e49-bda0-e0fe623f5c72":"https://x.com/test","2f09a216-71da-47f0-baf0-45bbbe3dbc11":["UI","UX"],"d4cc8f55-a316-4f45-97ea-67e4c0706297":"Test note","e18bafe8-c644-4e15-8ef8-1591032a5ad2":"Test Testo Testing","9df55e3a-254f-4475-af52-8c3d72dbdfb2":["bitcoin_cf8088d4-2e21-4dbc-90f9-7d9d93558031.pdf"],"completion_time":156}'
  */
 
-type AutoApplyPayload = Partial<{
+export type AutoApplyPayload = Partial<{
   email: string
   jobId: string
   linkedin: string
@@ -27,6 +27,7 @@ type AutoApplyPayload = Partial<{
   skills: string[]
   notes: string
   resumeURL: string
+  githubOrPortfolioURL: string
   isCryptoSavvy: boolean
 }>
 
@@ -48,6 +49,7 @@ const FIELD_IDS = {
   notes: "d4cc8f55-a316-4f45-97ea-67e4c0706297",
   fullName: "e18bafe8-c644-4e15-8ef8-1591032a5ad2",
   resumeURL: "9df55e3a-254f-4475-af52-8c3d72dbdfb2",
+  githubOrPortfolioURL: "84327978-66a6-4382-a647-234cd2232b65",
 } as const
 
 const REQUIRED_FIELDS = [
@@ -118,6 +120,11 @@ export async function POST(request: Request) {
 
     if (payload.fullName) {
       formData[FIELD_IDS.fullName] = payload.fullName
+    }
+
+    if (payload.githubOrPortfolioURL) {
+      // Sems like links/files are expected as arrays
+      formData[FIELD_IDS.githubOrPortfolioURL] = [payload.githubOrPortfolioURL]
     }
 
     // Make the request to noteforms API

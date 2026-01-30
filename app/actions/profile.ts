@@ -1,19 +1,11 @@
 "use server"
 
+import type { AutoApplyPayload } from "@/app/api/auto-apply/route"
 import { redis } from "@/lib/redis"
 
-export type ProfileData = {
-  userId: string
-  fullName?: string
-  email?: string
-  twitter?: string
-  telegram?: string
-  linkedin?: string
-  selectedSkills?: string[]
-  hasCryptoExperience?: boolean
-  cvUrl?: string
-  cvFileName?: string
+export type ProfileData = Omit<AutoApplyPayload, "jobId"> & {
   updatedAt?: number
+  userId: string
 }
 
 const PROFILE_KEYS = {

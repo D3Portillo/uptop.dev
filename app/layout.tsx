@@ -15,9 +15,8 @@ const nextFont = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "Up Top / TOP SHELF JOBS",
-  description:
-    "Find your next remote job with Up Top's curated job board. NOTE: This is a community owned project and is not affiliated with Up Top.",
+  title: "UP TOP / TOP SHELF JOBS",
+  description: "Find your next remote job with Up Top's curated job board.",
 }
 
 export default function RootLayout({

@@ -53,11 +53,13 @@ export default function TopNavigation({
                 />
               </svg>
             </figure>
-            <strong>Up Top / </strong>
+            <strong>
+              UP TOP <span className="sm:ml-3">/</span>
+            </strong>
           </button>
           <h1>
-            <span className="sm:hidden">Jobs</span>
-            <span className="hidden sm:inline">TOP SHELF JOBS</span>
+            <span className="sm:hidden">JOBS</span>
+            <span className="hidden ml-3 sm:inline">TOP SHELF JOBS</span>
           </h1>
           <div className="grow" />
 

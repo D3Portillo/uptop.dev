@@ -12,6 +12,7 @@ import { MdCheck } from "react-icons/md"
 import SkillChip from "@/components/SkillChip"
 import TopNavigation from "@/components/TopNavigation"
 import AddressBlock from "@/components/AddressBlock"
+import { FaTrashAlt } from "react-icons/fa"
 
 const MAX_SKILLS = 5
 export default function ProfilePage() {
@@ -27,14 +28,17 @@ export default function ProfilePage() {
   const [twitter, setTwitter] = useState("")
   const [telegram, setTelegram] = useState("")
   const [linkedin, setLinkedin] = useState("")
+  const [githubOrPortfolioURL, setGithubOrPortfolioURL] = useState("")
+
   const [cvFile, setCvFile] = useState<File | null>(null)
 
   const { profile } = useProfileData(userId)
 
   useEffect(() => {
     if (profile) {
-      setSelectedSkills(profile.selectedSkills || [])
-      setHasCryptoExperience(profile.hasCryptoExperience || false)
+      setSelectedSkills(profile.skills || [])
+      setHasCryptoExperience(profile.isCryptoSavvy || false)
+      setGithubOrPortfolioURL(profile.githubOrPortfolioURL || "")
       setTwitter(profile.twitter || "")
       setTelegram(profile.telegram || "")
       setLinkedin(profile.linkedin || "")
@@ -54,13 +58,14 @@ export default function ProfilePage() {
     if (!userId) return
 
     // Determine if we need to update remote profile data
-    const shouldUpdateRemote =
-      twitter !== (profile?.twitter || "") ||
-      telegram !== (profile?.telegram || "") ||
-      linkedin !== (profile?.linkedin || "") ||
-      hasCryptoExperience !== (profile?.hasCryptoExperience || false) ||
-      JSON.stringify(selectedSkills) !==
-        JSON.stringify(profile?.selectedSkills || [])
+    const shouldUpdateRemote = [
+      twitter !== profile?.twitter,
+      linkedin !== profile?.linkedin,
+      telegram !== profile?.telegram,
+      githubOrPortfolioURL !== profile?.githubOrPortfolioURL,
+      hasCryptoExperience !== profile?.isCryptoSavvy,
+      JSON.stringify(selectedSkills) !== JSON.stringify(profile?.skills || []),
+    ].some((field) => !field)
 
     // Only update if there are changes
     if (shouldUpdateRemote) {
@@ -71,8 +76,9 @@ export default function ProfilePage() {
         twitter,
         linkedin,
         telegram,
-        selectedSkills,
-        hasCryptoExperience,
+        skills: selectedSkills,
+        isCryptoSavvy: hasCryptoExperience,
+        githubOrPortfolioURL,
       })
     }
   }
@@ -131,7 +137,9 @@ export default function ProfilePage() {
               <div>
                 <h3 className="text-lg font-semibold mb-4">
                   Twitter{" "}
-                  <span className="font-normal text-base">(Optional)</span>
+                  <span className="font-normal text-base opacity-60">
+                    (optional)
+                  </span>
                 </h3>
                 <input
                   type="text"
@@ -142,6 +150,23 @@ export default function ProfilePage() {
                 />
               </div>
             </section>
+
+            <div>
+              <h3 className="text-lg font-semibold mb-4">
+                Portfolio / Website{" "}
+                <span className="font-normal text-base opacity-60">
+                  (optional)
+                </span>
+              </h3>
+
+              <input
+                type="text"
+                value={githubOrPortfolioURL}
+                onChange={(e) => setGithubOrPortfolioURL(e.target.value)}
+                placeholder="Github, portfolio, or anything to showcase your work"
+                className="w-full px-4 h-12 bg-transparent border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
+              />
+            </div>
 
             <div>
               <h3 className="text-lg font-semibold mb-4">LinkedIn</h3>
@@ -180,11 +205,20 @@ export default function ProfilePage() {
             <h3 className="text-lg font-semibold mb-4">
               Skills{" "}
               {selectedSkills.length ? (
-                <span className="font-normal text-base">
-                  (Max {MAX_SKILLS})
+                <span className="font-normal text-base opacity-60">
+                  ({selectedSkills.length}/{MAX_SKILLS}){" "}
+                  <button
+                    onClick={() => setSelectedSkills([])}
+                    className="text-xs ml-1 inline-flex items-center gap-1 border border-white/15 px-2 py-1 rounded-lg"
+                  >
+                    <FaTrashAlt />
+                    <span>Clear</span>
+                  </button>
                 </span>
               ) : (
-                <span className="font-normal text-base">(Optional)</span>
+                <span className="font-normal text-base opacity-60">
+                  (optional)
+                </span>
               )}
             </h3>
 
