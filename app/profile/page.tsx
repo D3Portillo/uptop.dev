@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Fragment, useEffect, useMemo, useState } from "react"
 import { useAuth, useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 
@@ -9,7 +9,7 @@ import { extractSkillsFromJobs, useJobsList } from "@/lib/jobs"
 import { toAddres, useProfileData } from "@/lib/profile"
 
 import { MdCheck } from "react-icons/md"
-import { FaTrashAlt } from "react-icons/fa"
+import { FaEye, FaFilePdf, FaTrashAlt } from "react-icons/fa"
 
 import SkillChip from "@/components/SkillChip"
 import TopNavigation from "@/components/TopNavigation"
@@ -21,6 +21,8 @@ export default function ProfilePage() {
   const router = useRouter()
   const { userId } = useAuth()
   const { user, isLoaded: isUserDataLoaded } = useUser()
+
+  const [isSaving, setIsSaving] = useState(false)
 
   const { jobs, isLoading } = useJobsList()
   const skills = extractSkillsFromJobs(jobs)
@@ -47,17 +49,20 @@ export default function ProfilePage() {
     }
   }, [profile])
 
-  const handleCvUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      setCvFile(file)
-      // Create preview URL for PDF
-      const url = URL.createObjectURL(file)
-    }
+  const cvFileURI = useMemo(() => {
+    if (!cvFile) return null
+    return URL.createObjectURL(cvFile)
+  }, [cvFile?.name, cvFile?.lastModified])
+
+  const handlePdfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e?.target?.files?.[0]
+    if (file) setCvFile(file)
   }
 
   const handleSave = async () => {
     if (!userId) return
+
+    setIsSaving(true)
 
     // Determine if we need to update remote profile data
     const shouldUpdateRemote = [
@@ -71,18 +76,25 @@ export default function ProfilePage() {
 
     // Only update if there are changes
     if (shouldUpdateRemote) {
-      console.debug(`Updating data for userId: ${userId}`)
-      await setProfileData(userId, {
-        email: user?.primaryEmailAddress?.emailAddress,
-        fullName: user?.fullName || undefined,
-        twitter,
-        linkedin,
-        telegram,
-        skills: selectedSkills,
-        isCryptoSavvy: hasCryptoExperience,
-        githubOrPortfolioURL,
-      })
+      try {
+        console.debug(`Updating data for userId: ${userId}`)
+        await setProfileData(userId, {
+          email: user?.primaryEmailAddress?.emailAddress,
+          fullName: user?.fullName || undefined,
+          twitter,
+          linkedin,
+          telegram,
+          skills: selectedSkills,
+          isCryptoSavvy: hasCryptoExperience,
+          githubOrPortfolioURL,
+        })
+      } catch (error) {
+        console.error({ error })
+      }
     }
+
+    await new Promise((resolve) => setTimeout(resolve, 250)) // Small delay for UX
+    setIsSaving(false)
   }
 
   if (!isUserDataLoaded || isLoading) {
@@ -187,15 +199,42 @@ export default function ProfilePage() {
               <h3 className="text-lg font-semibold mb-4">Resume / CV</h3>
 
               <label className="block cursor-pointer">
-                <div className="border-2 border-dashed border-black/10 dark:border-white/10 rounded-lg p-8 text-center hover:border-ut-purple/50 hover:bg-ut-purple/5 transition-all">
-                  <div className="text-4xl mb-2">📤</div>
-                  <p className="text-sm font-medium opacity-70">Upload CV</p>
-                  <p className="text-xs opacity-50 mt-1">PDF (Max 5MB)</p>
+                <div className="border-2 relative flex flex-col items-center justify-center border-dashed border-black/10 dark:border-white/10 rounded-lg h-36 px-8 text-center hover:border-ut-purple/50 hover:bg-ut-purple/5 transition-all">
+                  {cvFileURI ? (
+                    <Fragment>
+                      <div
+                        role="button"
+                        tabIndex={-1}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          e.preventDefault()
+                          window.open(cvFileURI, "_blank")
+                        }}
+                        className="absolute border border-transparent bg-black/3 hover:bg-black/5 hover:border-black/5 rounded-full flex items-center gap-1 top-2 right-2 py-1 px-2"
+                      >
+                        <span className="text-xs font-semibold">View</span>
+                        <FaEye />
+                      </div>
+
+                      <FaFilePdf className="text-4xl opacity-80 dark:opacity-100 scale-110" />
+                      <p className="text-sm whitespace-nowrap opacity-50 mt-2 mb-1">
+                        {cvFile?.name || `Untitled File`}
+                      </p>
+                    </Fragment>
+                  ) : (
+                    <Fragment>
+                      <div className="text-4xl mb-2">📤</div>
+                      <p className="text-sm font-medium opacity-70">
+                        Upload CV
+                      </p>
+                      <p className="text-xs opacity-50 my-1">PDF (Max 5MB)</p>
+                    </Fragment>
+                  )}
                 </div>
                 <input
                   type="file"
                   accept=".pdf"
-                  onChange={handleCvUpload}
+                  onChange={handlePdfChange}
                   className="hidden"
                 />
               </label>
@@ -275,10 +314,18 @@ export default function ProfilePage() {
           {/* Action Buttons */}
           <nav className="flex w-full mb-24 sm:mb-4">
             <button
+              disabled={isSaving}
               onClick={handleSave}
-              className="px-6 w-full py-3 bg-ut-purple text-white rounded-lg font-semibold hover:bg-ut-purple/90 transition-colors shadow-lg shadow-ut-purple/20"
+              className="px-6 flex items-center justify-center gap-3 w-full py-3 bg-ut-purple text-white rounded-lg font-semibold hover:bg-ut-purple/90 transition-colors shadow-lg shadow-ut-purple/20"
             >
-              Save Changes
+              {isSaving ? (
+                <Fragment>
+                  <Spinner themeSize="size-5" />
+                  <span className="mr-3">Saving</span>
+                </Fragment>
+              ) : (
+                "Save Changes"
+              )}
             </button>
           </nav>
         </div>
