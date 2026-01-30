@@ -116,7 +116,7 @@ export default function ProfilePage() {
 
       {/* Main Content */}
       <div className="max-w-4xl mx-auto sm:px-8 sm:pt-8 sm:pb-32">
-        <div className="bg-white/50 dark:bg-white/5 text-black dark:text-white sm:rounded-xl border border-black/0 sm:border-black/10 dark:sm:border-white/10 p-7 sm:p-16 sm:mt-16">
+        <div className="bg-white/30 dark:bg-white/7 text-black dark:text-white sm:rounded-xl border border-black/0 sm:border-black/10 dark:sm:border-white/10 p-7 sm:p-16 sm:mt-16">
           {/* Profile Header */}
           <div className="flex items-center gap-6 mt-6 sm:mt-0 mb-8 pb-8 border-b border-black/7 dark:border-white/7">
             <figure className="size-18 sm:size-20 overflow-hidden rounded-2xl sm:rounded-full border border-black dark:border-white/10">
