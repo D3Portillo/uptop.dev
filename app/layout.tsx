@@ -1,6 +1,7 @@
 import "./globals.css"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
+import { GoogleTagManager } from "@next/third-parties/google"
 
 import { ThemeProvider } from "next-themes"
 import { ClerkProvider } from "@clerk/nextjs"
@@ -34,6 +35,8 @@ export default function RootLayout({
       }}
     >
       <html lang="en" suppressHydrationWarning>
+        <GoogleTagManager gtmId="G-0NZPZK59CE" />
+
         <body className={`${nextFont.className} antialiased`}>
           <ThemeProvider
             attribute="class"
