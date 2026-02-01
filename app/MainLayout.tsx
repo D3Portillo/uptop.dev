@@ -25,7 +25,7 @@ export default function MainLayout({ children }: PropsWithChildren) {
         style={{
           backgroundImage: `url(/bg.png)`,
         }}
-        className="top-0 opacity-10 sm:opacity-30 dark:opacity-25 dark:sm:opacity-50 sblur-lg -z-1 left-0 w-screen h-screen pointer-events-none bg-cover fixed"
+        className="top-0 opacity-10 sm:opacity-30 dark:opacity-20 dark:sm:opacity-50 sblur-lg -z-1 left-0 w-screen h-screen pointer-events-none bg-cover fixed"
       >
         <div
           style={{

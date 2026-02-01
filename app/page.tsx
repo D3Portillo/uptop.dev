@@ -399,7 +399,7 @@ export default function Home() {
                     : "opacity-60",
                 )}
               >
-                📒 On-site
+                🗂️ On-site
               </button>
 
               <button

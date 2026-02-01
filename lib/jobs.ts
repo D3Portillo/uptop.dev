@@ -40,7 +40,7 @@ const formatPolicy = (policy: string) => {
   }
 
   return {
-    emoji: "📒",
+    emoji: "🗂️",
     label: "On-site",
   }
 }

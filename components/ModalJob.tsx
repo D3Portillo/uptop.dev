@@ -79,8 +79,8 @@ function ModalJob() {
     <Drawer.Root open={isOpen} onOpenChange={(open) => !open && closeModal()}>
       <Drawer.Portal>
         <Drawer.Overlay className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50" />
-        <Drawer.Content className="fixed inset-x-0 bottom-0 top-14 sm:top-20 z-50 max-w-2xl min-[100rem]:max-w-228 mx-auto px-2 sm:px-6 flex outline-none">
-          <div className="h-full bg-white text-black rounded-t-2xl shadow-2xl border border-black/10 flex flex-col w-full">
+        <Drawer.Content className="fixed inset-x-0 bottom-0 top-14 sm:top-20 z-50 max-w-2xl min-[100rem]:max-w-228 mx-auto sm:px-6 flex outline-none">
+          <div className="h-full bg-white text-black rounded-t-3xl shadow-2xl border border-black/10 flex flex-col w-full">
             {/* Drawer Header */}
             <div className="flex items-center justify-between p-6 pr-3 border-b border-black/10 shrink-0">
               <h2 className="text-lg uppercase font-semibold text-black">

@@ -1,5 +1,6 @@
 "use client"
 
+import { cn } from "@/lib/utils"
 import { Fragment, useState } from "react"
 import { IoChevronDownOutline } from "react-icons/io5"
 
@@ -32,18 +33,20 @@ export default function SelectSortBy({
             className="fixed z-5 inset-0"
           />
 
-          <div className="absolute right-0 mt-2 w-48 bg-white border border-black/10 rounded-lg shadow-lg z-10">
+          <div className="absolute right-0 mt-2 w-48 bg-white/80 dark:bg-white/5 backdrop-blur-xl dark:border-white/10 border border-black/10 rounded-lg shadow-lg z-10">
             {options.map((option) => (
               <button
                 onClick={() => {
                   onValueChange(option)
                   setShowSortMenu(false)
                 }}
-                className={`w-full text-left px-4 py-3 text-sm hover:bg-black/5 first:rounded-t-lg ${
+                className={cn(
+                  "w-full text-left px-4 py-3 text-sm hover:bg-black/5 first:rounded-t-lg last:rounded-b-lg",
+                  "hover:bg-black/5 dark:hover:bg-white/7",
                   option === value
-                    ? "text-black/80"
-                    : "text-black/50 font-medium"
-                }`}
+                    ? "text-black/70 dark:text-white"
+                    : "text-black/50 dark:text-white/60",
+                )}
               >
                 {option}
               </button>

@@ -67,13 +67,13 @@ export default function Auth() {
                 className="fixed z-5 inset-0"
               />
 
-              <div className="absolute right-0 mt-2 w-36 bg-white border border-black/10 rounded-lg shadow-lg z-10 flex flex-col">
+              <div className="absolute right-0 mt-2 w-36 bg-white/80 dark:bg-white/5 backdrop-blur-xl dark:border-white/10 text-black/70 dark:text-white border border-black/10 rounded-lg shadow-lg z-10 flex flex-col">
                 <button
                   onClick={() => {
                     setShowProfileMenu(false)
                     router.push("/profile")
                   }}
-                  className="w-full text-left px-4 py-3 text-sm hover:bg-black/5 first:rounded-t-lg text-black/70 font-medium"
+                  className="w-full text-left px-4 py-3 text-sm hover:bg-black/5 dark:hover:bg-white/7 first:rounded-t-lg font-medium"
                 >
                   Manage Profile
                 </button>
@@ -82,7 +82,7 @@ export default function Auth() {
                     setShowProfileMenu(false)
                     signOut()
                   }}
-                  className="w-full text-left px-4 py-3 text-sm hover:bg-black/5 last:rounded-b-lg text-black/70 font-medium"
+                  className="w-full text-left px-4 py-3 text-sm hover:bg-black/5 dark:hover:bg-white/7 last:rounded-b-lg font-medium"
                 >
                   Disconnect
                 </button>
