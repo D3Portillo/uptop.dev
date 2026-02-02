@@ -12,6 +12,7 @@ import {
 } from "react-icons/io5"
 import AddressBlock from "./AddressBlock"
 
+export const ID_BUTTON_CONNECT = "button-connect"
 export default function Auth() {
   const router = useRouter()
   const { signOut, isSignedIn, userId } = useAuth()
@@ -34,6 +35,7 @@ export default function Auth() {
 
       <SignedOut>
         <button
+          id={ID_BUTTON_CONNECT}
           onClick={() => setIsSignInOpen(true)}
           className="h-9 group active:scale-98 outline-2 shadow-lg shadow-ut-blue-dark/10 hover:shadow-ut-blue-dark/15 outline-ut-blue-dark/15 text-sm pr-3 relative pl-4 flex gap-1.5 items-center bg-linear-to-br from-ut-blue-dark to-ut-purple rounded-full text-white font-semibold transition-colors"
         >

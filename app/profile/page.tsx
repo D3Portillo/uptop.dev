@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { setProfileData } from "@/app/actions/profile"
 import { extractSkillsFromJobs, useJobsList } from "@/lib/jobs"
 import { toAddres, useProfileData } from "@/lib/profile"
+import { cn } from "@/lib/utils"
 
 import { MdCheck } from "react-icons/md"
 import { FaEye, FaFilePdf, FaTrashAlt } from "react-icons/fa"
@@ -16,10 +17,12 @@ import TopNavigation from "@/components/TopNavigation"
 import AddressBlock from "@/components/AddressBlock"
 import Spinner from "@/components/Spinner"
 
+import { ID_BUTTON_CONNECT } from "@/components/Auth"
+
 const MAX_SKILLS = 5
 export default function ProfilePage() {
   const router = useRouter()
-  const { userId } = useAuth()
+  const { userId, isSignedIn } = useAuth()
   const { user, isLoaded: isUserDataLoaded } = useUser()
 
   const [isSaving, setIsSaving] = useState(false)
@@ -59,7 +62,13 @@ export default function ProfilePage() {
     if (file) setCvFile(file)
   }
 
+  const tryTriggerSignIn = () => {
+    document.getElementById(ID_BUTTON_CONNECT)?.click()
+  }
+
   const handleSave = async () => {
+    // Try to trigger connect-flow
+    if (!isSignedIn) return tryTriggerSignIn()
     if (!userId) return
 
     setIsSaving(true)
@@ -118,8 +127,19 @@ export default function ProfilePage() {
       <div className="max-w-4xl mx-auto sm:px-8 sm:pt-8 sm:pb-32">
         <div className="bg-white/30 dark:bg-white/7 text-black dark:text-white sm:rounded-xl border border-black/0 sm:border-black/10 dark:sm:border-white/10 p-7 sm:p-16 sm:mt-16">
           {/* Profile Header */}
-          <div className="flex items-center gap-6 mt-6 sm:mt-0 mb-8 pb-8 border-b border-black/7 dark:border-white/7">
-            <figure className="size-18 sm:size-20 overflow-hidden rounded-2xl sm:rounded-full border border-black dark:border-white/10">
+          <div
+            tabIndex={-1}
+            onClick={() => {
+              if (isSignedIn) return
+              tryTriggerSignIn()
+            }}
+            role={isSignedIn ? "banner" : "button"}
+            className={cn(
+              isSignedIn || "cursor-pointer",
+              "flex items-center gap-6 mt-6 sm:mt-0 mb-8 pb-8 border-b border-black/7 dark:border-white/7",
+            )}
+          >
+            <figure className="size-17 sm:size-20 overflow-hidden rounded-2xl sm:rounded-full border border-black dark:border-white/10">
               <AddressBlock
                 showAuthImage
                 address={toAddres(userId || "")}
@@ -127,191 +147,198 @@ export default function ProfilePage() {
               />
             </figure>
             <div>
-              <h2 className="text-xl sm:text-2xl font-bold">{fullName}</h2>
+              <h2 className="text-xl sm:text-2xl font-bold">
+                {isSignedIn ? fullName : "Disconnected User"}
+              </h2>
               <p className="opacity-50 text-sm mt-1">
                 {user?.primaryEmailAddress?.emailAddress}
               </p>
             </div>
           </div>
 
-          {/* Social Links */}
-          <div className="space-y-8 pb-12 border-b border-black/10 dark:border-white/7">
-            <section className="grid lg:grid-cols-2 gap-8">
-              <div>
-                <h3 className="text-lg font-semibold mb-4">Telegram</h3>
-                <input
-                  type="text"
-                  value={telegram}
-                  onChange={(e) => setTelegram(e.target.value)}
-                  placeholder="@telegram"
-                  className="w-full px-4 h-12 bg-transparent border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
-                />
-              </div>
+          <section className={cn(isSignedIn || "pointer-events-none blur-xs")}>
+            {/* Social Links */}
+            <div className="space-y-8 pb-12 border-b border-black/10 dark:border-white/7">
+              <section className="grid lg:grid-cols-2 gap-8">
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">Telegram</h3>
+                  <input
+                    type="text"
+                    value={telegram}
+                    onChange={(e) => setTelegram(e.target.value)}
+                    placeholder="@telegram"
+                    className="w-full px-4 h-12 bg-transparent border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
+                  />
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold mb-4">
+                    Twitter{" "}
+                    <span className="font-normal text-base opacity-60">
+                      (optional)
+                    </span>
+                  </h3>
+                  <input
+                    type="text"
+                    value={twitter}
+                    onChange={(e) => setTwitter(e.target.value)}
+                    placeholder="@twitter"
+                    className="w-full px-4 h-12 bg-transparent border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
+                  />
+                </div>
+              </section>
 
               <div>
                 <h3 className="text-lg font-semibold mb-4">
-                  Twitter{" "}
+                  Portfolio / Website{" "}
                   <span className="font-normal text-base opacity-60">
                     (optional)
                   </span>
                 </h3>
+
                 <input
                   type="text"
-                  value={twitter}
-                  onChange={(e) => setTwitter(e.target.value)}
-                  placeholder="@twitter"
+                  value={githubOrPortfolioURL}
+                  onChange={(e) => setGithubOrPortfolioURL(e.target.value)}
+                  placeholder="Github, portfolio, or anything to showcase your work"
                   className="w-full px-4 h-12 bg-transparent border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
                 />
               </div>
-            </section>
 
-            <div>
-              <h3 className="text-lg font-semibold mb-4">
-                Portfolio / Website{" "}
-                <span className="font-normal text-base opacity-60">
-                  (optional)
-                </span>
-              </h3>
+              <div>
+                <h3 className="text-lg font-semibold mb-4">LinkedIn</h3>
 
-              <input
-                type="text"
-                value={githubOrPortfolioURL}
-                onChange={(e) => setGithubOrPortfolioURL(e.target.value)}
-                placeholder="Github, portfolio, or anything to showcase your work"
-                className="w-full px-4 h-12 bg-transparent border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
-              />
-            </div>
-
-            <div>
-              <h3 className="text-lg font-semibold mb-4">LinkedIn</h3>
-
-              <input
-                type="text"
-                value={linkedin}
-                onChange={(e) => setLinkedin(e.target.value)}
-                placeholder="https://linkedin.com/in/username"
-                className="w-full px-4 h-12 bg-transparent border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
-              />
-            </div>
-
-            {/* CV Upload */}
-            <div>
-              <h3 className="text-lg font-semibold mb-4">Resume / CV</h3>
-
-              <label className="block cursor-pointer">
-                <div className="border-2 relative flex flex-col items-center justify-center border-dashed border-black/10 dark:border-white/10 rounded-lg h-36 sm:h-40 px-8 text-center hover:border-ut-purple/50 hover:bg-ut-purple/5 transition-all">
-                  {cvFileURI ? (
-                    <Fragment>
-                      <div
-                        role="button"
-                        tabIndex={-1}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          e.preventDefault()
-                          window.open(cvFileURI, "_blank")
-                        }}
-                        className="absolute border border-transparent bg-black/3 dark:bg-white/5 hover:bg-black/5 dark:hover:bg-white/10 hover:border-black/5 rounded-full flex items-center gap-1 top-2 right-2 py-1 px-2"
-                      >
-                        <span className="text-xs font-semibold">View</span>
-                        <FaEye />
-                      </div>
-
-                      <FaFilePdf className="text-4xl opacity-80 dark:opacity-100 scale-110" />
-                      <p className="text-sm whitespace-nowrap opacity-50 mt-2 mb-1">
-                        {cvFile?.name || `Untitled File`}
-                      </p>
-                    </Fragment>
-                  ) : (
-                    <Fragment>
-                      <div className="text-4xl mb-2">📤</div>
-                      <p className="text-sm font-medium opacity-70">
-                        Upload CV
-                      </p>
-                      <p className="text-xs opacity-50 my-1">PDF (Max 5MB)</p>
-                    </Fragment>
-                  )}
-                </div>
                 <input
-                  type="file"
-                  accept=".pdf"
-                  onChange={handlePdfChange}
-                  className="hidden"
+                  type="text"
+                  value={linkedin}
+                  onChange={(e) => setLinkedin(e.target.value)}
+                  placeholder="https://linkedin.com/in/username"
+                  className="w-full px-4 h-12 bg-transparent border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm"
                 />
+              </div>
+
+              {/* CV Upload */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Resume / CV</h3>
+
+                <label className="block cursor-pointer">
+                  <div className="border-2 relative flex flex-col items-center justify-center border-dashed border-black/10 dark:border-white/10 rounded-lg h-36 sm:h-40 px-8 text-center hover:border-ut-purple/50 hover:bg-ut-purple/5 transition-all">
+                    {cvFileURI ? (
+                      <Fragment>
+                        <div
+                          role="button"
+                          tabIndex={-1}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            e.preventDefault()
+                            window.open(cvFileURI, "_blank")
+                          }}
+                          className="absolute border border-transparent bg-black/3 dark:bg-white/5 hover:bg-black/5 dark:hover:bg-white/10 hover:border-black/5 rounded-full flex items-center gap-1 top-2 right-2 py-1 px-2"
+                        >
+                          <span className="text-xs font-semibold">View</span>
+                          <FaEye />
+                        </div>
+
+                        <FaFilePdf className="text-4xl opacity-80 dark:opacity-100 scale-110" />
+                        <p className="text-sm whitespace-nowrap opacity-50 mt-2 mb-1">
+                          {cvFile?.name || `Untitled File`}
+                        </p>
+                      </Fragment>
+                    ) : (
+                      <Fragment>
+                        <div className="text-4xl mb-2">📤</div>
+                        <p className="text-sm font-medium opacity-70">
+                          Upload CV
+                        </p>
+                        <p className="text-xs opacity-50 my-1">PDF (Max 5MB)</p>
+                      </Fragment>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    accept=".pdf"
+                    onChange={handlePdfChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* Skills Selection */}
+            {isSignedIn ? (
+              // Hide if not signed in
+              <div className="mt-8 pb-8 border-b border-black/7 dark:border-white/7">
+                <h3 className="text-lg font-semibold mb-4">
+                  Skills{" "}
+                  {selectedSkills.length ? (
+                    <span className="font-normal text-base">
+                      <span className="opacity-60">
+                        ({selectedSkills.length}/{MAX_SKILLS})
+                      </span>{" "}
+                      <button
+                        onClick={() => setSelectedSkills([])}
+                        className="text-xs opacity-60 hover:opacity-90 ml-1 inline-flex items-center gap-1 border border-black/10 dark:border-white/15 px-2 py-1 rounded-lg"
+                      >
+                        <FaTrashAlt />
+                        <span>Clear</span>
+                      </button>
+                    </span>
+                  ) : (
+                    <span className="font-normal text-base opacity-60">
+                      (optional)
+                    </span>
+                  )}
+                </h3>
+
+                <div className="flex flex-wrap gap-2 items-center">
+                  {skills.map((skill) => (
+                    <SkillChip
+                      skill={skill}
+                      key={`p-skill-${skill}`}
+                      isSelected={selectedSkills.includes(skill)}
+                      onSelect={() => {
+                        setSelectedSkills((prev) => {
+                          const newSkills = prev.includes(skill)
+                            ? prev.filter((s) => s !== skill)
+                            : [...prev, skill]
+
+                          return newSkills.slice(0, MAX_SKILLS)
+                        })
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            ) : null}
+
+            {/* Crypto Experience */}
+            <div className="mt-6 pb-12 flex justify-start">
+              <label className="flex items-start gap-4 cursor-pointer group">
+                <div className="relative pt-1">
+                  <input
+                    type="checkbox"
+                    checked={hasCryptoExperience}
+                    onChange={(e) => setHasCryptoExperience(e.target.checked)}
+                    className="peer sr-only"
+                  />
+                  <div className="size-5 border-2 border-black/20 dark:border-white/20 rounded group-hover:border-black/35 dark:group-hover:border-ut-purple peer-checked:border-ut-purple peer-checked:bg-ut-purple transition-all flex items-center justify-center">
+                    {hasCryptoExperience && (
+                      <MdCheck className="text-white text-sm" />
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">
+                    Do you have experience working in the crypto/web3 industry?
+                  </p>
+                  <p className="text-xs opacity-50 mt-1">
+                    This is not required, but helps us match you with relevant
+                    opportunities.
+                  </p>
+                </div>
               </label>
             </div>
-          </div>
-
-          {/* Skills Selection */}
-          <div className="mb-8 mt-8">
-            <h3 className="text-lg font-semibold mb-4">
-              Skills{" "}
-              {selectedSkills.length ? (
-                <span className="font-normal text-base">
-                  <span className="opacity-60">
-                    ({selectedSkills.length}/{MAX_SKILLS})
-                  </span>{" "}
-                  <button
-                    onClick={() => setSelectedSkills([])}
-                    className="text-xs opacity-60 hover:opacity-90 ml-1 inline-flex items-center gap-1 border border-black/10 dark:border-white/15 px-2 py-1 rounded-lg"
-                  >
-                    <FaTrashAlt />
-                    <span>Clear</span>
-                  </button>
-                </span>
-              ) : (
-                <span className="font-normal text-base opacity-60">
-                  (optional)
-                </span>
-              )}
-            </h3>
-
-            <div className="flex flex-wrap gap-2 items-center">
-              {skills.map((skill) => (
-                <SkillChip
-                  skill={skill}
-                  key={`p-skill-${skill}`}
-                  isSelected={selectedSkills.includes(skill)}
-                  onSelect={() => {
-                    setSelectedSkills((prev) => {
-                      const newSkills = prev.includes(skill)
-                        ? prev.filter((s) => s !== skill)
-                        : [...prev, skill]
-
-                      return newSkills.slice(0, MAX_SKILLS)
-                    })
-                  }}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Crypto Experience */}
-          <div className="pt-6 pb-12 flex justify-start border-t border-black/7 dark:border-white/7">
-            <label className="flex items-start gap-4 cursor-pointer group">
-              <div className="relative pt-1">
-                <input
-                  type="checkbox"
-                  checked={hasCryptoExperience}
-                  onChange={(e) => setHasCryptoExperience(e.target.checked)}
-                  className="peer sr-only"
-                />
-                <div className="size-5 border-2 border-black/20 dark:border-white/20 rounded group-hover:border-black/35 dark:group-hover:border-ut-purple peer-checked:border-ut-purple peer-checked:bg-ut-purple transition-all flex items-center justify-center">
-                  {hasCryptoExperience && (
-                    <MdCheck className="text-white text-sm" />
-                  )}
-                </div>
-              </div>
-              <div>
-                <p className="text-sm font-medium">
-                  Do you have experience working in the crypto/web3 industry?
-                </p>
-                <p className="text-xs opacity-50 mt-1">
-                  This is not required, but helps us match you with relevant
-                  opportunities.
-                </p>
-              </div>
-            </label>
-          </div>
+          </section>
 
           {/* Action Buttons */}
           <nav className="flex w-full mb-24 sm:mb-4">
@@ -320,13 +347,17 @@ export default function ProfilePage() {
               onClick={handleSave}
               className="px-6 flex items-center justify-center gap-3 w-full py-3 bg-ut-purple text-white rounded-lg font-semibold hover:bg-ut-purple/90 transition-colors shadow-lg shadow-ut-purple/20"
             >
-              {isSaving ? (
-                <Fragment>
-                  <Spinner themeSize="size-5" />
-                  <span className="mr-3">Saving</span>
-                </Fragment>
+              {isSignedIn ? (
+                isSaving ? (
+                  <Fragment>
+                    <Spinner themeSize="size-5" />
+                    <span className="mr-3">Saving</span>
+                  </Fragment>
+                ) : (
+                  "Save Changes"
+                )
               ) : (
-                "Save Changes"
+                "Connect & Continue"
               )}
             </button>
           </nav>

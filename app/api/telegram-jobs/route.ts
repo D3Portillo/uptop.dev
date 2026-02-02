@@ -10,7 +10,7 @@ async function fetchTelegramJobs() {
 
   const jobs = await Promise.all(
     messages
-      .filter((msg) => msg.message.includes(CLIENT_MARKER))
+      .filter((msg) => msg?.message?.includes(CLIENT_MARKER))
       .map(async ({ message, ...msg }) => {
         const clientName = `${
           message.split(CLIENT_MARKER)[1]?.split("\n")[0] || ""

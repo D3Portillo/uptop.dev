@@ -172,6 +172,9 @@ export const useTelegramJobsMetadata = () => {
     async (url: string) => {
       const data = await jsonify<TTelegramJobsResponse>(fetch(url))
 
+      // Ensure consistent data type
+      if (!Array.isArray(data)) return []
+
       if (data.length > 0) {
         // Cache if we got any job listings
         await waitForStack()
