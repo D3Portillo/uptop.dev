@@ -105,7 +105,7 @@ export default function Home() {
       const query = searchQuery.toLowerCase()
       const formattedDataString = [
         properties.title,
-        properties.company || "",
+        // properties.company || "",
         properties.location || "",
         properties.remotePolicy || "",
         properties.formattedJobPolicy.label,
@@ -246,7 +246,7 @@ export default function Home() {
             )}
             <input
               type="text"
-              placeholder="Filter jobs by title, company or keyword"
+              placeholder="Filter jobs by title, location or keyword"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full outline-none pl-12 pr-4 py-3.5 bg-transparent text-sm"
