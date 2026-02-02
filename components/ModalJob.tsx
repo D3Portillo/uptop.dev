@@ -151,7 +151,7 @@ function ModalJob() {
                           "flex flex-wrap [&_section]:sm:px-5 [&_section]:sm:py-2 px-6 sm:px-2 pb-6 sm:pb-5 pt-5 mb-12 bg-black/3 rounded-2xl gap-4",
                           [
                             job?.properties?.location,
-                            job?.properties.company,
+                            // job?.properties.company,
                             job?.properties?.salaryRange?.length,
                             job?.properties?.skills.length,
                           ].every((v) => !v) && "hidden", // Hide if no data
@@ -205,7 +205,9 @@ function ModalJob() {
                           </section>
                         ) : null}
 
-                        {job?.properties.company ? (
+                        {false ? (
+                          // Not used for now
+                          // job?.properties.company
                           <section className="px-2 py-3">
                             <h2 className="text-sm mb-4 text-black/60">
                               Company
@@ -213,7 +215,7 @@ function ModalJob() {
 
                             <nav className="flex">
                               <div className="rounded-full capitalize whitespace-nowrap h-8 border text-sm border-black/10 font-semibold px-3 py-1 text-black/70">
-                                {job.properties.company.toLowerCase()}
+                                {job?.properties?.company?.toLowerCase()}
                               </div>
                             </nav>
                           </section>

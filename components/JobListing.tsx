@@ -57,8 +57,8 @@ export default function JobListing({
     properties.faviconBaseDomain,
   )
 
-  const COMPANY_IMAGE = companyData?.logoImage || favicon
-  const COMPANY_COLOR = companyData?.hexColor || dominantColor || "#ffffff"
+  const COMPANY_IMAGE = undefined // companyData?.logoImage || favicon
+  const COMPANY_COLOR = "#fff" // companyData?.hexColor || dominantColor || "#fff"
 
   // Fallback to job ID to avoid generics (formatted to reduce collisions)
   const gravatarSeed = properties.company || formattedId
