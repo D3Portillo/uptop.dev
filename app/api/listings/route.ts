@@ -1,8 +1,6 @@
-import { formatJobTitles } from "@/app/actions/textFormatter"
 import { acquireBrowserLock, releaseLockedBrowser } from "@/lib/chromium"
 import { redis, CACHE_KEYS } from "@/lib/redis"
 import { staledResponse } from "@/lib/routes"
-import { formatTitleCase } from "@/lib/utils"
 
 const ROW_HEADERS = [
   "STATUS",
@@ -129,23 +127,10 @@ async function fetchListings() {
         }
       })
 
-    const formattedTitles = await formatJobTitles(
-      formattedBlocks.map((block) => block.properties.title || "NO_TITLE"),
-    )
-
     const result = {
       success: true,
       count: formattedBlocks.length,
-      data: formattedBlocks.map((block, index) => ({
-        ...block,
-        properties: {
-          ...block.properties,
-          // Use formatted title from AI, or fallback to original
-          title:
-            formattedTitles[index] ||
-            formatTitleCase(block.properties.title || "Untitled Job"),
-        },
-      })),
+      data: formattedBlocks,
     }
 
     return result
@@ -226,9 +211,27 @@ export async function POST() {
       mergedJobs.set(job.id, job)
     })
 
+    const freshDataKeys = {} as Record<string, true>
     // Then, add/update with fresh data (overwrites existing)
     freshData.data.forEach((job) => {
+      freshDataKeys[job.id] = true
       mergedJobs.set(job.id, job)
+    })
+
+    // Mark as closed elements not present in fresh data
+    existingData?.data?.forEach((job) => {
+      if (!freshDataKeys[job.id]) {
+        mergedJobs.set(job.id, {
+          ...job,
+          properties: {
+            ...job.properties,
+            // Mark this job as closed
+            status: "CLOSED",
+            // @ts-ignore
+            originalStatus: job.properties.status,
+          },
+        })
+      }
     })
 
     const mergedResult: TListingResponse = {

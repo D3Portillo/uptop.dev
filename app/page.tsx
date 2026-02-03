@@ -41,7 +41,14 @@ export default function Home() {
       : MIN_DESKTOP_SHOW_SIZE
 
   const [isGlobalLoading, setIsGlobalLoading] = useState(true)
-  const { jobs, isEmpty: isMainJobsListEmpty } = useJobsList()
+  const { jobs: rawJobs, isEmpty: isMainJobsListEmpty } = useJobsList()
+
+  const jobs = rawJobs.filter((job) => {
+    // Return only active jobs
+    return ["OPEN", "COVERED", "PRIORITY", "PASSIVE"].includes(
+      job.properties.status || "",
+    )
+  })
 
   useEffect(() => {
     setIsGlobalLoading(isMainJobsListEmpty)
