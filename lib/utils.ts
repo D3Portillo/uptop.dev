@@ -53,3 +53,9 @@ export function formatTitleCase(str: string) {
   // and replace the matched character with its uppercase version.
   return str.toLowerCase().replace(/\b\w/g, (s) => s.toUpperCase())
 }
+
+export const isActiveJobListing = (status?: string | null) => {
+  return ["OPEN", "COVERED", "PRIORITY", "PASSIVE"].includes(
+    status?.toUpperCase() || "",
+  )
+}

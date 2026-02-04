@@ -6,5 +6,5 @@ export const redis = Redis.fromEnv()
 export const CACHE_KEYS = {
   listings: "uptop:listings:all",
   listingDetail: (postID: string) => `uptop:listings:${postID}:details`,
-  browserLock: "uptop:browser:lock",
+  browserLock: (resourceID: string) => `uptop:browser:${resourceID}:lock`,
 } as const

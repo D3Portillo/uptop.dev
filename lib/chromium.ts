@@ -18,9 +18,10 @@ export async function acquireBrowserLock(
   resourceId: string,
   namespace: Namespace = "global",
 ): Promise<Browser> {
-  // Single browser (key-based) shared across requests within the same namespace
-  const lockKey = `${CACHE_KEYS.browserLock}:${namespace}`
-  const lockValue = `${resourceId}:${Date.now()}`
+  // Lock key from namespace and resourceId
+  const lockKey = `${namespace}:${CACHE_KEYS.browserLock(resourceId)}`
+  // Namespace, resourceId, acquisition timestamp
+  const lockValue = `${namespace}:${resourceId}:${Date.now()}`
   const lockTTL = 10 * 60 // 10 minutes in seconds
 
   // Attempt to acquire lock

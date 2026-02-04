@@ -8,8 +8,9 @@ import { atom, useAtom } from "jotai"
 import { atomWithStorage } from "jotai/utils"
 import { useJobsList, useJobDetails } from "@/lib/jobs"
 import { formatID } from "@/lib/id"
-import { cn } from "@/lib/utils"
+import { cn, isActiveJobListing } from "@/lib/utils"
 
+import { LuBadgeAlert } from "react-icons/lu"
 import { IoCloseOutline } from "react-icons/io5"
 import { MdArrowOutward } from "react-icons/md"
 
@@ -56,13 +57,14 @@ function ModalJob() {
       // NOTE: This is simple logic to randomly update job details in the background
       // to try and keep data fresh without overwhelming the backend with requests :p
 
-      const shouldSendUpdate = Math.random() < 0.33 // 33% chance
+      const EXECUTE_CHANCE = 0.77 // (1-100)%
+      const shouldSendUpdate = Math.random() < EXECUTE_CHANCE
       if (shouldSendUpdate) {
         // Notify backend to try update cache for this job
         fetch(`/api/listings/${openJobID}`, { method: "POST" })
       }
 
-      // Mark as updated to avoid redundant calls
+      // Mark as updated to avoid redundant calls (We ok with this raced condition)
       setUpdatedJobs((prev) => ({ ...prev, [openJobID]: true }))
     }
   }, [openJobID, isUpdated, isOpen])
@@ -73,7 +75,35 @@ function ModalJob() {
 
   const job = jobs.find(({ id }) => id === openJobID)
   const title = job?.properties.title
-  const applyLink = job?.applyLink
+  const hasApplyLink = Boolean(job?.applyLink)
+
+  // Determine if the job is still active
+  const isInactiveJob =
+    job?.properties?.status && !isActiveJobListing(job.properties.status)
+
+  // Debugging
+  console.debug({
+    isInactiveJob,
+    status: job?.properties?.status,
+    originalStatus: (job?.properties as any)?.originalStatus || null,
+  })
+
+  function handleApply() {
+    if (isInactiveJob) {
+      return closeModal()
+    }
+
+    if (hasApplyLink) {
+      if (!isApplied) {
+        // Mark as applied for connected user
+        setAppliedJobs((current) => [...current, openJobID])
+      }
+      return window.open(job!.applyLink, "_blank")
+    }
+
+    // Fallback
+    closeModal()
+  }
 
   return (
     <Drawer.Root open={isOpen} onOpenChange={(open) => !open && closeModal()}>
@@ -82,8 +112,8 @@ function ModalJob() {
         <Drawer.Content className="fixed inset-x-0 bottom-0 top-14 sm:top-20 z-50 max-w-2xl min-[100rem]:max-w-228 mx-auto sm:px-6 flex outline-none">
           <div className="h-full bg-white text-black rounded-t-3xl shadow-2xl border border-black/10 flex flex-col w-full">
             {/* Drawer Header */}
-            <div className="flex items-center justify-between p-6 pr-3 border-b border-black/10 shrink-0">
-              <h2 className="text-lg uppercase font-semibold text-black">
+            <div className="flex gap-1 items-center justify-between p-6 pr-3 border-b border-black/10 shrink-0">
+              <h2 className="sm:text-lg whitespace-nowrap overflow-hidden text-ellipsis uppercase font-semibold text-black">
                 <button
                   className="text-black/50 hover:text-black/70"
                   onClick={closeModal}
@@ -95,7 +125,7 @@ function ModalJob() {
 
               <button
                 onClick={closeModal}
-                className="p-3 pt-1 sm:pt-3 self-start text-black/70 hover:text-black"
+                className="px-2.5 py-1.5 text-black/70 hover:text-black"
               >
                 <IoCloseOutline className="text-2xl" />
               </button>
@@ -103,7 +133,21 @@ function ModalJob() {
 
             {/* Drawer Content */}
             <div className="grow overflow-y-auto p-6">
-              {isLoadingDetails ? (
+              {isInactiveJob ? (
+                <section className="pt-20 grid gap-3 place-items-center">
+                  <LuBadgeAlert className="text-4xl scale-110 opacity-80" />
+                  <p className="text-black/50 max-w-xs text-center mx-auto">
+                    Sorry, this position is no longer active.
+                    <br />
+                    <button
+                      className="underline underline-offset-4"
+                      onClick={closeModal}
+                    >
+                      Check for similar roles
+                    </button>
+                  </p>
+                </section>
+              ) : isLoadingDetails ? (
                 <div className="space-y-4">
                   <div className="h-12 bg-black/5 rounded-md animate-pulse" />
                   <div className="h-12 bg-black/5 delay-150 rounded-md animate-pulse" />
@@ -247,25 +291,23 @@ function ModalJob() {
               )}
             </div>
 
-            {applyLink && (
-              <nav className="flex relative shrink-0 w-full pb-4 pt-2 px-6">
-                <div className="absolute bottom-full left-0 right-0 h-12 pointer-events-none bg-linear-to-b from-white/0 to-white" />
+            <nav className="flex relative shrink-0 w-full pb-6 sm:pb-4 pt-2 px-6">
+              <div className="absolute bottom-full left-0 right-0 h-12 pointer-events-none bg-linear-to-b from-white/0 to-white" />
 
-                <a
-                  href={applyLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => {
-                    if (isApplied) return
-                    setAppliedJobs((current) => [...current, openJobID])
-                  }}
-                  className="flex w-full items-center justify-center gap-4 p-4 bg-ut-purple text-white text-center rounded-lg hover:bg-ut-purple/90 transition-colors font-black"
-                >
-                  <span>{isApplied ? "Applied" : "Apply Now"}</span>
-                  <MdArrowOutward className="text-xl" />
-                </a>
-              </nav>
-            )}
+              <button
+                onClick={handleApply}
+                className="flex w-full items-center justify-center gap-4 p-4 bg-ut-purple text-white text-center rounded-lg hover:bg-ut-purple/90 transition-colors font-black"
+              >
+                {hasApplyLink && !isInactiveJob ? (
+                  <Fragment>
+                    <span>{isApplied ? "Applied" : "Apply Now"}</span>
+                    <MdArrowOutward className="text-xl" />
+                  </Fragment>
+                ) : (
+                  "Continue Exploring"
+                )}
+              </button>
+            </nav>
           </div>
         </Drawer.Content>
       </Drawer.Portal>

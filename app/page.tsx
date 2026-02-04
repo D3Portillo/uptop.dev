@@ -12,6 +12,7 @@ import { MdCheck, MdOutlineClose } from "react-icons/md"
 import {
   cn,
   getHighestSalaryFromProperty,
+  isActiveJobListing,
   normalizeLocation,
 } from "@/lib/utils"
 import { extractSkillsFromJobs, useJobsList } from "@/lib/jobs"
@@ -43,12 +44,9 @@ export default function Home() {
   const [isGlobalLoading, setIsGlobalLoading] = useState(true)
   const { jobs: rawJobs, isEmpty: isMainJobsListEmpty } = useJobsList()
 
-  const jobs = rawJobs.filter((job) => {
-    // Return only active jobs
-    return ["OPEN", "COVERED", "PRIORITY", "PASSIVE"].includes(
-      job.properties.status || "",
-    )
-  })
+  const jobs = rawJobs.filter((job) =>
+    isActiveJobListing(job?.properties?.status),
+  )
 
   useEffect(() => {
     setIsGlobalLoading(isMainJobsListEmpty)
