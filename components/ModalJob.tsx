@@ -301,7 +301,7 @@ function ModalJob() {
 
               <button
                 onClick={handleApply}
-                className="flex w-full items-center justify-center gap-4 p-4 bg-ut-purple text-white text-center rounded-lg hover:bg-ut-purple/90 transition-colors font-black"
+                className="flex w-full items-center justify-center gap-4 p-4 bg-linear-to-br from-ut-blue-dark to-ut-purple text-white text-center rounded-lg hover:bg-ut-purple/90 transition-colors font-black"
               >
                 {hasApplyLink && !isInactiveJob ? (
                   <Fragment>

@@ -65,20 +65,18 @@ export default function JobListing({
     >
       <div className="flex min-h-20 gap-6">
         {/* Company Image */}
-        <div className="size-16 overflow-hidden bg-cover sm:size-20 border-2 border-black dark:border-blue-700/30 rounded-xl flex items-center justify-center font-bold text-xl shrink-0">
-          <div className="grid p-1 bg-linear-to-bl from-ut-blue-dark to-blue-600 size-full place-items-center">
-            <Image
-              className="w-full fade-in duration-100 opacity-95"
-              width={500}
-              height={500}
-              onLoad={(e) => {
-                e.currentTarget.classList.add("animate-in")
-              }}
-              loading="lazy"
-              src={COVER_IMAGE}
-              alt=""
-            />
-          </div>
+        <div className="size-16 overflow-hidden bg-cover sm:size-20 border-2 border-black dark:border-white/10 rounded-xl flex items-center justify-center font-bold text-xl shrink-0">
+          <Image
+            className="w-full fade-in duration-100 opacity-95"
+            width={500}
+            height={500}
+            onLoad={(e) => {
+              e.currentTarget.classList.add("animate-in")
+            }}
+            loading="lazy"
+            src={COVER_IMAGE}
+            alt=""
+          />
         </div>
 
         {/* Job Info */}
@@ -180,14 +178,14 @@ export default function JobListing({
 
 const getImageForCategory = (category = "") => {
   const categoryMap: Record<string, string> = {
-    "BIZ DEV": "/covers/bizdev.png",
-    ENGINEERING: "/covers/development.png",
-    MARKETING: "/covers/marketing.png",
-    PRODUCT: "/covers/product.png",
-    DESIGN: "/covers/design.png",
-    FINANCE: "/covers/trading.png",
-    OPERATIONS: "/covers/operations.png",
+    "BIZ DEV": "/covers2/bizdev.png",
+    ENGINEERING: "/covers2/development.png",
+    MARKETING: "/covers2/marketing.png",
+    PRODUCT: "/covers2/product.png",
+    DESIGN: "/covers2/design.png",
+    FINANCE: "/covers2/trading.png",
+    OPERATIONS: "/covers2/operations.png",
   }
 
-  return categoryMap[category.toUpperCase().trim()] || "/covers/default.png"
+  return categoryMap[category.toUpperCase().trim()] || "/covers2/default.png"
 }
