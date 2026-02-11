@@ -5,24 +5,21 @@ import type { JobsList } from "@/lib/jobs"
 import { Fragment } from "react/jsx-runtime"
 import { useAtom } from "jotai"
 import { differenceInDays } from "date-fns"
-import { blo } from "blo"
 import { atomWithStorage } from "jotai/utils"
-import { keccak256, toHex } from "viem"
-import useSWR from "swr"
 
 import { useRouter } from "next/navigation"
 import { useOpenJobID, useAppliedJobs } from "./ModalJob"
 
 import { IoLocationOutline } from "react-icons/io5"
-import { cn, jsonify, normalizeLocation } from "@/lib/utils"
+import { cn, normalizeLocation } from "@/lib/utils"
 
 import { CRYPTO_JOB_LOCATIONS } from "@/lib/constants/countries"
-import { useCompanyAppData } from "@/lib/company"
+import Image from "next/image"
 
 const atomViewededJobs = atomWithStorage("ut.jobs.viewedJobs", [] as string[])
 export const useViewededJobs = () => useAtom(atomViewededJobs)
 export default function JobListing({
-  listing: { id, formattedId, properties, rowIndex },
+  listing: { id, properties, rowIndex },
 }: {
   listing: JobsList[number]
 }) {
@@ -51,21 +48,7 @@ export default function JobListing({
     router.push(`?job=${id}`, { scroll: false })
   }
 
-  const { companyData } = useCompanyAppData(properties.company || "")
-
-  const { favicon, unsafeFaviconURL, dominantColor } = useDomainFavicon(
-    properties.faviconBaseDomain,
-  )
-
-  const COMPANY_IMAGE = undefined // companyData?.logoImage || favicon
-  const COMPANY_COLOR = "#fff" // companyData?.hexColor || dominantColor || "#fff"
-
-  // Fallback to job ID to avoid generics (formatted to reduce collisions)
-  const gravatarSeed = properties.company || formattedId
-  const gravatar = blo(keccak256(toHex(gravatarSeed)), 16)
-
-  // Show when no local company data available
-  const shouldShowBorderedColor = !companyData?.hexColor
+  const COVER_IMAGE = getImageForCategory(properties?.category || "")
 
   return (
     <button
@@ -82,32 +65,19 @@ export default function JobListing({
     >
       <div className="flex min-h-20 gap-6">
         {/* Company Image */}
-        <div
-          data-gravatar-seed={gravatarSeed}
-          data-company-image={unsafeFaviconURL || "null"}
-          style={{
-            backgroundImage: `url(${gravatar})`,
-            filter: COMPANY_IMAGE
-              ? undefined
-              : "saturate(1.2) brightness(0.7) contrast(1.2)",
-          }}
-          className="size-16 overflow-hidden bg-cover sm:size-20 bg-white border-2 border-black dark:border-white rounded-lg flex items-center justify-center font-bold text-xl shrink-0"
-        >
-          <div
-            style={{
-              backgroundColor: COMPANY_COLOR,
-            }}
-            className={cn(
-              shouldShowBorderedColor && "p-1.5",
-              "grid size-full place-items-center",
-              COMPANY_IMAGE ? "opacity-100" : "opacity-0 pointer-events-none",
-            )}
-          >
-            <figure className="rounded-md overflow-hidden">
-              {COMPANY_IMAGE ? (
-                <img loading="lazy" src={COMPANY_IMAGE} alt="" />
-              ) : null}
-            </figure>
+        <div className="size-16 overflow-hidden bg-cover sm:size-20 border-2 border-black dark:border-blue-700/30 rounded-xl flex items-center justify-center font-bold text-xl shrink-0">
+          <div className="grid p-1 bg-linear-to-bl from-ut-blue-dark to-blue-600 size-full place-items-center">
+            <Image
+              className="w-full fade-in duration-100 opacity-95"
+              width={500}
+              height={500}
+              onLoad={(e) => {
+                e.currentTarget.classList.add("animate-in")
+              }}
+              loading="lazy"
+              src={COVER_IMAGE}
+              alt=""
+            />
           </div>
         </div>
 
@@ -208,59 +178,16 @@ export default function JobListing({
   )
 }
 
-export const useDomainFavicon = (domain?: string | null) => {
-  const favicon = domain
-    ? `https://www.google.com/s2/favicons?domain=${domain.replace(
-        "www.",
-        "",
-      )}&sz=128`
-    : null
-
-  const { data = null } = useSWR(favicon, async () => {
-    if (!favicon) return null
-
-    const LOCAL_FAVICON_KEY = `ut.jobs.favicon.${domain}`
-    const localCache = localStorage.getItem(LOCAL_FAVICON_KEY)
-    if (localCache) {
-      return JSON.parse(localCache) as {
-        isValid: boolean
-        dominantColor: string
-      }
-    }
-
-    const [formattedURL, { hex: dominantColor }] = await Promise.all([
-      loadFavicon(favicon),
-      jsonify<{ hex: string }>(
-        fetch(`/api/images/tools?bg-color=${encodeURIComponent(favicon)}`),
-      ),
-    ])
-
-    const isValid = Boolean(formattedURL)
-    if (isValid && dominantColor) {
-      localStorage.setItem(
-        LOCAL_FAVICON_KEY,
-        JSON.stringify({
-          isValid,
-          dominantColor,
-        }),
-      )
-    }
-
-    return { isValid, dominantColor }
-  })
-
-  return {
-    unsafeFaviconURL: favicon,
-    favicon: data?.isValid === false ? null : favicon,
-    dominantColor: data?.dominantColor || null,
+const getImageForCategory = (category = "") => {
+  const categoryMap: Record<string, string> = {
+    "BIZ DEV": "/covers/bizdev.png",
+    ENGINEERING: "/covers/development.png",
+    MARKETING: "/covers/marketing.png",
+    PRODUCT: "/covers/product.png",
+    DESIGN: "/covers/design.png",
+    FINANCE: "/covers/trading.png",
+    OPERATIONS: "/covers/operations.png",
   }
-}
 
-function loadFavicon(url: string): Promise<string | null> {
-  return new Promise((resolve) => {
-    const img = new Image()
-    img.onload = async () => resolve(url)
-    img.onerror = () => resolve(null)
-    img.src = url
-  })
+  return categoryMap[category.toUpperCase().trim()] || "/covers/default.png"
 }
