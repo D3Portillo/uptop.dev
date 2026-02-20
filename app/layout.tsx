@@ -5,6 +5,7 @@ import { GoogleAnalytics } from "@next/third-parties/google"
 
 import { ThemeProvider } from "next-themes"
 import { ClerkProvider } from "@clerk/nextjs"
+import { Toaster } from "sonner"
 import MainLayout from "./MainLayout"
 
 const nextFont = Inter({
@@ -44,6 +45,7 @@ export default function RootLayout({
             enableSystem={false}
             disableTransitionOnChange
           >
+            <Toaster richColors position="bottom-right" />
             <MainLayout>{children}</MainLayout>
           </ThemeProvider>
         </body>

@@ -18,6 +18,7 @@ import AddressBlock from "@/components/AddressBlock"
 import Spinner from "@/components/Spinner"
 
 import { ID_BUTTON_CONNECT } from "@/components/Auth"
+import { toast } from "sonner"
 
 const MAX_SKILLS = 5
 export default function ProfilePage() {
@@ -38,6 +39,7 @@ export default function ProfilePage() {
   const [githubOrPortfolioURL, setGithubOrPortfolioURL] = useState("")
 
   const [cvFile, setCvFile] = useState<File | null>(null)
+  const [resumeURL, setResumeURL] = useState<string | null>(null)
 
   const { profile } = useProfileData(userId)
 
@@ -49,17 +51,38 @@ export default function ProfilePage() {
       setTwitter(profile.twitter || "")
       setTelegram(profile.telegram || "")
       setLinkedin(profile.linkedin || "")
+      setResumeURL(profile.resumeURL || null)
     }
   }, [profile])
 
   const cvFileURI = useMemo(() => {
-    if (!cvFile) return null
-    return URL.createObjectURL(cvFile)
-  }, [cvFile?.name, cvFile?.lastModified])
+    if (cvFile) return URL.createObjectURL(cvFile)
+    return resumeURL ?? null
+  }, [cvFile?.name, cvFile?.lastModified, resumeURL])
 
-  const handlePdfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePdfChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e?.target?.files?.[0]
-    if (file) setCvFile(file)
+    if (!file) return
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("File exceeds 5MB limit")
+      return
+    }
+
+    setCvFile(file)
+
+    const formData = new FormData()
+    formData.append("file", file)
+
+    try {
+      const res = await fetch("/api/resume", { method: "POST", body: formData })
+      if (!res.ok) throw new Error(await res.text())
+      const { url } = await res.json()
+      setResumeURL(url)
+    } catch {
+      toast.error("Failed to upload CV, please try again")
+      setCvFile(null)
+    }
   }
 
   const tryTriggerSignIn = () => {
@@ -81,6 +104,7 @@ export default function ProfilePage() {
       githubOrPortfolioURL !== profile?.githubOrPortfolioURL,
       hasCryptoExperience !== profile?.isCryptoSavvy,
       JSON.stringify(selectedSkills) !== JSON.stringify(profile?.skills || []),
+      resumeURL !== profile?.resumeURL,
     ].some((field) => !field)
 
     // Only update if there are changes
@@ -96,6 +120,7 @@ export default function ProfilePage() {
           skills: selectedSkills,
           isCryptoSavvy: hasCryptoExperience,
           githubOrPortfolioURL,
+          resumeURL: resumeURL || undefined,
         })
       } catch (error) {
         console.error({ error })
