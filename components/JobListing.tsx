@@ -65,15 +65,12 @@ export default function JobListing({
     >
       <div className="flex min-h-20 gap-6">
         {/* Company Image */}
-        <div className="size-16 overflow-hidden bg-cover sm:size-20 border-2 border-black dark:border-white/10 rounded-xl flex items-center justify-center font-bold text-xl shrink-0">
+        <div className="size-16 p-1 bg-[#2b108e] overflow-hidden bg-cover sm:size-20 border-2 border-black dark:border-white/10 rounded-xl flex items-center justify-center font-bold text-xl shrink-0">
           <Image
-            className="w-full fade-in duration-100 opacity-95"
-            width={500}
-            height={500}
-            onLoad={(e) => {
-              e.currentTarget.classList.add("animate-in")
-            }}
+            width={300}
+            height={300}
             loading="lazy"
+            className="size-full"
             src={COVER_IMAGE}
             alt=""
           />
@@ -178,14 +175,14 @@ export default function JobListing({
 
 const getImageForCategory = (category = "") => {
   const categoryMap: Record<string, string> = {
-    "BIZ DEV": "/covers2/bizdev.png",
-    ENGINEERING: "/covers2/development.png",
-    MARKETING: "/covers2/marketing.png",
-    PRODUCT: "/covers2/product.png",
-    DESIGN: "/covers2/design.png",
-    FINANCE: "/covers2/trading.png",
-    OPERATIONS: "/covers2/operations.png",
+    "BIZ DEV": "/icons/bizdev.svg",
+    ENGINEERING: "/icons/development.svg",
+    MARKETING: "/icons/marketing.svg",
+    PRODUCT: "/icons/product.svg",
+    DESIGN: "/icons/product.svg",
+    FINANCE: "/icons/trading.svg",
+    OPERATIONS: "/icons/operations.svg",
   }
 
-  return categoryMap[category.toUpperCase().trim()] || "/covers2/default.png"
+  return categoryMap[category.toUpperCase().trim()] || "/icons/default.svg"
 }
