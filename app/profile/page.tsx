@@ -4,7 +4,7 @@ import { Fragment, useEffect, useMemo, useState } from "react"
 import { useAuth, useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
 
-import { setProfileData } from "@/app/actions/profile"
+import { setProfileData, type CvMetadata } from "@/app/actions/profile"
 import { extractSkillsFromJobs, useJobsList } from "@/lib/jobs"
 import { toAddres, useProfileData } from "@/lib/profile"
 import { cn } from "@/lib/utils"
@@ -39,7 +39,6 @@ export default function ProfilePage() {
   const [githubOrPortfolioURL, setGithubOrPortfolioURL] = useState("")
 
   const [cvFile, setCvFile] = useState<File | null>(null)
-  const [resumeURL, setResumeURL] = useState<string | null>(null)
 
   const { profile } = useProfileData(userId)
 
@@ -51,38 +50,25 @@ export default function ProfilePage() {
       setTwitter(profile.twitter || "")
       setTelegram(profile.telegram || "")
       setLinkedin(profile.linkedin || "")
-      setResumeURL(profile.resumeURL || null)
     }
   }, [profile])
 
-  const cvFileURI = useMemo(() => {
-    if (cvFile) return URL.createObjectURL(cvFile)
-    return resumeURL ?? null
-  }, [cvFile?.name, cvFile?.lastModified, resumeURL])
+  const cvFileURI = useMemo(
+    () => (cvFile ? URL.createObjectURL(cvFile) : null),
+    [cvFile?.name, cvFile?.lastModified],
+  )
 
-  const handlePdfChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const cvPreviewName = cvFile?.name || profile?.cvMetadata?.name || null
+  const cvViewURL = cvFileURI || profile?.cvMetadata?.vercelURL || null
+
+  const handlePdfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e?.target?.files?.[0]
     if (!file) return
-
     if (file.size > 5 * 1024 * 1024) {
       toast.error("File exceeds 5MB limit")
       return
     }
-
     setCvFile(file)
-
-    const formData = new FormData()
-    formData.append("file", file)
-
-    try {
-      const res = await fetch("/api/resume", { method: "POST", body: formData })
-      if (!res.ok) throw new Error(await res.text())
-      const { url } = await res.json()
-      setResumeURL(url)
-    } catch {
-      toast.error("Failed to upload CV, please try again")
-      setCvFile(null)
-    }
   }
 
   const tryTriggerSignIn = () => {
@@ -104,13 +90,29 @@ export default function ProfilePage() {
       githubOrPortfolioURL !== profile?.githubOrPortfolioURL,
       hasCryptoExperience !== profile?.isCryptoSavvy,
       JSON.stringify(selectedSkills) !== JSON.stringify(profile?.skills || []),
-      resumeURL !== profile?.resumeURL,
+      cvFile !== null,
     ].some((field) => !field)
 
     // Only update if there are changes
     if (shouldUpdateRemote) {
       try {
         console.debug(`Updating data for userId: ${userId}`)
+
+        let cvMetadata: CvMetadata | undefined = profile?.cvMetadata
+
+        if (cvFile) {
+          const formData = new FormData()
+          formData.append("file", cvFile)
+          const res = await fetch("/api/resume", {
+            method: "POST",
+            body: formData,
+          })
+
+          if (!res.ok) throw new Error("Failed to upload CV")
+          const { url } = await res.json()
+          cvMetadata = { name: cvFile.name, vercelURL: url }
+        }
+
         await setProfileData(userId, {
           email: user?.primaryEmailAddress?.emailAddress,
           fullName: user?.fullName || undefined,
@@ -120,10 +122,11 @@ export default function ProfilePage() {
           skills: selectedSkills,
           isCryptoSavvy: hasCryptoExperience,
           githubOrPortfolioURL,
-          resumeURL: resumeURL || undefined,
+          resumeURL: cvMetadata?.vercelURL,
+          cvMetadata,
         })
       } catch (error) {
-        console.error({ error })
+        toast.error("Oops, something went wrong.")
       }
     }
 
@@ -248,7 +251,7 @@ export default function ProfilePage() {
 
                 <label className="block cursor-pointer">
                   <div className="border-2 relative flex flex-col items-center justify-center border-dashed border-black/10 dark:border-white/10 rounded-lg h-36 sm:h-40 px-8 text-center hover:border-ut-purple/50 hover:bg-ut-purple/5 transition-all">
-                    {cvFileURI ? (
+                    {cvPreviewName ? (
                       <Fragment>
                         <div
                           role="button"
@@ -256,7 +259,7 @@ export default function ProfilePage() {
                           onClick={(e) => {
                             e.stopPropagation()
                             e.preventDefault()
-                            window.open(cvFileURI, "_blank")
+                            if (cvViewURL) window.open(cvViewURL, "_blank")
                           }}
                           className="absolute border border-transparent bg-black/3 dark:bg-white/5 hover:bg-black/5 dark:hover:bg-white/10 hover:border-black/5 rounded-full flex items-center gap-1 top-2 right-2 py-1 px-2"
                         >
@@ -266,7 +269,7 @@ export default function ProfilePage() {
 
                         <FaFilePdf className="text-4xl opacity-80 dark:opacity-100 scale-110" />
                         <p className="text-sm whitespace-nowrap opacity-50 mt-2 mb-1">
-                          {cvFile?.name || `Untitled File`}
+                          {cvPreviewName}
                         </p>
                       </Fragment>
                     ) : (

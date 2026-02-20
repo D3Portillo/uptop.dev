@@ -3,9 +3,15 @@
 import type { AutoApplyPayload } from "@/app/api/auto-apply/route"
 import { redis } from "@/lib/redis"
 
+export type CvMetadata = {
+  name: string
+  vercelURL: string
+}
+
 export type ProfileData = Omit<AutoApplyPayload, "jobId"> & {
   updatedAt?: number
   userId: string
+  cvMetadata?: CvMetadata
 }
 
 const PROFILE_KEYS = {

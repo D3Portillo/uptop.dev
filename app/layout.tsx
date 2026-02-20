@@ -45,7 +45,18 @@ export default function RootLayout({
             enableSystem={false}
             disableTransitionOnChange
           >
-            <Toaster richColors position="bottom-right" />
+            <Toaster
+              position="top-center"
+              swipeDirections={["left", "right", "bottom", "top"]}
+              toastOptions={{
+                classNames: {
+                  toast: "rounded-full! py-3! pl-5!",
+                  title: "font-bold!",
+                },
+              }}
+              richColors
+              theme="dark"
+            />
             <MainLayout>{children}</MainLayout>
           </ThemeProvider>
         </body>
