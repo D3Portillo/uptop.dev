@@ -40,7 +40,7 @@ export default function ProfilePage() {
 
   const [cvFile, setCvFile] = useState<File | null>(null)
 
-  const { profile } = useProfileData(userId)
+  const { profile } = useProfileData()
 
   useEffect(() => {
     if (profile) {
@@ -91,7 +91,9 @@ export default function ProfilePage() {
       hasCryptoExperience !== profile?.isCryptoSavvy,
       JSON.stringify(selectedSkills) !== JSON.stringify(profile?.skills || []),
       cvFile !== null,
-    ].some((field) => !field)
+    ]
+      // Only update if there's at least one change
+      .some(Boolean)
 
     // Only update if there are changes
     if (shouldUpdateRemote) {
@@ -132,6 +134,7 @@ export default function ProfilePage() {
 
     await new Promise((resolve) => setTimeout(resolve, 250)) // Small delay for UX
     setIsSaving(false)
+    toast.success("Profile updated successfully!")
   }
 
   if (!isUserDataLoaded || isLoading) {

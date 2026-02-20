@@ -1,10 +1,11 @@
 "use client"
 
 import type { ProfileData } from "@/app/actions/profile"
-import { addressToBackgroundImage } from "@/components/AddressBlock"
-import { useUser } from "@clerk/nextjs"
+import { useAuth, useUser } from "@clerk/nextjs"
 import { toHex } from "viem"
 import useSWR from "swr"
+
+import { addressToBackgroundImage } from "@/components/AddressBlock"
 import { getProfileData } from "@/app/actions/profile"
 
 export const toAddres = (userId?: string) => {
@@ -25,7 +26,9 @@ export const useProfileImage = () => {
  * SWR hook to fetch user profile data from Redis
  * @param userId - The user ID to fetch profile data for
  */
-export const useProfileData = (userId: string | null | undefined) => {
+export const useProfileData = () => {
+  const { userId } = useAuth()
+
   const { data = null, ...query } = useSWR<ProfileData | null>(
     userId ? `profile.data.${userId}` : null,
     async () => {
@@ -41,6 +44,7 @@ export const useProfileData = (userId: string | null | undefined) => {
 
   return {
     ...query,
+    userId,
     profile: data,
   }
 }

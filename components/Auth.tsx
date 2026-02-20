@@ -79,6 +79,19 @@ export default function Auth() {
                 >
                   Manage Profile
                 </button>
+
+                <button
+                  onClick={() => {
+                    setShowProfileMenu(false)
+                    // Show auto-apply modal here (jotai atom controlled)
+                  }}
+                  className="w-full text-left px-4 py-3 text-sm hover:bg-black/5 dark:hover:bg-white/7 first:rounded-t-lg font-medium"
+                >
+                  Auto-apply
+                </button>
+
+                <div className="h-px bg-black/7 dark:bg-white/7 w-full" />
+
                 <button
                   onClick={() => {
                     setShowProfileMenu(false)
