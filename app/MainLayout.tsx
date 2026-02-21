@@ -18,6 +18,10 @@ const ModalJobWithSuspense = dynamic(() => import("@/components/ModalJob"), {
   ssr: false,
 })
 
+const ModalFastApply = dynamic(() => import("@/components/ModalFastApply"), {
+  ssr: false,
+})
+
 export default function MainLayout({ children }: PropsWithChildren) {
   return (
     <Fragment>
@@ -37,6 +41,7 @@ export default function MainLayout({ children }: PropsWithChildren) {
       </div>
 
       <ModalJobWithSuspense />
+      <ModalFastApply />
       <Announcement />
       <ListingsSentinel />
 

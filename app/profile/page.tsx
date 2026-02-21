@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useMemo, useState } from "react"
 import { useAuth, useUser } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
 
 import { setProfileData, type CvMetadata } from "@/app/actions/profile"
 import { extractSkillsFromJobs, useJobsList } from "@/lib/jobs"
@@ -16,9 +17,7 @@ import SkillChip from "@/components/SkillChip"
 import TopNavigation from "@/components/TopNavigation"
 import AddressBlock from "@/components/AddressBlock"
 import Spinner from "@/components/Spinner"
-
-import { ID_BUTTON_CONNECT } from "@/components/Auth"
-import { toast } from "sonner"
+import { tryTriggerSignIn } from "@/components/Auth"
 
 const MAX_SKILLS = 5
 export default function ProfilePage() {
@@ -69,10 +68,6 @@ export default function ProfilePage() {
       return
     }
     setCvFile(file)
-  }
-
-  const tryTriggerSignIn = () => {
-    document.getElementById(ID_BUTTON_CONNECT)?.click()
   }
 
   const handleSave = async () => {

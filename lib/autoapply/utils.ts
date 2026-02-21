@@ -16,5 +16,5 @@ export const isRequiredFieldsPresent = (
     (field) => typeof payload[field] === "undefined",
   )
 
-  return missingFields.length > 0
+  return missingFields.length <= 0
 }

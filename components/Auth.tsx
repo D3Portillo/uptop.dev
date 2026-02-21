@@ -3,6 +3,7 @@
 import { Fragment, useEffect, useState } from "react"
 import { SignedIn, SignedOut, SignIn, useAuth } from "@clerk/nextjs"
 import { useRouter } from "next/navigation"
+import { useFastApply } from "@/lib/autoapply"
 
 import { toAddres } from "@/lib/profile"
 import {
@@ -16,6 +17,7 @@ export const ID_BUTTON_CONNECT = "button-connect"
 export default function Auth() {
   const router = useRouter()
   const { signOut, isSignedIn, userId } = useAuth()
+  const { modal: fastApplyModal } = useFastApply()
 
   const [_isSignInOpen, setIsSignInOpen] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
@@ -83,11 +85,11 @@ export default function Auth() {
                 <button
                   onClick={() => {
                     setShowProfileMenu(false)
-                    // Show auto-apply modal here (jotai atom controlled)
+                    fastApplyModal.open()
                   }}
                   className="w-full text-left px-4 py-3 text-sm hover:bg-black/5 dark:hover:bg-white/7 first:rounded-t-lg font-medium"
                 >
-                  Auto-apply
+                  Fast Apply ⚡
                 </button>
 
                 <div className="h-px bg-black/7 dark:bg-white/7 w-full" />
@@ -166,4 +168,8 @@ export default function Auth() {
       )}
     </Fragment>
   )
+}
+
+export const tryTriggerSignIn = () => {
+  document.getElementById(ID_BUTTON_CONNECT)?.click()
 }
