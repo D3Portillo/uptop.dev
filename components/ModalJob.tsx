@@ -1,23 +1,35 @@
 "use client"
 
-import { Fragment, Suspense, useEffect } from "react"
+import { Fragment, Suspense, useEffect, useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Drawer } from "vaul"
 
+import { toast } from "sonner"
 import { atom, useAtom } from "jotai"
 import { atomWithStorage } from "jotai/utils"
+
 import { useJobsList, useJobDetails } from "@/lib/jobs"
 import { formatID } from "@/lib/id"
 import { cn, isActiveJobListing } from "@/lib/utils"
 
 import { LuBadgeAlert } from "react-icons/lu"
 import { IoCloseOutline } from "react-icons/io5"
-import { MdArrowOutward } from "react-icons/md"
+import { MdArrowOutward, MdBolt, MdCheck } from "react-icons/md"
 
 import Markdown from "@/components/Markdown"
 import { GEOGRAPHIC_REGIONS } from "@/lib/constants/countries"
+import { useFastApply } from "@/lib/autoapply"
+import { useProfileData } from "@/lib/profile"
+
+import Spinner from "./Spinner"
+import { AutoApplyPayload } from "@/app/api/auto-apply/route"
 
 const atomAppliedJobs = atomWithStorage("ut.jobs.appliedJobs", [] as string[])
+const atomFastAppliedJobs = atomWithStorage(
+  "ut.jobs.fastAppliedJobs",
+  [] as string[],
+)
+
 const atomJobUpdated = atom({} as Record<string, boolean>)
 const atomOpenJobID = atom("")
 
@@ -25,15 +37,23 @@ export const useOpenJobID = () => useAtom(atomOpenJobID)
 export const useAppliedJobs = () => useAtom(atomAppliedJobs)
 
 function ModalJob() {
+  const { profile } = useProfileData()
+
   const [updatedJobs, setUpdatedJobs] = useAtom(atomJobUpdated)
   const [openJobID, setOpenJobID] = useOpenJobID()
+
+  const [fastAppliedJobs, setFastAppliedJobs] = useAtom(atomFastAppliedJobs)
   const [appliedJobs, setAppliedJobs] = useAppliedJobs()
+
+  const [isFastApplying, setIsFastApplying] = useState(false)
+  const { isEnabled, modal: faModal } = useFastApply()
 
   const searchParams = useSearchParams()
   const queryJobID = searchParams.get("job")
 
   const isUpdated = updatedJobs[openJobID] === true
   const isApplied = appliedJobs.includes(openJobID)
+  const isFastApplied = fastAppliedJobs.includes(openJobID)
 
   const router = useRouter()
   const { jobs } = useJobsList()
@@ -52,12 +72,25 @@ function ModalJob() {
     })
   }
 
+  const tryMarkAsApplied = ({ isFastApply = false } = {}) => {
+    if (!isApplied) {
+      setAppliedJobs((current) => [...current, openJobID])
+    }
+
+    if (isFastApply) {
+      setFastAppliedJobs((current) => {
+        if (current.includes(openJobID)) return current
+        return [...current, openJobID]
+      })
+    }
+  }
+
   useEffect(() => {
     if (openJobID && !isUpdated && isOpen) {
       // NOTE: This is simple logic to randomly update job details in the background
       // to try and keep data fresh without overwhelming the backend with requests :p
 
-      const EXECUTE_CHANCE = 0.77 // (1-100)%
+      const EXECUTE_CHANCE = 0.66 // (1-100)%
       const shouldSendUpdate = Math.random() < EXECUTE_CHANCE
       if (shouldSendUpdate) {
         // Notify backend to try update cache for this job
@@ -71,11 +104,14 @@ function ModalJob() {
 
   useEffect(() => {
     setOpenJobID(queryJobID || "")
+    setIsFastApplying(false) // Reset fast-apply state when job changes
   }, [queryJobID])
 
   const job = jobs.find(({ id }) => id === openJobID)
   const title = job?.properties.title
-  const hasApplyLink = Boolean(job?.applyLink)
+
+  // Up Top's apply link
+  const applyLink = `https://noteforms.com/forms/top-shelf-job-application-cheqot?084f5395-fbce-48de-81e2-ca34d396c6a0%5B%5D=${openJobID}`
 
   // Determine if the job is still active
   const isInactiveJob =
@@ -88,21 +124,49 @@ function ModalJob() {
     originalStatus: (job?.properties as any)?.originalStatus || null,
   })
 
+  // Handle platform automatic apply logic
+  async function handleFastApply() {
+    if (isFastApplied || isInactiveJob) return closeModal()
+    if (!isEnabled) return faModal.open()
+
+    try {
+      setIsFastApplying(true)
+
+      const payload = {
+        ...(profile || {}),
+        jobId: openJobID,
+        resumeURL: profile?.cvMetadata?.vercelURL,
+      } satisfies AutoApplyPayload
+
+      console.debug("[handleFastApply] Payload:", payload)
+
+      const BASE_URL = "/api/auto-apply"
+      const res = await fetch(BASE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) throw new Error("Failed to apply")
+
+      // Mark as applied for current user
+      tryMarkAsApplied({
+        isFastApply: true,
+      })
+    } catch (error) {
+      console.error({ error })
+      toast.error("Failed to submit. Please try again.")
+    } finally {
+      setIsFastApplying(false)
+    }
+  }
+
+  // Open regular notion form link
   function handleApply() {
-    if (isInactiveJob) {
-      return closeModal()
-    }
-
-    if (hasApplyLink) {
-      if (!isApplied) {
-        // Mark as applied for connected user
-        setAppliedJobs((current) => [...current, openJobID])
-      }
-      return window.open(job!.applyLink, "_blank")
-    }
-
-    // Fallback
-    closeModal()
+    tryMarkAsApplied()
+    window.open(applyLink, "_blank")
   }
 
   return (
@@ -136,15 +200,9 @@ function ModalJob() {
               {isInactiveJob ? (
                 <section className="pt-20 grid gap-6 place-items-center">
                   <LuBadgeAlert className="text-5xl scale-105 opacity-70" />
-                  <p className="text-black/50 max-w-xs text-center mx-auto">
-                    Sorry, this position is no longer active.
-                    <br />
-                    <button
-                      className="underline underline-offset-4"
-                      onClick={closeModal}
-                    >
-                      Check for similar roles
-                    </button>
+                  <p className="text-black/50 max-w-[18rem] text-center mx-auto">
+                    Sorry, this role is no longer active. Check out other
+                    opportunities on the platform.
                   </p>
                 </section>
               ) : isLoadingDetails ? (
@@ -189,7 +247,7 @@ function ModalJob() {
 
                   {description ? (
                     <Fragment>
-                      <Markdown>{formatDescription(description)}</Markdown>
+                      <Markdown>{description}</Markdown>
                       <section className="relative bg-ut-ink rounded-2xl overflow-hidden sm:mt-8 mb-12">
                         <div className="bg-linear-to-r pointer-events-none from-ut-ink/0 to-ut-ink z-1 w-4 sm:w-2 absolute top-0 bottom-0 right-0" />
                         <div
@@ -296,21 +354,40 @@ function ModalJob() {
               )}
             </div>
 
-            <nav className="flex relative shrink-0 w-full pb-6 sm:pb-4 pt-2 px-6">
+            <nav className="flex flex-col sm:flex-row gap-3 sm:gap-4 relative shrink-0 w-full pb-6 sm:pb-4 pt-2 px-6">
               <div className="absolute bottom-full left-0 right-0 h-12 pointer-events-none bg-linear-to-b from-white/0 to-white" />
 
+              {isInactiveJob || isFastApplied ? null : (
+                <button
+                  onClick={handleApply}
+                  className="flex active:scale-98 h-14 w-full items-center justify-center gap-2 px-4 border border-black/15 text-black/80 text-center rounded-lg font-black"
+                >
+                  <span>Apply</span>
+                  <MdArrowOutward className="text-xl scale-105" />
+                </button>
+              )}
+
               <button
-                onClick={handleApply}
-                className="flex w-full items-center justify-center gap-4 p-4 bg-linear-to-br from-ut-blue-dark to-ut-purple text-white text-center rounded-lg hover:bg-ut-purple/90 transition-colors font-black"
+                onClick={handleFastApply}
+                className="flex active:scale-98 h-14 w-full items-center justify-center gap-1 px-4 bg-linear-to-br from-ut-blue-dark to-ut-purple text-white text-center rounded-lg font-black"
               >
-                {hasApplyLink && !isInactiveJob ? (
-                  <Fragment>
-                    <span>{isApplied ? "Applied" : "Apply Now"}</span>
-                    <MdArrowOutward className="text-xl" />
-                  </Fragment>
-                ) : (
-                  "Continue Exploring"
+                {isFastApplied ? null : isFastApplying ? (
+                  <Spinner themeSize="size-5" />
+                ) : isInactiveJob ? null : (
+                  <MdBolt className="text-2xl scale-110" />
                 )}
+
+                <div className={cn(isFastApplying && "ml-1")}>
+                  {isFastApplied
+                    ? "Submitted"
+                    : isFastApplying
+                      ? "Applying"
+                      : isInactiveJob
+                        ? "Continue Exploring"
+                        : "Fast Apply"}
+                </div>
+
+                {isFastApplied && <MdCheck className="text-2xl ml-1" />}
               </button>
             </nav>
           </div>
@@ -347,11 +424,6 @@ function DefaultEmptyState({ formattedID }: { formattedID?: string }) {
       </p>
     </section>
   )
-}
-
-function formatDescription(description: string) {
-  // Sometimes clients use "CONFIDENTIAL CLIENT" in place of company name
-  return description.replaceAll(/CONFIDENTIAL CLIENT/gi, "\n")
 }
 
 export default function ModalJobWithSuspense() {

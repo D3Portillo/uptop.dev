@@ -26,11 +26,13 @@ export const useFastApply = () => {
     : false
 
   return {
-    isEnabled,
+    isEnabled: userId ? isEnabled : false, // Force disable if not signed in
     canEnableFastApply,
     enable: () => {
       if (canEnableFastApply) return setIsEnabled(true)
-      // TODO: Add an action to help fill user data
+      console.error(
+        `[useFastApply] Can't enable. Missing required profile fields.`,
+      )
     },
     disable: () => setIsEnabled(false),
     modal: {

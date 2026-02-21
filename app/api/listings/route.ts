@@ -63,7 +63,6 @@ async function fetchListings() {
           rowIndex,
           // Notion removes dashes from IDs in URLs
           formattedId: ID.replaceAll("-", ""),
-          applyLink: `https://noteforms.com/forms/top-shelf-job-application-cheqot?084f5395-fbce-48de-81e2-ca34d396c6a0%5B%5D=${ID}`,
           properties: Array.from(rowItems || []).map((item) => {
             const popUps = Array.from(
               item.querySelectorAll("[data-popup-origin=true]"),
