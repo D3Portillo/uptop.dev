@@ -128,9 +128,14 @@ export default function Home() {
 
   const skills = extractSkillsFromJobs(initialFilteredItems)
   const isAllSkillsSelected = selectedSkills.length === skills.length
+  const slideSkills = skills
+    .slice(0, SHOW_OR_LESS_SIZE)
+    // Longer skills first to avoid layout shifts when showing more
+    .sort((a, b) => b.length - a.length)
+
   const displayedSkills = showAllSkills
-    ? skills
-    : skills.slice(0, SHOW_OR_LESS_SIZE)
+    ? [...slideSkills, ...skills.slice(SHOW_OR_LESS_SIZE)]
+    : slideSkills
 
   const filteredListings = initialFilteredItems
     // First apply policy and skills filters
@@ -234,7 +239,7 @@ export default function Home() {
         <div className="flex gap-3">
           <label
             tabIndex={-1}
-            className="flex-1 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg focus-within:border-ut-purple focus-within:ring-2 focus-within:ring-ut-purple/20 transition-all relative"
+            className="flex-1 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg focus-within:border-ut-blue-dark focus-within:ring-2 focus-within:ring-ut-blue-dark/20 transition-all relative"
           >
             {isGlobalSearch ? (
               <div
@@ -251,7 +256,8 @@ export default function Home() {
             )}
             <input
               type="text"
-              placeholder="Filter jobs by title, location or keyword"
+              id="main-search"
+              placeholder="Filter jobs by title, location or skill"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full outline-none pl-12 pr-4 py-3.5 bg-transparent text-sm"
@@ -270,7 +276,7 @@ export default function Home() {
                 resetSkillSelection()
                 setLocationQuery(e.target.value as LocationKey)
               }}
-              className="w-full md:pl-4 pl-4 pr-10 py-3.5 bg-white/0 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-purple focus:ring-2 focus:ring-ut-purple/20 transition-all text-sm appearance-none cursor-pointer"
+              className="w-full md:pl-4 pl-4 pr-10 py-3.5 bg-white/0 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-blue-dark focus:ring-2 focus:ring-ut-blue-dark/20 transition-all text-sm appearance-none cursor-pointer"
             >
               {locationOptions.map((locationKey) => {
                 const locationData = CRYPTO_JOB_LOCATIONS[locationKey]
@@ -377,17 +383,39 @@ export default function Home() {
             <span className="font-semibold">
               {
                 // Show empty when ZERO
-                isGlobalLoading || filteredListings.length || ""
+                isGlobalLoading ? "" : filteredListings.length || ""
               }
             </span>{" "}
-            jobs{" "}
+            jobs
             {isGlobalSearch && (
               <span
-                title="Search is global"
-                className="underline cursor-pointer decoration-black/25 dark:decoration-white/50 underline-offset-4"
+                className="cursor-help"
+                title="This search is global (all countries/regions)"
               >
-                globally
+                {" globally"}
               </span>
+            )}
+            {selectedSkills.length > 0 && (
+              <Fragment>
+                <span className="mx-2">•</span>
+                <span
+                  role="button"
+                  onClick={() => {
+                    // Show all skills when clicked
+                    if (!showAllSkills && skills.length > SHOW_OR_LESS_SIZE) {
+                      setShowAllSkills(true)
+                    }
+
+                    // Focus main-search input
+                    document.getElementById("main-search")?.focus()
+                  }}
+                  tabIndex={-1}
+                  className="underline underline-offset-4 cursor-pointer"
+                >
+                  {selectedSkills.length} skill
+                  {selectedSkills.length > 1 && "s"}
+                </span>
+              </Fragment>
             )}
           </div>
 
