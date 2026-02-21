@@ -117,15 +117,10 @@ function ModalJob() {
   const isInactiveJob =
     job?.properties?.status && !isActiveJobListing(job.properties.status)
 
-  // Debugging
-  console.debug({
-    isInactiveJob,
-    status: job?.properties?.status,
-    originalStatus: (job?.properties as any)?.originalStatus || null,
-  })
-
   // Handle platform automatic apply logic
   async function handleFastApply() {
+    // Edge case: Prevent multiple calls
+    if (isFastApplying) return
     if (isFastApplied || isInactiveJob) return closeModal()
     if (!isEnabled) return faModal.open()
 
@@ -170,9 +165,23 @@ function ModalJob() {
   }
 
   return (
-    <Drawer.Root open={isOpen} onOpenChange={(open) => !open && closeModal()}>
+    <Drawer.Root
+      modal={false}
+      open={isOpen}
+      onOpenChange={(open) => !open && closeModal()}
+    >
       <Drawer.Portal>
-        <Drawer.Overlay className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50" />
+        <Drawer.Close asChild>
+          <div
+            role="button"
+            tabIndex={-1}
+            style={{
+              pointerEvents: "auto",
+            }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 animate-in fade-in duration-200"
+          />
+        </Drawer.Close>
+
         <Drawer.Content className="fixed inset-x-0 bottom-0 top-14 sm:top-20 z-50 max-w-2xl min-[100rem]:max-w-228 mx-auto sm:px-6 flex outline-none">
           <div className="h-full bg-white text-black rounded-t-3xl shadow-2xl border border-black/10 flex flex-col w-full">
             {/* Drawer Header */}
@@ -369,6 +378,7 @@ function ModalJob() {
 
               <button
                 onClick={handleFastApply}
+                disabled={isFastApplying}
                 className="flex active:scale-98 h-14 w-full items-center justify-center gap-1 px-4 bg-linear-to-br from-ut-blue-dark to-ut-purple text-white text-center rounded-lg font-black"
               >
                 {isFastApplied ? null : isFastApplying ? (

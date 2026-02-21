@@ -12,8 +12,10 @@ export async function POST(req: Request) {
   const file = formData.get("file") as File | null
 
   if (!file) return new Response("Missing file", { status: 400 })
-  if (file.type !== "application/pdf")
+
+  if (!file.type.endsWith("pdf"))
     return new Response("Only PDF files are allowed", { status: 400 })
+
   if (file.size > MAX_SIZE)
     return new Response("File exceeds 5MB limit", { status: 400 })
 

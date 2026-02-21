@@ -39,7 +39,7 @@ export default function ProfilePage() {
 
   const [cvFile, setCvFile] = useState<File | null>(null)
 
-  const { profile } = useProfileData()
+  const { profile, revalidate: revalidateProfile } = useProfileData()
 
   useEffect(() => {
     if (profile) {
@@ -63,6 +63,13 @@ export default function ProfilePage() {
   const handlePdfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e?.target?.files?.[0]
     if (!file) return
+
+    // Only allow PDF files under 5MB
+    if (!file.type.endsWith("pdf")) {
+      toast.error("Only PDF files are allowed")
+      return
+    }
+
     if (file.size > 5 * 1024 * 1024) {
       toast.error("File exceeds 5MB limit")
       return
@@ -74,6 +81,26 @@ export default function ProfilePage() {
     // Try to trigger connect-flow
     if (!isSignedIn) return tryTriggerSignIn()
     if (!userId) return
+
+    if (!cvViewURL) {
+      return toast.error("Resume/CV is required")
+    }
+
+    if (!telegram) {
+      return toast.error("Telegram handle is required")
+    }
+
+    if (!linkedin) {
+      return toast.error("LinkedIn URL is required")
+    }
+
+    if (!linkedin.startsWith("https://linkedin.com/in/")) {
+      return toast.error("Invalid LinkedIn URL")
+    }
+
+    if (githubOrPortfolioURL && !githubOrPortfolioURL.startsWith("http")) {
+      return toast.error("Invalid Portfolio URL")
+    }
 
     setIsSaving(true)
 
@@ -122,6 +149,8 @@ export default function ProfilePage() {
           resumeURL: cvMetadata?.vercelURL,
           cvMetadata,
         })
+
+        revalidateProfile()
       } catch (error) {
         toast.error("Oops, something went wrong.")
       }

@@ -44,6 +44,7 @@ export const useProfileData = () => {
 
   return {
     ...query,
+    revalidate: () => query.mutate(null), // Force revalidation
     userId,
     profile: data,
   }
