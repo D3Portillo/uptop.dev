@@ -60,6 +60,7 @@ const FIELD_IDS = {
 export async function POST(request: Request) {
   try {
     const payload: AutoApplyPayload = await request.json()
+    console.debug("[AutoApply] API Payload:", payload)
 
     // Validate required fields
     const isValidPayload = isRequiredFieldsPresent(payload)

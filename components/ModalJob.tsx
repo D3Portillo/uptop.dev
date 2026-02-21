@@ -133,10 +133,7 @@ function ModalJob() {
         resumeURL: profile?.cvMetadata?.vercelURL,
       } satisfies AutoApplyPayload
 
-      console.debug("[handleFastApply] Payload:", payload)
-
-      const BASE_URL = "/api/auto-apply"
-      const res = await fetch(BASE_URL, {
+      const res = await fetch("/api/auto-apply", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

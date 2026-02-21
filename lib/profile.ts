@@ -1,7 +1,7 @@
 "use client"
 
 import type { ProfileData } from "@/app/actions/profile"
-import { useAuth, useUser } from "@clerk/nextjs"
+import { useUser } from "@clerk/nextjs"
 import { toHex } from "viem"
 import useSWR from "swr"
 
@@ -27,7 +27,10 @@ export const useProfileImage = () => {
  * @param userId - The user ID to fetch profile data for
  */
 export const useProfileData = () => {
-  const { userId } = useAuth()
+  const { user } = useUser()
+
+  const clerkProfileImage = user?.imageUrl
+  const userId = user?.id
 
   const { data = null, ...query } = useSWR<ProfileData | null>(
     userId ? `profile.data.${userId}` : null,
@@ -46,6 +49,12 @@ export const useProfileData = () => {
     ...query,
     revalidate: () => query.mutate(null), // Force revalidation
     userId,
-    profile: data,
+    profile: data
+      ? {
+          ...data,
+          // Fallback to clerk's profile image
+          profileImage: data.profileImage || clerkProfileImage,
+        }
+      : null,
   }
 }
