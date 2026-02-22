@@ -29,6 +29,8 @@ export function ModalProfileWorth({
         onClick={onClose}
       />
 
+      <style>{`body, html { overflow: hidden }`}</style>
+
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
@@ -36,9 +38,9 @@ export function ModalProfileWorth({
           onClick={(e) => e.stopPropagation()}
         >
           {/* Modal Content */}
-          <div className="bg-linear-to-b backdrop-blur from-[#11082e] to-black border shadow-2xl shadow-ut-blue-dark/10 border-white/10 rounded-2xl p-6">
+          <div className="bg-linear-to-b overflow-y-auto max-h-[calc(100dvh-2rem)] backdrop-blur from-[#11082e] to-black border shadow-2xl shadow-ut-blue-dark/10 border-white/10 rounded-2xl p-6">
             {/* Header */}
-            <div className="flex items-center justify-end mb-6">
+            <div className="flex sticky top-0 z-1 items-center justify-end mb-4">
               <button
                 onClick={onClose}
                 className="flex items-center justify-center w-8 h-8 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-colors"
@@ -51,10 +53,10 @@ export function ModalProfileWorth({
             <div className="space-y-6">
               {/* Salary Display */}
               <div className="space-y-2 text-center">
-                <p className="text-xs text-white/60 uppercase tracking-wider">
-                  YOUR PROFILE WORTH
+                <p className="text-xs text-white/70 uppercase tracking-wider">
+                  YOUR PROFILE MARKET VALUE
                 </p>
-                <p className="text-5xl font-black text-ut-green tabular-nums">
+                <p className="text-4xl whitespace-nowrap sm:text-5xl font-black text-ut-green tabular-nums">
                   {profileWorth.estimatedSalaryRangeInUSD}
                 </p>
               </div>
@@ -92,8 +94,8 @@ export function ModalProfileWorth({
               </div>
 
               {/* Explanation */}
-              <div className="bg-white/5 rounded-2xl p-6">
-                <h2 className="font-bold text-white/80 mb-1">Explanation</h2>
+              <div className="bg-white/5 mt-2 sm:m-2 rounded-2xl p-6">
+                <h2 className="font-bold text-white/80 mb-1">Summary</h2>
                 <p className="text-sm text-white/70 leading-relaxed text-left">
                   {profileWorth.explanation}
                 </p>

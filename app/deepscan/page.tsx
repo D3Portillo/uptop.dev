@@ -55,27 +55,28 @@ export default function PageDeepscan() {
     },
   )
 
-  const { data: result = null } = useSWRImmutable(
-    profile
-      ? `cv-money-${profile.metadata.fileName}-${profile.metadata.textLength}-${file?.lastModified || "0"}`
-      : null,
-    async () => {
-      if (!profile || JOB_TITLES.length <= 1) return null
+  const { data: result = null, isLoading: isGettingProfileData } =
+    useSWRImmutable(
+      profile
+        ? `cv-money-${profile.metadata.fileName}-${profile.metadata.textLength}-${file?.lastModified || "0"}`
+        : null,
+      async () => {
+        if (!profile || JOB_TITLES.length <= 1) return null
 
-      const [recommendedJobs, profileWorth] = await Promise.all([
-        getJobRecommendations(profile.jobTitle, JOB_TITLES as any),
-        getProfileWorth(
-          profile.rawText,
-          salariesInCSV ? Object.values(salariesInCSV) : [],
-        ),
-      ])
+        const [recommendedJobs, profileWorth] = await Promise.all([
+          getJobRecommendations(profile.jobTitle, JOB_TITLES as any),
+          getProfileWorth(
+            profile.rawText,
+            salariesInCSV ? Object.values(salariesInCSV) : [],
+          ),
+        ])
 
-      return {
-        recommendedJobs,
-        profileWorth,
-      }
-    },
-  )
+        return {
+          recommendedJobs,
+          profileWorth,
+        }
+      },
+    )
 
   // Auto-open modal when result is available
   useEffect(() => {
@@ -117,22 +118,24 @@ export default function PageDeepscan() {
     tryLoadFile(e?.dataTransfer?.files?.[0])
   }
 
+  const isLoading = isMutating || isGettingProfileData
+
   return (
-    <main className="dark relative">
+    <main className="dark relative overflow-hidden">
       <div className="min-h-screen bg-linear-to-b from-black via-ut-blue-dark/10 to-ut-blue-dark/20">
-        <section className="[&_#button-connect]:bg-transparent [&_#theme-toggle]:hidden [&_.Menu]:bg-black/90 bg-black/30 relative z-1">
+        <section className="[&_#button-connect]:bg-transparent [&_#theme-toggle]:hidden [&_.Menu]:bg-black/90 bg-black/30 backdrop-blur relative z-1">
           <TopNavigation
-            className="bg-transparent!"
+            className="bg-transparent! [&_nav]:mb-1 [&_nav]:sm:mb-3"
             onHomeButtonPress={() => router.push("/")}
           />
         </section>
 
         {/* Floating PDFs */}
-        <div className="absolute overflow-hidden top-20 left-0 right-0 bottom-0 pointer-events-none">
+        <div className="absolute overflow-hidden -top-28 sm:top-20 -left-5 sm:left-0 -right-5 sm:right-0 bottom-0 pointer-events-none">
           {FLOATING_PDFS.map((pdf, i) => (
             <div
-              key={i}
-              className="absolute"
+              key={`floating-pdf-${i}`}
+              className="absolute opacity-80 sm:opacity-100"
               style={{
                 left: `${pdf.left}%`,
                 top: `${pdf.top}%`,
@@ -176,11 +179,11 @@ export default function PageDeepscan() {
 
         {/* Main Content */}
         <div className="max-w-3xl px-6 pt-28 pb-12 mx-auto text-center">
-          <h1 className="text-5xl md:text-7xl font-bold text-white">
+          <h1 className="text-5xl sm:text-7xl font-bold text-white">
             How valuable are your skills?
           </h1>
 
-          <p className="mt-4 text-xl text-white/60">
+          <p className="mt-4 text-lg sm:text-xl text-white/60">
             Upload resume {"->"} Discover your market value
           </p>
 
@@ -193,14 +196,15 @@ export default function PageDeepscan() {
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               className={cn(
-                "group relative flex flex-col items-center justify-center w-full h-48 border rounded-2xl cursor-pointer bg-ut-blue-alien/95 backdrop-blur transition-all",
+                "group relative flex flex-col items-center justify-center w-full h-48 border rounded-2xl cursor-pointer bg-ut-blue-alien/80 backdrop-blur transition-all",
+                isLoading && "pointer-events-none",
                 isDragging
                   ? "border-ut-blue-dark scale-102 shadow-xl shadow-ut-blue-dark/20"
                   : "border-white/10 hover:border-ut-blue-dark/60 hover:shadow-xl hover:shadow-ut-blue-dark/10",
               )}
             >
               <div className="flex flex-col items-center justify-center gap-3">
-                {isMutating ? (
+                {isLoading ? (
                   <Spinner themeSize="size-7" />
                 ) : (
                   <svg
@@ -251,7 +255,7 @@ export default function PageDeepscan() {
 
         @keyframes float {
           0%, 100% { transform: translateY(0) }
-          50% { transform: translateY(calc(var(--float-offset, 6px) * -1)) }
+          50% { transform: translateY(calc(var(--float-offset, 5px) * -1)) }
         }
 
         .animate-float {
@@ -326,7 +330,7 @@ const FLOATING_PDFS = [
     floatOffset: 7,
   },
   {
-    position: "Tech Lead",
+    position: "Financial Analyst",
     salary: "$220k",
     left: 78,
     top: 78,
