@@ -4,6 +4,8 @@ import type { ResumeExtract } from "@/app/api/resume/extract/route"
 
 import { Fragment, useState } from "react"
 import { useRouter } from "next/navigation"
+import { toast } from "sonner"
+
 import useSWRMutation from "swr/mutation"
 import useSWRImmutable from "swr/immutable"
 
@@ -39,6 +41,17 @@ export default function PageDeepscan() {
     },
   )
 
+  const { data: salariesInCSV = null } = useSWRImmutable(
+    `reference-salaries`,
+    async () => {
+      const [nonTech, tech] = await Promise.all([
+        fetch("/salaries/non-tech.csv").then((r) => r.text()),
+        fetch("/salaries/tech.csv").then((r) => r.text()),
+      ])
+      return { nonTech, tech }
+    },
+  )
+
   const { data: result = null } = useSWRImmutable(
     profile
       ? `cv-money-${profile.metadata.fileName}-${profile.metadata.textLength}-${file?.lastModified || "0"}`
@@ -46,9 +59,13 @@ export default function PageDeepscan() {
     async () => {
       console.debug({ JOB_TITLES })
       if (!profile || JOB_TITLES.length <= 1) return null
+
       const [recommendedJobs, profileWorth] = await Promise.all([
         getJobRecommendations(profile.jobTitle, JOB_TITLES as any),
-        getProfileWorth(profile.rawText, []),
+        getProfileWorth(
+          profile.rawText,
+          salariesInCSV ? Object.values(salariesInCSV) : [],
+        ),
       ])
 
       return {
@@ -60,13 +77,17 @@ export default function PageDeepscan() {
 
   console.debug({ profile, result })
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0]
-    if (selectedFile) {
-      setFile(selectedFile)
-      trigger(selectedFile)
+  const tryLoadFile = (file?: File) => {
+    if (file?.type?.endsWith("pdf")) {
+      setFile(file)
+      trigger(file)
+    } else {
+      toast.error("Invalid File. Only PDF files are accepted")
     }
   }
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    tryLoadFile(e.target.files?.[0])
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -84,12 +105,7 @@ export default function PageDeepscan() {
     e.preventDefault()
     e.stopPropagation()
     setIsDragging(false)
-
-    const droppedFile = e.dataTransfer.files?.[0]
-    if (droppedFile && droppedFile.type === "application/pdf") {
-      setFile(droppedFile)
-      trigger(droppedFile)
-    }
+    tryLoadFile(e?.dataTransfer?.files?.[0])
   }
 
   return (
@@ -150,13 +166,13 @@ export default function PageDeepscan() {
         </div>
 
         {/* Main Content */}
-        <div className="max-w-4xl px-6 pt-28 pb-12 mx-auto text-center">
+        <div className="max-w-3xl px-6 pt-28 pb-12 mx-auto text-center">
           <h1 className="text-5xl md:text-7xl font-bold text-white">
-            How much are your skills worth?
+            How valuable are your skills?
           </h1>
 
           <p className="mt-4 text-xl text-white/60">
-            Upload your resume. Discover your market value.
+            Upload resume {"->"} Discover your market value
           </p>
 
           {/* Upload Area */}
@@ -200,7 +216,7 @@ export default function PageDeepscan() {
                 <p className="text-sm transition-colors text-white/50">
                   {isDragging
                     ? "Drop your PDF here"
-                    : file?.name || "Drop or click to upload PDF"}
+                    : file?.name || "Drop or click to upload"}
                 </p>
 
                 {isDragging ? null : (
@@ -233,15 +249,21 @@ export default function PageDeepscan() {
         </div>
 
         <style>{`
+        html,body { background: black }
+        #tg-button { display: none }
+
         @keyframes float {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(calc(var(--float-offset, 6px) * -1)); }
+          0%, 100% { transform: translateY(0) }
+          50% { transform: translateY(calc(var(--float-offset, 6px) * -1)) }
         }
+
         .animate-float {
           animation: float 4s ease-in-out infinite;
         }
       `}</style>
       </div>
+
+      <div className="fixed pointer-events-none z-1 from-black/0 to-black/40 bg-linear-to-b h-8 w-full bottom-0 left-0" />
     </main>
   )
 }

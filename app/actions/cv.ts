@@ -21,7 +21,10 @@ export const formatCVContent = async (extractedContent: string) => {
       }),
     }),
     prompt: `
-You're a CV content formatter. Your task is to take raw text extracted from a PDF resume/cv and format it into clean, structured markdown suitable for a tech-focused job application.
+You're a CV content formatter.
+Your task is to take raw text extracted from a PDF resume/cv and format it into clean, structured markdown suitable for a tech-focused job application.
+
+RULES:
 1. Do not go crazy with formatting simple text
 2. Don't add emojis or icons or any unnecessary symbols
 3. Use common CV sections like "Experience", "Education", "Skills", "Projects" as headers if they are identifiable in the text
@@ -55,12 +58,16 @@ export const getProfileWorth = async (
       }),
     }),
     prompt: `
-You're a cv evaluator. Your task is to take the raw CV content and give an estimate of the candidate's market worth based on their experience, skills, and the current market salaries for tech and non-tech roles.
+You're a cv evaluator.
+Your task is to take the raw CV content and give an estimate of the candidate's market worth based on their experience, skills, and the current market salaries for tech and non-tech roles.
+
+RULES:
 1. Analyze the CV content to identify key skills, years of experience, and notable achievements.
 2. If provided, use the reference salary data to inform your evaluation, considering how the candidate's profile compares to typical profiles in the salary data.
 3. Provide a short explanation of the candidate's profile and an estimated salary range they could expect in the current market - Has to be really short/scannable, no emojis, no fluff, to the point.
 4. Explanation starts with profile name like "Jhon [do not put complete name, just first name] is a senior software engineer with 10 years of experience..."
-5. Include the solid value in USD, eg: "$120k-$150k" nothing else, just pure value, no emojis and shit
+5. Include the profile market value in USD, example: "$80k-$120k" nothing else, just the pure value, no emojis and shit
+6. If reference salaries are provided, use them as it's the freaking bible for this task. We expect idempotent results here boi
 
 RAW_CV_CONTENT:
 ${rawCvContent}
@@ -68,9 +75,9 @@ ${rawCvContent}
 ${
   referenceSalaryCSVFiles.length > 0
     ? `
-------
-And here's some reference data about the current salaries for tech and non-tech roles:
-${referenceSalaryCSVFiles.map(() => "\n--------------\n")}
+---------
+And here's some reference data about the current salaries for tech and non-tech roles in CSV format:
+${referenceSalaryCSVFiles.join("\n\n---------\n")}
 
   `
     : ""
