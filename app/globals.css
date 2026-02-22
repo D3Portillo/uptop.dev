@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @plugin "tailwindcss-animate";
 
+html,
+body {
+  pointer-events: auto !important;
+}
+
 button {
   @apply cursor-pointer;
 }

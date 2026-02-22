@@ -1,12 +1,8 @@
 import { formatCVContent } from "@/app/actions/cv"
-import { auth } from "@clerk/nextjs/server"
 
 const MAX_SIZE = 5 * 1024 * 1024 // 5MB
 
 export async function POST(req: Request) {
-  const { userId } = await auth()
-  if (!userId) return new Response("Unauthorized", { status: 401 })
-
   try {
     const formData = await req.formData()
     const file = formData.get("file") as File | null

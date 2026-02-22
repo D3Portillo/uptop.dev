@@ -75,7 +75,7 @@ export default function PageDeepscan() {
   const router = useRouter()
   const [file, setFile] = useState<File | null>(null)
 
-  const { trigger, isMutating, error, data } = useSWRMutation(
+  const { trigger, isMutating, data } = useSWRMutation(
     "/api/resume/extract",
     sendRequest,
   )
@@ -89,9 +89,9 @@ export default function PageDeepscan() {
   }
 
   return (
-    <main className="dark">
+    <main className="dark relative">
       <div className="min-h-screen bg-linear-to-b from-black via-ut-blue-dark/10 to-ut-blue-dark/20">
-        <section className="backdrop-blur-xl [&_.Menu]:bg-black/90 bg-black/30 relative z-1">
+        <section className="[&_#button-connect]:bg-transparent [&_#theme-toggle]:hidden [&_.Menu]:bg-black/90 bg-black/30 relative z-1">
           <TopNavigation
             className="bg-transparent!"
             onHomeButtonPress={() => router.push("/")}
@@ -145,8 +145,8 @@ export default function PageDeepscan() {
           ))}
         </div>
 
-        {/* Hero Section */}
-        <div className="relative z-10 max-w-4xl px-6 pt-24 pb-12 mx-auto text-center">
+        {/* Main Content */}
+        <div className="max-w-4xl px-6 pt-28 pb-12 mx-auto text-center">
           <h1 className="text-5xl md:text-7xl font-bold text-white">
             How much are your skills worth?
           </h1>
@@ -156,17 +156,17 @@ export default function PageDeepscan() {
           </p>
 
           {/* Upload Area */}
-          <div className="mt-12 max-w-md mx-auto">
+          <section className="mt-14 max-w-md mx-auto">
             <label
               htmlFor="pdf-upload"
-              className="group relative flex flex-col items-center justify-center w-full h-48 border border-white/10 rounded-2xl cursor-pointer bg-white/5 backdrop-blur-sm hover:border-ut-purple/60 hover:bg-white/8 transition-all hover:shadow-xl hover:shadow-ut-purple/10"
+              className="group relative flex flex-col items-center justify-center w-full h-48 border border-white/10 rounded-2xl cursor-pointer bg-[rgba(24,17,44,0.95)] backdrop-blur hover:border-ut-blue-dark/60 transition-all hover:shadow-xl hover:shadow-ut-blue-dark/10"
             >
               <div className="flex flex-col items-center justify-center gap-3">
                 {isMutating ? (
                   <Spinner themeSize="size-7" />
                 ) : (
                   <svg
-                    className="w-10 h-10 text-white/20 group-hover:text-ut-purple/60 transition-colors"
+                    className="size-10 text-white/25 group-hover:text-white/50 transition-colors"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -179,10 +179,12 @@ export default function PageDeepscan() {
                     />
                   </svg>
                 )}
-                <p className="text-sm text-white/40">
-                  {file ? file.name : "Drop your CV here"}
+
+                <p className="text-sm text-white/50">
+                  {file ? file.name : "Drop or click to upload PDF"}
                 </p>
-                <p className="text-xs text-white/20">PDF, max 5MB</p>
+
+                <p className="text-xs -mt-2 text-white/30">PDF, max 5MB</p>
               </div>
               <input
                 id="pdf-upload"
@@ -192,19 +194,15 @@ export default function PageDeepscan() {
                 className="hidden"
               />
             </label>
+          </section>
 
-            {error && (
-              <p className="mt-4 text-ut-red text-sm text-center">
-                {error.message}
-              </p>
-            )}
+          {data && (
+            <p className="mt-4 text-ut-green text-sm text-center">
+              Done — check console for results.
+            </p>
+          )}
 
-            {data && (
-              <p className="mt-4 text-ut-green text-sm text-center">
-                Done — check console for results.
-              </p>
-            )}
-          </div>
+          <div className="py-12"></div>
         </div>
 
         <style>{`

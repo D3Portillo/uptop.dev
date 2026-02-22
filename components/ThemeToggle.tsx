@@ -9,6 +9,7 @@ export default function ThemeToggle() {
 
   return (
     <button
+      id="theme-toggle"
       onClick={() => setTheme(isDarkTheme ? "light" : "dark")}
       className="size-9 active:scale-98 text-base grid place-items-center rounded-xl border border-black/7 dark:border-white/7"
       aria-label="Toggle dark/light theme"

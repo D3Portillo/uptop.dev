@@ -49,6 +49,7 @@ export default function Auth() {
       <SignedIn>
         <div className="relative">
           <button
+            id={ID_BUTTON_CONNECT}
             data-user-id={userId || "null"}
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className="h-9 rounded-lg pl-1 pr-2 bg-black/3 dark:bg-white/3 hover:bg-black/5 dark:hover:bg-white/5 transition-colors flex items-center gap-1"
@@ -118,12 +119,12 @@ export default function Auth() {
           <div
             role="button"
             tabIndex={-1}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-60 animate-in fade-in duration-200"
+            className="fixed left-0 top-0 w-screen h-screen bg-black/50 backdrop-blur-sm z-60 animate-in fade-in duration-200"
             onClick={() => setIsSignInOpen(false)}
           />
 
           {/* Modal Content */}
-          <div className="fixed inset-0 z-60 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200 pointer-events-none">
+          <div className="fixed left-0 top-0 w-screen h-screen inset-0 z-60 flex items-center justify-center p-4 animate-in fade-in zoom-in-95 duration-200 pointer-events-none">
             <div className="bg-white overflow-hidden rounded-3xl shadow-2xl border border-black/10 max-w-md w-full relative pointer-events-auto">
               {/* Close Button */}
               <button
