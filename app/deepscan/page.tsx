@@ -1,46 +1,57 @@
 "use client"
 
-import type { ResumeExtract } from "@/app/api/resume/extract/route"
-
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
-import useSWRMutation from "swr/mutation"
 import useSWRImmutable from "swr/immutable"
-
-import { getJobRecommendations, getProfileWorth } from "@/app/actions/cv"
-import { cn, jsonify } from "@/lib/utils"
 import { useJobsList } from "@/lib/jobs"
+
+import {
+  getJobRecommendations,
+  getProfileJobTitle,
+  getProfileWorth,
+} from "@/app/actions/cv"
+import { cn } from "@/lib/utils"
+
+import { ModalProfileWorth } from "@/components/ModalProfileWorth"
 
 import TopNavigation from "@/components/TopNavigation"
 import Spinner from "@/components/Spinner"
-import { ModalProfileWorth } from "@/components/ModalProfileWorth"
 
 export default function PageDeepscan() {
   const router = useRouter()
-  const [file, setFile] = useState<File | null>(null)
+
   const [isDragging, setIsDragging] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const [file, setFile] = useState<File | null>(null)
 
   const { jobs } = useJobsList()
   const JOB_TITLES = jobs.map((job) => job.properties.title)
 
-  const {
-    trigger,
-    isMutating,
-    data: profile,
-    reset: resetProfileExtract,
-  } = useSWRMutation(
-    "/api/resume/extract",
-    async function sendRequest(url: string, { arg }: { arg: File }) {
-      const formData = new FormData()
-      formData.append("file", arg)
-      const response = await jsonify<ResumeExtract>(
-        fetch(url, { method: "POST", body: formData }),
+  const { isLoading: isParsingPDF, data: profile } = useSWRImmutable(
+    `extract-pdf-${file?.lastModified}-${file?.name}`,
+    async () => {
+      if (!file) return null
+
+      const { PDFParse } = await import("pdf-parse")
+      PDFParse.setWorker(
+        "https://cdn.jsdelivr.net/npm/pdf-parse@latest/dist/pdf-parse/web/pdf.worker.min.mjs",
       )
 
-      return response
+      const parser = new PDFParse({
+        data: Buffer.from(await file.arrayBuffer()),
+      })
+
+      const { text: rawContent, total } = await parser.getText()
+      const jobTitle = await getProfileJobTitle(rawContent)
+
+      return {
+        rawContent,
+        jobTitle,
+        totalPages: total,
+      }
     },
   )
 
@@ -57,16 +68,18 @@ export default function PageDeepscan() {
 
   const { data: result = null, isLoading: isGettingProfileData } =
     useSWRImmutable(
-      profile
-        ? `cv-money-${profile.metadata.fileName}-${profile.metadata.textLength}-${file?.lastModified || "0"}`
-        : null,
+      profile ? `cv-money-${file?.lastModified || "0"}` : null,
       async () => {
         if (!profile || JOB_TITLES.length <= 1) return null
 
         const [recommendedJobs, profileWorth] = await Promise.all([
-          getJobRecommendations(profile.jobTitle, JOB_TITLES as any),
+          getJobRecommendations(
+            profile.jobTitle,
+            // JOB_TITLES - we'll iterate this later
+            [],
+          ),
           getProfileWorth(
-            profile.rawText,
+            profile.rawContent,
             salariesInCSV ? Object.values(salariesInCSV) : [],
           ),
         ])
@@ -85,12 +98,9 @@ export default function PageDeepscan() {
     }
   }, [result])
 
-  console.debug({ profile, result })
-
   const tryLoadFile = (file?: File) => {
     if (file?.type?.endsWith("pdf")) {
       setFile(file)
-      trigger(file)
     } else {
       toast.error("Invalid File. Only PDF files are accepted")
     }
@@ -118,7 +128,7 @@ export default function PageDeepscan() {
     tryLoadFile(e?.dataTransfer?.files?.[0])
   }
 
-  const isLoading = isMutating || isGettingProfileData
+  const isLoading = file ? isParsingPDF || isGettingProfileData : false
 
   return (
     <main className="dark relative overflow-hidden">
@@ -272,7 +282,6 @@ export default function PageDeepscan() {
           isOpen={isModalOpen}
           onClose={() => {
             setIsModalOpen(false)
-            resetProfileExtract()
             setFile(null)
           }}
           profileWorth={result.profileWorth}

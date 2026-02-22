@@ -44,6 +44,26 @@ ${extractedContent}
   return output
 }
 
+export const getProfileJobTitle = async (rawCvContent: string) => {
+  const { output } = await generateText({
+    model: GPT4Nano,
+    output: Output.text(),
+    prompt: `
+You're a CV Job Title Extractor.
+Your task is to analyze the raw CV content and extract a concise job title that best represents the candidate's profile and experience.
+
+RULES:
+1. Provide a concise job title based on user's profile and experience. This should be something short and to the point like "Senior Frontend Developer" or "Data Scientist", not your freaking wishes and wet dreams.
+
+
+RAW_CV_CONTENT:
+${rawCvContent}
+    `,
+  })
+
+  return output
+}
+
 export const getProfileWorth = async (
   rawCvContent: string,
   referenceSalaryCSVFiles: string[],
