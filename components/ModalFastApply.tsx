@@ -3,7 +3,7 @@
 import { Fragment } from "react"
 
 import { IoCloseOutline } from "react-icons/io5"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useAuth } from "@clerk/nextjs"
 
 import { useFastApply } from "@/lib/autoapply"
@@ -11,14 +11,24 @@ import { tryTriggerSignIn } from "./Auth"
 
 export default function ModalFastApply() {
   const router = useRouter()
+  const pathname = usePathname()
 
   const { isSignedIn } = useAuth()
   const { modal, isEnabled, enable, canEnableFastApply } = useFastApply()
+
+  // At root page (job-board)
+  const isHomePage = pathname === "/"
 
   function handleEnable() {
     modal.close()
 
     if (!isSignedIn) return tryTriggerSignIn()
+    if (isEnabled) {
+      // Navitate to job board if not there already
+      if (!isHomePage) router.push("/")
+      return
+    }
+
     if (canEnableFastApply) return enable()
 
     // Complete profile flow
@@ -73,7 +83,9 @@ export default function ModalFastApply() {
               {isSignedIn
                 ? canEnableFastApply
                   ? isEnabled
-                    ? "Continue Exploring"
+                    ? isHomePage
+                      ? "Continue Exploring"
+                      : "Explore Jobs"
                     : "Enable Fast Apply"
                   : "Complete Profile"
                 : "Connect Account"}

@@ -43,7 +43,7 @@ export function ModalProfileWorth({
             <div className="flex sticky top-0 z-1 items-center justify-end mb-4">
               <button
                 onClick={onClose}
-                className="flex items-center justify-center w-8 h-8 rounded-full text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+                className="flex items-center justify-center w-8 h-8 rounded-full text-white/60 hover:text-white hover:bg-white/10 transition-colors"
               >
                 <IoCloseOutline className="size-5" />
               </button>
