@@ -102,6 +102,10 @@ export default function PageDeepscan() {
     } else {
       toast.error("Invalid File. Only PDF files are accepted")
     }
+
+    // Clean up input (mobile issues)
+    const inputElement: any = document.getElementById("pdf-upload")
+    if (inputElement) inputElement.value = ""
   }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
