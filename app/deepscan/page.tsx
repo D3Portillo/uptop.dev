@@ -2,7 +2,7 @@
 
 import type { ResumeExtract } from "@/app/api/resume/extract/route"
 
-import { Fragment, useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
@@ -15,11 +15,13 @@ import { useJobsList } from "@/lib/jobs"
 
 import TopNavigation from "@/components/TopNavigation"
 import Spinner from "@/components/Spinner"
+import { ModalProfileWorth } from "@/components/ModalProfileWorth"
 
 export default function PageDeepscan() {
   const router = useRouter()
   const [file, setFile] = useState<File | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   const { jobs } = useJobsList()
   const JOB_TITLES = jobs.map((job) => job.properties.title)
@@ -28,6 +30,7 @@ export default function PageDeepscan() {
     trigger,
     isMutating,
     data: profile,
+    reset: resetProfileExtract,
   } = useSWRMutation(
     "/api/resume/extract",
     async function sendRequest(url: string, { arg }: { arg: File }) {
@@ -57,7 +60,6 @@ export default function PageDeepscan() {
       ? `cv-money-${profile.metadata.fileName}-${profile.metadata.textLength}-${file?.lastModified || "0"}`
       : null,
     async () => {
-      console.debug({ JOB_TITLES })
       if (!profile || JOB_TITLES.length <= 1) return null
 
       const [recommendedJobs, profileWorth] = await Promise.all([
@@ -74,6 +76,13 @@ export default function PageDeepscan() {
       }
     },
   )
+
+  // Auto-open modal when result is available
+  useEffect(() => {
+    if (result) {
+      setIsModalOpen(true)
+    }
+  }, [result])
 
   console.debug({ profile, result })
 
@@ -184,7 +193,7 @@ export default function PageDeepscan() {
               onDragLeave={handleDragLeave}
               onDrop={handleDrop}
               className={cn(
-                "group relative flex flex-col items-center justify-center w-full h-48 border rounded-2xl cursor-pointer bg-[rgba(24,17,44,0.95)] backdrop-blur transition-all",
+                "group relative flex flex-col items-center justify-center w-full h-48 border rounded-2xl cursor-pointer bg-ut-blue-alien/95 backdrop-blur transition-all",
                 isDragging
                   ? "border-ut-blue-dark scale-102 shadow-xl shadow-ut-blue-dark/20"
                   : "border-white/10 hover:border-ut-blue-dark/60 hover:shadow-xl hover:shadow-ut-blue-dark/10",
@@ -233,18 +242,6 @@ export default function PageDeepscan() {
             </label>
           </section>
 
-          {result ? (
-            <Fragment>
-              <p className="mt-12 font-black text-ut-green text-3xl text-center">
-                {result.profileWorth.estimatedSalaryRangeInUSD}
-              </p>
-
-              <p className="text-sm mt-2 max-w-lg mx-auto text-center text-white/70">
-                {result.profileWorth.explanation}
-              </p>
-            </Fragment>
-          ) : null}
-
           <div className="py-12"></div>
         </div>
 
@@ -264,6 +261,19 @@ export default function PageDeepscan() {
       </div>
 
       <div className="fixed pointer-events-none z-1 from-black/0 to-black/40 bg-linear-to-b h-8 w-full bottom-0 left-0" />
+
+      {/* Profile Worth Modal */}
+      {result && (
+        <ModalProfileWorth
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false)
+            resetProfileExtract()
+            setFile(null)
+          }}
+          profileWorth={result.profileWorth}
+        />
+      )}
     </main>
   )
 }
