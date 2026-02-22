@@ -89,12 +89,12 @@ export default function PageDeepscan() {
       }
     })
 
-  // Auto-open modal when result is available
+  // Open modal when result is available
   useEffect(() => {
     if (result) {
       setIsModalOpen(true)
     }
-  }, [result])
+  }, [result, FILE_ID])
 
   const tryLoadFile = (file?: File) => {
     if (file?.type?.endsWith("pdf")) {
@@ -185,7 +185,7 @@ export default function PageDeepscan() {
             How valuable are your skills?
           </h1>
 
-          <p className="mt-4 text-lg sm:text-xl text-white/60">
+          <p className="mt-4 text-lg sm:text-xl text-white/70 sm:text-white/60">
             Upload resume {"->"} Discover your market value
           </p>
 
