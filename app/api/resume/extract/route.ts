@@ -15,8 +15,6 @@ export type ResumeExtract = {
   }
 }
 
-export const runtime = "nodejs"
-
 export async function POST(req: Request) {
   try {
     const formData = await req.formData()
@@ -36,8 +34,10 @@ export async function POST(req: Request) {
 
     let pdfData
     try {
-      require("pdf-parse/worker")
+      const { getPath } = require("pdf-parse/worker")
       const { PDFParse } = require("pdf-parse")
+
+      PDFParse.setWorker(getPath())
       const parser = new PDFParse({ data: buffer })
       pdfData = await parser.getText()
     } catch (error) {
