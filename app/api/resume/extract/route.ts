@@ -2,6 +2,19 @@ import { formatCVContent } from "@/app/actions/cv"
 
 const MAX_SIZE = 5 * 1024 * 1024 // 5MB
 
+export type ResumeExtract = {
+  summary: string
+  jobTitle: string
+  sections: { title: string; content: string }[]
+  rawText: string
+  metadata: {
+    pages: number
+    textLength: number
+    fileName: string
+    fileSize: number
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const formData = await req.formData()
@@ -40,14 +53,20 @@ export async function POST(req: Request) {
     }
 
     // Step 2: Use OpenAI to extract structured resume data
-    let formatted = []
+    let sections = []
     let summary = ""
-    try {
-      const { sections, summary: summaryResult } =
-        await formatCVContent(extractedText)
+    let jobTitle = ""
 
-      formatted = sections
+    try {
+      const {
+        sections: sectionsResult,
+        summary: summaryResult,
+        jobTitle: jobTitleResult,
+      } = await formatCVContent(extractedText)
+
+      sections = sectionsResult
       summary = summaryResult
+      jobTitle = jobTitleResult
     } catch (error) {
       console.error("OpenAI parsing error:", error)
       return new Response("Failed to parse resume content with AI", {
@@ -57,7 +76,8 @@ export async function POST(req: Request) {
 
     return Response.json({
       summary,
-      formatted,
+      jobTitle,
+      sections,
       rawText: extractedText,
       metadata: {
         pages: numPages,
@@ -65,7 +85,7 @@ export async function POST(req: Request) {
         fileName: file.name,
         fileSize: file.size,
       },
-    })
+    } satisfies ResumeExtract)
   } catch (error) {
     console.error("Unexpected error:", error)
     return new Response("An unexpected error occurred", { status: 500 })

@@ -50,15 +50,17 @@ export const getProfileWorth = async (
     output: Output.object({
       name: "profileWorth",
       schema: z.object({
-        summary: z.string(),
-        estimatedSalaryRange: z.string(),
+        explanation: z.string(),
+        estimatedSalaryRangeInUSD: z.string(),
       }),
     }),
     prompt: `
 You're a cv evaluator. Your task is to take the raw CV content and give an estimate of the candidate's market worth based on their experience, skills, and the current market salaries for tech and non-tech roles.
 1. Analyze the CV content to identify key skills, years of experience, and notable achievements.
 2. If provided, use the reference salary data to inform your evaluation, considering how the candidate's profile compares to typical profiles in the salary data.
-3. Provide a short summary of the candidate's profile and an estimated salary range they could expect in the current market.
+3. Provide a short explanation of the candidate's profile and an estimated salary range they could expect in the current market - Has to be really short/scannable, no emojis, no fluff, to the point.
+4. Explanation starts with profile name like "Jhon [do not put complete name, just first name] is a senior software engineer with 10 years of experience..."
+5. Include the solid value in USD, eg: "$120k-$150k" nothing else, just pure value, no emojis and shit
 
 RAW_CV_CONTENT:
 ${rawCvContent}
@@ -85,10 +87,19 @@ export const getJobRecommendations = async (
 ) => {
   const { output } = await generateText({
     model: GPT4Nano,
-    output: Output.text(),
+    output: Output.array({
+      name: "jobRecommendations",
+      element: z.string(),
+      description: "A list of up to 5 recommended job titles",
+    }),
     prompt: `
 You're a job recommendation engine.
 Your task is to take a candidate's profile summary or job title and recommend at most 5 revelant jobs from the provided list of reference jobs.
+Rules:
+1. Do not recommended jobs not present in the reference list
+2. Output same job title as in the reference list, do not change or modify the job titles
+3. If the candidate's profile is very junior, recommend more junior roles, if it's senior, recommend more senior roles. Be mindful of the candidate's experience level as inferred from the job title or summary.
+4. Take profile skills + summary when making recommendation, example: do not recommend "iOS Developer" to a non-mobile dev or pure frontend dev
 
 REFERENCE_JOBS:
 ${referenceJobs.map((job) => `- ${job}`).join("\n")}

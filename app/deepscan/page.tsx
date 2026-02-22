@@ -1,90 +1,94 @@
 "use client"
 
+import type { ResumeExtract } from "@/app/api/resume/extract/route"
+
+import { Fragment, useState } from "react"
 import { useRouter } from "next/navigation"
-import { useState } from "react"
 import useSWRMutation from "swr/mutation"
+import useSWRImmutable from "swr/immutable"
+
+import { getJobRecommendations, getProfileWorth } from "@/app/actions/cv"
+import { cn, jsonify } from "@/lib/utils"
+import { useJobsList } from "@/lib/jobs"
+
 import TopNavigation from "@/components/TopNavigation"
 import Spinner from "@/components/Spinner"
-
-// left%, top%, rotation, delay, floatOffset (random movement amount)
-const FLOATING_PDFS = [
-  {
-    position: "Senior Developer",
-    salary: "$180k",
-    left: 8,
-    top: 15,
-    rotation: -12,
-    delay: 0,
-    floatOffset: 6,
-  },
-  {
-    position: "Product Manager",
-    salary: "$165k",
-    left: 80,
-    top: 10,
-    rotation: 8,
-    delay: 0.7,
-    floatOffset: 9,
-  },
-  {
-    position: "UX Designer",
-    salary: "$140k",
-    left: 3,
-    top: 48,
-    rotation: -7,
-    delay: 1.4,
-    floatOffset: 5,
-  },
-  {
-    position: "DevOps Engineer",
-    salary: "$175k",
-    left: 85,
-    top: 45,
-    rotation: 10,
-    delay: 0.3,
-    floatOffset: 8,
-  },
-  {
-    position: "Data Scientist",
-    salary: "$195k",
-    left: 12,
-    top: 80,
-    rotation: -5,
-    delay: 1.8,
-    floatOffset: 7,
-  },
-  {
-    position: "Tech Lead",
-    salary: "$220k",
-    left: 78,
-    top: 78,
-    rotation: 6,
-    delay: 1.1,
-    floatOffset: 4,
-  },
-]
-
-async function sendRequest(url: string, { arg }: { arg: File }) {
-  const formData = new FormData()
-  formData.append("file", arg)
-  const response = await fetch(url, { method: "POST", body: formData })
-  return response.json()
-}
 
 export default function PageDeepscan() {
   const router = useRouter()
   const [file, setFile] = useState<File | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
 
-  const { trigger, isMutating, data } = useSWRMutation(
+  const { jobs } = useJobsList()
+  const JOB_TITLES = jobs.map((job) => job.properties.title)
+
+  const {
+    trigger,
+    isMutating,
+    data: profile,
+  } = useSWRMutation(
     "/api/resume/extract",
-    sendRequest,
+    async function sendRequest(url: string, { arg }: { arg: File }) {
+      const formData = new FormData()
+      formData.append("file", arg)
+      const response = await jsonify<ResumeExtract>(
+        fetch(url, { method: "POST", body: formData }),
+      )
+
+      return response
+    },
   )
+
+  const { data: result = null } = useSWRImmutable(
+    profile
+      ? `cv-money-${profile.metadata.fileName}-${profile.metadata.textLength}-${file?.lastModified || "0"}`
+      : null,
+    async () => {
+      console.debug({ JOB_TITLES })
+      if (!profile || JOB_TITLES.length <= 1) return null
+      const [recommendedJobs, profileWorth] = await Promise.all([
+        getJobRecommendations(profile.jobTitle, JOB_TITLES as any),
+        getProfileWorth(profile.rawText, []),
+      ])
+
+      return {
+        recommendedJobs,
+        profileWorth,
+      }
+    },
+  )
+
+  console.debug({ profile, result })
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0]
     if (selectedFile) {
       setFile(selectedFile)
       trigger(selectedFile)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const droppedFile = e.dataTransfer.files?.[0]
+    if (droppedFile && droppedFile.type === "application/pdf") {
+      setFile(droppedFile)
+      trigger(droppedFile)
     }
   }
 
@@ -159,14 +163,27 @@ export default function PageDeepscan() {
           <section className="mt-14 max-w-md mx-auto">
             <label
               htmlFor="pdf-upload"
-              className="group relative flex flex-col items-center justify-center w-full h-48 border border-white/10 rounded-2xl cursor-pointer bg-[rgba(24,17,44,0.95)] backdrop-blur hover:border-ut-blue-dark/60 transition-all hover:shadow-xl hover:shadow-ut-blue-dark/10"
+              data-type="drag-n-drop-area"
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+              className={cn(
+                "group relative flex flex-col items-center justify-center w-full h-48 border rounded-2xl cursor-pointer bg-[rgba(24,17,44,0.95)] backdrop-blur transition-all",
+                isDragging
+                  ? "border-ut-blue-dark scale-102 shadow-xl shadow-ut-blue-dark/20"
+                  : "border-white/10 hover:border-ut-blue-dark/60 hover:shadow-xl hover:shadow-ut-blue-dark/10",
+              )}
             >
               <div className="flex flex-col items-center justify-center gap-3">
                 {isMutating ? (
                   <Spinner themeSize="size-7" />
                 ) : (
                   <svg
-                    className="size-10 text-white/25 group-hover:text-white/50 transition-colors"
+                    className={cn(
+                      "size-10 transition-colors",
+                      "text-white/25 group-hover:text-white/60",
+                      isDragging && "text-white/60",
+                    )}
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -180,11 +197,15 @@ export default function PageDeepscan() {
                   </svg>
                 )}
 
-                <p className="text-sm text-white/50">
-                  {file ? file.name : "Drop or click to upload PDF"}
+                <p className="text-sm transition-colors text-white/50">
+                  {isDragging
+                    ? "Drop your PDF here"
+                    : file?.name || "Drop or click to upload PDF"}
                 </p>
 
-                <p className="text-xs -mt-2 text-white/30">PDF, max 5MB</p>
+                {isDragging ? null : (
+                  <p className="text-xs -mt-2 text-white/30">PDF (5MB MAX)</p>
+                )}
               </div>
               <input
                 id="pdf-upload"
@@ -196,11 +217,17 @@ export default function PageDeepscan() {
             </label>
           </section>
 
-          {data && (
-            <p className="mt-4 text-ut-green text-sm text-center">
-              Done — check console for results.
-            </p>
-          )}
+          {result ? (
+            <Fragment>
+              <p className="mt-12 font-black text-ut-green text-3xl text-center">
+                {result.profileWorth.estimatedSalaryRangeInUSD}
+              </p>
+
+              <p className="text-sm mt-2 max-w-lg mx-auto text-center text-white/70">
+                {result.profileWorth.explanation}
+              </p>
+            </Fragment>
+          ) : null}
 
           <div className="py-12"></div>
         </div>
@@ -218,3 +245,61 @@ export default function PageDeepscan() {
     </main>
   )
 }
+
+// left%, top%, rotation, delay, floatOffset (random movement amount)
+const FLOATING_PDFS = [
+  {
+    position: "Senior Developer",
+    salary: "$180k",
+    left: 8,
+    top: 15,
+    rotation: -12,
+    delay: 0,
+    floatOffset: 6,
+  },
+  {
+    position: "Product Manager",
+    salary: "$165k",
+    left: 80,
+    top: 10,
+    rotation: 8,
+    delay: 0.7,
+    floatOffset: 9,
+  },
+  {
+    position: "UX Designer",
+    salary: "$140k",
+    left: 3,
+    top: 48,
+    rotation: -7,
+    delay: 1.4,
+    floatOffset: 5,
+  },
+  {
+    position: "DevOps Engineer",
+    salary: "$175k",
+    left: 85,
+    top: 45,
+    rotation: 10,
+    delay: 0.3,
+    floatOffset: 8,
+  },
+  {
+    position: "Data Scientist",
+    salary: "$195k",
+    left: 12,
+    top: 80,
+    rotation: -5,
+    delay: 1.8,
+    floatOffset: 7,
+  },
+  {
+    position: "Tech Lead",
+    salary: "$220k",
+    left: 78,
+    top: 78,
+    rotation: 6,
+    delay: 1.1,
+    floatOffset: 4,
+  },
+]
