@@ -1,0 +1,77 @@
+import { formatCVContent } from "@/app/actions/cv"
+import { auth } from "@clerk/nextjs/server"
+
+const MAX_SIZE = 5 * 1024 * 1024 // 5MB
+
+export async function POST(req: Request) {
+  const { userId } = await auth()
+  if (!userId) return new Response("Unauthorized", { status: 401 })
+
+  try {
+    const formData = await req.formData()
+    const file = formData.get("file") as File | null
+
+    if (!file) return new Response("Missing file", { status: 400 })
+
+    if (!file.type.endsWith("pdf"))
+      return new Response("Only PDF files are allowed", { status: 400 })
+
+    if (file.size > MAX_SIZE)
+      return new Response("File exceeds 5MB limit", { status: 400 })
+
+    // Step 1: Extract text from PDF
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
+    let pdfData
+    try {
+      const { PDFParse } = require("pdf-parse")
+      const parser = new PDFParse({ data: buffer })
+      pdfData = await parser.getText()
+    } catch (error) {
+      console.error("PDF parsing error:", error)
+      return new Response("Failed to parse PDF file", { status: 422 })
+    }
+
+    const extractedText = pdfData.text
+    const numPages = pdfData.total
+
+    if (!extractedText || extractedText.trim().length === 0) {
+      return new Response(
+        "No text found in PDF. The file may be an image or scanned document.",
+        { status: 422 },
+      )
+    }
+
+    // Step 2: Use OpenAI to extract structured resume data
+    let formatted = []
+    let summary = ""
+    try {
+      const { sections, summary: summaryResult } =
+        await formatCVContent(extractedText)
+
+      formatted = sections
+      summary = summaryResult
+    } catch (error) {
+      console.error("OpenAI parsing error:", error)
+      return new Response("Failed to parse resume content with AI", {
+        status: 500,
+      })
+    }
+
+    return Response.json({
+      summary,
+      formatted,
+      rawText: extractedText,
+      metadata: {
+        pages: numPages,
+        textLength: extractedText.length,
+        fileName: file.name,
+        fileSize: file.size,
+      },
+    })
+  } catch (error) {
+    console.error("Unexpected error:", error)
+    return new Response("An unexpected error occurred", { status: 500 })
+  }
+}

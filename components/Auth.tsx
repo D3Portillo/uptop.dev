@@ -71,7 +71,7 @@ export default function Auth() {
                 className="fixed z-5 inset-0"
               />
 
-              <div className="absolute right-0 mt-2 w-36 bg-white/80 dark:bg-white/5 backdrop-blur-xl dark:border-white/10 text-black/70 dark:text-white border border-black/10 rounded-lg shadow-lg z-10 flex flex-col">
+              <div className="absolute Menu right-0 mt-2 w-36 bg-white/80 dark:bg-white/5 backdrop-blur-xl dark:border-white/10 text-black/70 dark:text-white border border-black/10 rounded-lg shadow-lg z-10 flex flex-col">
                 <button
                   onClick={() => {
                     setShowProfileMenu(false)
