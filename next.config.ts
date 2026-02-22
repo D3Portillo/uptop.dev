@@ -4,16 +4,7 @@ const nextConfig: NextConfig = {
   images: {
     unoptimized: true,
   },
-  webpack: (config, { isServer }) => {
-    if (isServer) {
-      config.externals = [
-        ...(Array.isArray(config.externals) ? config.externals : []),
-        "pdf-parse",
-        "pdfjs-dist",
-      ]
-    }
-    return config
-  },
+  serverExternalPackages: ["pdf-parse", "@napi-rs/canvas"],
 }
 
 export default nextConfig

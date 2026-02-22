@@ -34,6 +34,7 @@ export async function POST(req: Request) {
 
     let pdfData
     try {
+      require("pdf-parse/worker")
       const { PDFParse } = require("pdf-parse")
       const parser = new PDFParse({ data: buffer })
       pdfData = await parser.getText()
