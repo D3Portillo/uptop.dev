@@ -26,12 +26,13 @@ export default function PageDeepscan() {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const [file, setFile] = useState<File | null>(null)
+  const FILE_ID = file ? `${file.name}-${file.lastModified}-${file.size}` : null
 
   const { jobs } = useJobsList()
   const JOB_TITLES = jobs.map((job) => job.properties.title)
 
   const { isLoading: isParsingPDF, data: profile } = useSWRImmutable(
-    `extract-pdf-${file?.lastModified}-${file?.name}`,
+    `extract-file-${FILE_ID}`,
     async () => {
       if (!file) return null
 
@@ -67,29 +68,26 @@ export default function PageDeepscan() {
   )
 
   const { data: result = null, isLoading: isGettingProfileData } =
-    useSWRImmutable(
-      profile ? `cv-money-${file?.lastModified || "0"}` : null,
-      async () => {
-        if (!profile || JOB_TITLES.length <= 1) return null
+    useSWRImmutable(profile ? `cv-value-${FILE_ID}` : null, async () => {
+      if (!profile) return null
 
-        const [recommendedJobs, profileWorth] = await Promise.all([
-          getJobRecommendations(
-            profile.jobTitle,
-            // JOB_TITLES - we'll iterate this later
-            [],
-          ),
-          getProfileWorth(
-            profile.rawContent,
-            salariesInCSV ? Object.values(salariesInCSV) : [],
-          ),
-        ])
+      const [recommendedJobs, profileWorth] = await Promise.all([
+        getJobRecommendations(
+          profile.jobTitle,
+          // JOB_TITLES - we'll iterate this later
+          [],
+        ),
+        getProfileWorth(
+          profile.rawContent,
+          salariesInCSV ? Object.values(salariesInCSV) : [],
+        ),
+      ])
 
-        return {
-          recommendedJobs,
-          profileWorth,
-        }
-      },
-    )
+      return {
+        recommendedJobs,
+        profileWorth,
+      }
+    })
 
   // Auto-open modal when result is available
   useEffect(() => {
@@ -109,22 +107,16 @@ export default function PageDeepscan() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) =>
     tryLoadFile(e.target.files?.[0])
 
-  const handleDragOver = (e: React.DragEvent) => {
+  const updateDragState = (e: React.DragEvent, { isDragging = false }) => {
     e.preventDefault()
     e.stopPropagation()
-    setIsDragging(true)
+    setIsDragging(isDragging)
   }
 
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(false)
-  }
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(false)
+  const handleDragOver = (e: any) => updateDragState(e, { isDragging: true })
+  const handleDragLeave = (e: any) => updateDragState(e, { isDragging: false })
+  const handleDrop = (e: any) => {
+    updateDragState(e, { isDragging: false })
     tryLoadFile(e?.dataTransfer?.files?.[0])
   }
 
@@ -141,11 +133,11 @@ export default function PageDeepscan() {
         </section>
 
         {/* Floating PDFs */}
-        <div className="absolute overflow-hidden -top-28 sm:top-20 -left-5 sm:left-0 -right-5 sm:right-0 bottom-0 pointer-events-none">
+        <div className="absolute overflow-hidden -top-30 sm:top-20 -left-5 sm:left-0 -right-5 sm:right-0 bottom-0 pointer-events-none">
           {FLOATING_PDFS.map((pdf, i) => (
             <div
               key={`floating-pdf-${i}`}
-              className="absolute opacity-80 sm:opacity-100"
+              className="absolute opacity-75 sm:opacity-100"
               style={{
                 left: `${pdf.left}%`,
                 top: `${pdf.top}%`,
