@@ -26,14 +26,15 @@ import JobListing from "@/components/JobListing"
 import SelectSortBy from "@/components/SelectSortBy"
 import TopNavigation from "@/components/TopNavigation"
 import SkillChip from "@/components/SkillChip"
+import Banner from "@/components/Banner"
 
 const SORT_BY = {
   MOST_RECENT: "Most Recent",
   BY_SALARY: "Salary (high - low)",
 } as const
 
-const MIN_MOBILE_SHOW_SIZE = 5
-const MIN_DESKTOP_SHOW_SIZE = 7
+const MIN_MOBILE_SHOW_SIZE = 4
+const MIN_DESKTOP_SHOW_SIZE = 6
 
 export default function Home() {
   const SHOW_OR_LESS_SIZE =
@@ -225,283 +226,288 @@ export default function Home() {
   const isEmpty = !isGlobalLoading && filteredListings.length === 0
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-white/0 to-white/15 dark:from-black/0 dark:to-black/20">
-      <TopNavigation
-        className="[&_nav]:sm:mb-7"
-        onHomeButtonPress={() => {
-          // Simulate re-load page
-          resetFilters()
-          setIsGlobalLoading(true)
-          setTimeout(() => setIsGlobalLoading(false), 500)
-        }}
-      >
-        {/* Search Filters */}
-        <div className="flex gap-3">
-          <label
-            tabIndex={-1}
-            className="flex-1 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg focus-within:border-ut-blue-dark focus-within:ring-2 focus-within:ring-ut-blue-dark/20 transition-all relative"
-          >
-            {isGlobalSearch ? (
-              <div
-                role="button"
-                className="absolute cursor-pointer left-4 py-2 top-1/2 -translate-y-1/2"
-                onClick={() => {
-                  setSearchQuery("")
-                }}
-              >
-                <IoCloseOutline className="opacity-50 text-xl scale-110" />
-              </div>
-            ) : (
-              <IoSearchOutline className="absolute pointer-events-none left-4 top-1/2 -translate-y-1/2 opacity-50 text-xl" />
-            )}
-            <input
-              type="text"
-              id="main-search"
-              placeholder="Filter jobs by title, location or skill"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full outline-none pl-12 pr-4 py-3.5 bg-transparent text-sm"
-            />
-          </label>
-
-          <div className="w-17 md:w-52 relative">
-            {/* Display emoji on mobile */}
-            <span className="absolute z-1 left-4 top-1/2 -translate-y-1/2 text-xl pointer-events-none md:hidden">
-              {CRYPTO_JOB_LOCATIONS[locationQuery].emoji}
-            </span>
-
-            <select
-              value={locationQuery}
-              onChange={(e) => {
-                resetSkillSelection()
-                setLocationQuery(e.target.value as LocationKey)
-              }}
-              className="w-full md:pl-4 pl-4 pr-10 py-3.5 bg-white/0 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-blue-dark focus:ring-2 focus:ring-ut-blue-dark/20 transition-all text-sm appearance-none cursor-pointer"
+    <Fragment>
+      <Banner />
+      <div className="min-h-screen bg-linear-to-b from-white/0 to-white/15 dark:from-black/0 dark:to-black/20">
+        <TopNavigation
+          className="[&_nav]:sm:mb-7"
+          onHomeButtonPress={() => {
+            // Simulate re-load page
+            resetFilters()
+            setIsGlobalLoading(true)
+            setTimeout(() => setIsGlobalLoading(false), 500)
+          }}
+        >
+          {/* Search Filters */}
+          <div className="flex gap-3">
+            <label
+              tabIndex={-1}
+              className="flex-1 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg focus-within:border-ut-blue-dark focus-within:ring-2 focus-within:ring-ut-blue-dark/20 transition-all relative"
             >
-              {locationOptions.map((locationKey) => {
-                const locationData = CRYPTO_JOB_LOCATIONS[locationKey]
-                return (
-                  <option key={locationKey} value={locationKey}>
-                    <span className="md:inline hidden">
-                      {locationData.emoji}
-                    </span>{" "}
-                    {locationData.name}
-                  </option>
-                )
-              })}
-            </select>
-            <IoChevronDownOutline className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
-          </div>
-        </div>
+              {isGlobalSearch ? (
+                <div
+                  role="button"
+                  className="absolute cursor-pointer left-4 py-2 top-1/2 -translate-y-1/2"
+                  onClick={() => {
+                    setSearchQuery("")
+                  }}
+                >
+                  <IoCloseOutline className="opacity-50 text-xl scale-110" />
+                </div>
+              ) : (
+                <IoSearchOutline className="absolute pointer-events-none left-4 top-1/2 -translate-y-1/2 opacity-50 text-xl" />
+              )}
+              <input
+                type="text"
+                id="main-search"
+                placeholder="Filter jobs by title, location or skill"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full outline-none pl-12 pr-4 py-3.5 bg-transparent text-sm"
+              />
+            </label>
 
-        {/* Category Filters */}
+            <div className="w-17 md:w-52 relative">
+              {/* Display emoji on mobile */}
+              <span className="absolute z-1 left-4 top-1/2 -translate-y-1/2 text-xl pointer-events-none md:hidden">
+                {CRYPTO_JOB_LOCATIONS[locationQuery].emoji}
+              </span>
+
+              <select
+                value={locationQuery}
+                onChange={(e) => {
+                  resetSkillSelection()
+                  setLocationQuery(e.target.value as LocationKey)
+                }}
+                className="w-full md:pl-4 pl-4 pr-10 py-3.5 bg-white/0 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-lg focus:outline-none focus:border-ut-blue-dark focus:ring-2 focus:ring-ut-blue-dark/20 transition-all text-sm appearance-none cursor-pointer"
+              >
+                {locationOptions.map((locationKey) => {
+                  const locationData = CRYPTO_JOB_LOCATIONS[locationKey]
+                  return (
+                    <option key={locationKey} value={locationKey}>
+                      <span className="md:inline hidden">
+                        {locationData.emoji}
+                      </span>{" "}
+                      {locationData.name}
+                    </option>
+                  )
+                })}
+              </select>
+              <IoChevronDownOutline className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 opacity-50 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Category Filters */}
+          <div
+            className={cn(
+              "flex transition-all flex-wrap gap-2 items-center",
+              isGlobalLoading &&
+                "min-h-18 sm:min-h-0 items-start sm:items-center",
+              // Hide all section when loaded and few skills to show
+              skills.length < 3 && !isGlobalLoading
+                ? "opacity-0 h-[0%] max-h-0 mt-2 pointer-events-none"
+                : "opacity-100 h-full mt-6",
+            )}
+          >
+            {isGlobalLoading
+              ? Array.from({ length: MIN_DESKTOP_SHOW_SIZE }).map((_, i) => (
+                  <div
+                    key={`mock-skill-${i}`}
+                    className="h-8 min-w-16 max-w-28 animate-pulse border border-black/3 dark:border-white/1 bg-black/3 dark:bg-white/3 grow rounded-lg"
+                  />
+                ))
+              : displayedSkills.map((skill) => (
+                  <SkillChip
+                    skill={skill}
+                    key={`f-skill-${skill}`}
+                    isSelected={selectedSkills.includes(skill)}
+                    onSelect={() => {
+                      setSelectedSkills((prev) =>
+                        prev.includes(skill)
+                          ? prev.filter((c) => c !== skill)
+                          : [...prev, skill],
+                      )
+                    }}
+                  />
+                ))}
+
+            {/* Show "Select All" / "Show More" options only when enough skills */}
+            {!isGlobalLoading && skills.length > MIN_MOBILE_SHOW_SIZE ? (
+              <Fragment>
+                <button
+                  onClick={() => {
+                    setSelectedSkills(isAllSkillsSelected ? [] : skills)
+                  }}
+                  className={cn(
+                    "min-w-30",
+                    "px-3 py-1 flex items-center justify-between gap-2 h-8 border border-transparent rounded-lg text-sm transition-colors",
+                    "bg-black/3 dark:bg-white/3 text-black/50 dark:text-white/40 border-black/5 dark:border-white/3 hover:bg-black/5 dark:hover:bg-ut-blue/10 dark:hover:text-white/50",
+                  )}
+                >
+                  <span>
+                    {isAllSkillsSelected ? "Remove all" : "Everything"}
+                  </span>
+                  {isAllSkillsSelected ? (
+                    <MdOutlineClose className="scale-125" />
+                  ) : (
+                    <MdCheck className="scale-110" />
+                  )}
+                </button>
+
+                {skills.length > SHOW_OR_LESS_SIZE && (
+                  <button
+                    onClick={() => setShowAllSkills(!showAllSkills)}
+                    className="border w-full lg:w-auto px-3 border-black/10 dark:border-white/10 h-8 rounded-lg text-sm hover:underline underline-offset-3"
+                  >
+                    <span className="opacity-70">
+                      {showAllSkills
+                        ? "Show less"
+                        : `Show more (${Math.max(
+                            0,
+                            skills.length - SHOW_OR_LESS_SIZE,
+                          )})`}
+                    </span>
+                  </button>
+                )}
+              </Fragment>
+            ) : null}
+          </div>
+        </TopNavigation>
+
+        {/* Main Content */}
         <div
           className={cn(
-            "flex transition-all flex-wrap gap-2 items-center",
-            isGlobalLoading &&
-              "min-h-18 sm:min-h-0 items-start sm:items-center",
-            // Hide all section when loaded and few skills to show
-            skills.length < 3 && !isGlobalLoading
-              ? "opacity-0 h-[0%] max-h-0 mt-2 pointer-events-none"
-              : "opacity-100 h-full mt-6",
+            "max-w-6xl overflow-hidden mx-auto p-6 min-h-screen",
+            isEmpty && "border-b mb-8 border-black/10",
           )}
         >
-          {isGlobalLoading
-            ? Array.from({ length: MIN_DESKTOP_SHOW_SIZE }).map((_, i) => (
+          {/* Results Header */}
+          <div className="sm:flex gap-3 items-center mb-5">
+            <div className="opacity-70 whitespace-nowrap">
+              Showing{" "}
+              <span className="font-semibold">
+                {
+                  // Show empty when ZERO
+                  isGlobalLoading ? "" : filteredListings.length || ""
+                }
+              </span>{" "}
+              jobs
+              {isGlobalSearch && (
+                <span
+                  className="cursor-help"
+                  title="This search is global (all countries/regions)"
+                >
+                  {" globally"}
+                </span>
+              )}
+              {selectedSkills.length > 0 && (
+                <Fragment>
+                  <span className="mx-2">•</span>
+                  <span
+                    role="button"
+                    onClick={() => {
+                      // Show all skills when clicked
+                      if (!showAllSkills && skills.length > SHOW_OR_LESS_SIZE) {
+                        setShowAllSkills(true)
+                      }
+
+                      // Focus main-search input
+                      document.getElementById("main-search")?.focus()
+                    }}
+                    tabIndex={-1}
+                    className="underline underline-offset-4 cursor-pointer"
+                  >
+                    {selectedSkills.length} skill
+                    {selectedSkills.length > 1 && "s"}
+                  </span>
+                </Fragment>
+              )}
+            </div>
+
+            <div className="grow" />
+
+            <div className="flex mt-4 sm:mt-0 gap-3 items-center">
+              <div className="flex whitespace-nowrap h-10 gap-3.5 border border-black/10 rounded-lg bg-white/50 dark:bg-white/5 dark:border-white/10">
+                <button
+                  onClick={() => setPolicy("ONSITE")}
+                  className={cn(
+                    "text-sm pl-3",
+                    policy === "ONSITE"
+                      ? "font-semibold dark:opacity-90"
+                      : "opacity-60",
+                  )}
+                >
+                  🗂️ On-site
+                </button>
+
+                <button
+                  onClick={() => setPolicy("REMOTE")}
+                  className={cn(
+                    "text-sm pr-3",
+                    policy === "REMOTE"
+                      ? "font-semibold dark:opacity-90"
+                      : "opacity-60",
+                  )}
+                >
+                  <span>💻 Remote</span>
+                </button>
+              </div>
+
+              <SelectSortBy
+                value={sortBy}
+                options={Object.values(SORT_BY)}
+                onValueChange={setSortBy as any}
+              />
+            </div>
+          </div>
+
+          {/* Job Listings */}
+          {isGlobalLoading ? (
+            <div className="space-y-4">
+              {[...Array(10)].map((_, i) => (
                 <div
-                  key={`mock-skill-${i}`}
-                  className="h-8 min-w-16 max-w-28 animate-pulse border border-black/3 dark:border-white/1 bg-black/3 dark:bg-white/3 grow rounded-lg"
-                />
-              ))
-            : displayedSkills.map((skill) => (
-                <SkillChip
-                  skill={skill}
-                  key={`f-skill-${skill}`}
-                  isSelected={selectedSkills.includes(skill)}
-                  onSelect={() => {
-                    setSelectedSkills((prev) =>
-                      prev.includes(skill)
-                        ? prev.filter((c) => c !== skill)
-                        : [...prev, skill],
-                    )
-                  }}
+                  key={`mock-load-${i}`}
+                  className="h-52 sm:h-36 bg-white/30 dark:bg-white/7 rounded-xl animate-pulse border border-black/10"
                 />
               ))}
-
-          {/* Show "Select All" / "Show More" options only when enough skills */}
-          {!isGlobalLoading && skills.length > MIN_MOBILE_SHOW_SIZE ? (
-            <Fragment>
-              <button
-                onClick={() => {
-                  setSelectedSkills(isAllSkillsSelected ? [] : skills)
-                }}
-                className={cn(
-                  "min-w-30",
-                  "px-3 py-1 flex items-center justify-between gap-2 h-8 border border-transparent rounded-lg text-sm transition-colors",
-                  "bg-black/3 dark:bg-white/3 text-black/50 dark:text-white/40 border-black/5 dark:border-white/3 hover:bg-black/5 dark:hover:bg-ut-blue/10 dark:hover:text-white/50",
-                )}
-              >
-                <span>{isAllSkillsSelected ? "Remove all" : "Everything"}</span>
-                {isAllSkillsSelected ? (
-                  <MdOutlineClose className="scale-125" />
-                ) : (
-                  <MdCheck className="scale-110" />
-                )}
-              </button>
-
-              {skills.length > SHOW_OR_LESS_SIZE && (
-                <button
-                  onClick={() => setShowAllSkills(!showAllSkills)}
-                  className="border px-3 border-black/10 dark:border-white/10 h-8 rounded-lg text-sm hover:underline underline-offset-3"
-                >
-                  <span className="opacity-70">
-                    {showAllSkills
-                      ? "Show less"
-                      : `Show more (${Math.max(
-                          0,
-                          skills.length - SHOW_OR_LESS_SIZE,
-                        )})`}
-                  </span>
-                </button>
-              )}
-            </Fragment>
-          ) : null}
-        </div>
-      </TopNavigation>
-
-      {/* Main Content */}
-      <div
-        className={cn(
-          "max-w-6xl overflow-hidden mx-auto p-6 min-h-screen",
-          isEmpty && "border-b mb-8 border-black/10",
-        )}
-      >
-        {/* Results Header */}
-        <div className="sm:flex gap-3 items-center mb-5">
-          <div className="opacity-70 whitespace-nowrap">
-            Showing{" "}
-            <span className="font-semibold">
-              {
-                // Show empty when ZERO
-                isGlobalLoading ? "" : filteredListings.length || ""
-              }
-            </span>{" "}
-            jobs
-            {isGlobalSearch && (
-              <span
-                className="cursor-help"
-                title="This search is global (all countries/regions)"
-              >
-                {" globally"}
-              </span>
-            )}
-            {selectedSkills.length > 0 && (
-              <Fragment>
-                <span className="mx-2">•</span>
-                <span
-                  role="button"
-                  onClick={() => {
-                    // Show all skills when clicked
-                    if (!showAllSkills && skills.length > SHOW_OR_LESS_SIZE) {
-                      setShowAllSkills(true)
-                    }
-
-                    // Focus main-search input
-                    document.getElementById("main-search")?.focus()
-                  }}
-                  tabIndex={-1}
-                  className="underline underline-offset-4 cursor-pointer"
-                >
-                  {selectedSkills.length} skill
-                  {selectedSkills.length > 1 && "s"}
-                </span>
-              </Fragment>
-            )}
-          </div>
-
-          <div className="grow" />
-
-          <div className="flex mt-4 sm:mt-0 gap-3 items-center">
-            <div className="flex whitespace-nowrap h-10 gap-3.5 border border-black/10 rounded-lg bg-white/50 dark:bg-white/5 dark:border-white/10">
-              <button
-                onClick={() => setPolicy("ONSITE")}
-                className={cn(
-                  "text-sm pl-3",
-                  policy === "ONSITE"
-                    ? "font-semibold dark:opacity-90"
-                    : "opacity-60",
-                )}
-              >
-                🗂️ On-site
-              </button>
-
-              <button
-                onClick={() => setPolicy("REMOTE")}
-                className={cn(
-                  "text-sm pr-3",
-                  policy === "REMOTE"
-                    ? "font-semibold dark:opacity-90"
-                    : "opacity-60",
-                )}
-              >
-                <span>💻 Remote</span>
-              </button>
             </div>
+          ) : isEmpty ? (
+            <section className="flex gap-2 py-16 flex-col items-center justify-center">
+              <div className="opacity-50">
+                Nothing found, try adjusting your search
+              </div>
 
-            <SelectSortBy
-              value={sortBy}
-              options={Object.values(SORT_BY)}
-              onValueChange={setSortBy as any}
-            />
-          </div>
+              <button onClick={resetFilters} className="underline opacity-50">
+                Clear filters
+              </button>
+            </section>
+          ) : (
+            <div className="space-y-4 mb-24">
+              {filteredListings.map((listing) => (
+                <JobListing
+                  key={`listing-item-${listing.id}`}
+                  listing={listing}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Job Listings */}
-        {isGlobalLoading ? (
-          <div className="space-y-4">
-            {[...Array(10)].map((_, i) => (
-              <div
-                key={`mock-load-${i}`}
-                className="h-52 sm:h-36 bg-white/30 dark:bg-white/7 rounded-xl animate-pulse border border-black/10"
-              />
-            ))}
-          </div>
-        ) : isEmpty ? (
-          <section className="flex gap-2 py-16 flex-col items-center justify-center">
-            <div className="opacity-50">
-              Nothing found, try adjusting your search
-            </div>
-
-            <button onClick={resetFilters} className="underline opacity-50">
-              Clear filters
-            </button>
-          </section>
-        ) : (
-          <div className="space-y-4 mb-24">
-            {filteredListings.map((listing) => (
-              <JobListing
-                key={`listing-item-${listing.id}`}
-                listing={listing}
-              />
-            ))}
-          </div>
-        )}
+        <footer className="max-w-6xl mx-auto px-6 pt-8 pb-16">
+          <p className="text-center max-w-lg mx-auto text-sm opacity-50">
+            This is a community project and is not affiliated with Up Top. Visit{" "}
+            <a
+              href="https://uptop.notion.site/job-board"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline underline-offset-4"
+            >
+              Up Top's Notion Page
+            </a>{" "}
+            for the official listings.
+          </p>
+        </footer>
       </div>
-
-      <footer className="max-w-6xl mx-auto px-6 pt-8 pb-16">
-        <p className="text-center max-w-lg mx-auto text-sm opacity-50">
-          This is a community project and is not affiliated with Up Top. Visit{" "}
-          <a
-            href="https://uptop.notion.site/job-board"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="underline underline-offset-4"
-          >
-            Up Top's Notion Page
-          </a>{" "}
-          for the official listings.
-        </p>
-      </footer>
-    </div>
+    </Fragment>
   )
 }

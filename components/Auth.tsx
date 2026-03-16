@@ -72,7 +72,7 @@ export default function Auth() {
                 className="fixed z-5 inset-0"
               />
 
-              <div className="absolute Menu right-0 mt-2 w-36 bg-white/80 dark:bg-white/5 backdrop-blur-xl dark:border-white/10 text-black/70 dark:text-white border border-black/10 rounded-lg shadow-lg z-10 flex flex-col">
+              <div className="absolute Menu right-0 mt-2 w-42 bg-white/80 dark:bg-white/5 backdrop-blur-xl dark:border-white/10 text-black/70 dark:text-white border border-black/10 rounded-lg shadow-lg z-10 flex flex-col">
                 <button
                   onClick={() => {
                     setShowProfileMenu(false)
@@ -86,6 +86,19 @@ export default function Auth() {
                 <button
                   onClick={() => {
                     setShowProfileMenu(false)
+                    router.push("/deepscan")
+                  }}
+                  className="w-full flex gap-2 items-center text-left px-4 py-3 text-sm hover:bg-black/5 dark:hover:bg-white/7 first:rounded-t-lg font-medium"
+                >
+                  <span>Market Value</span>
+                  <div className="bg-[#2c00ff] dark:bg-yellow-200 text-xs font-bold px-1.5 py-0.5 rounded-full text-white dark:text-black">
+                    NEW
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => {
+                    setShowProfileMenu(false)
                     fastApplyModal.open()
                   }}
                   className="w-full text-left px-4 py-3 text-sm hover:bg-black/5 dark:hover:bg-white/7 first:rounded-t-lg font-medium"
@@ -93,7 +106,7 @@ export default function Auth() {
                   Fast Apply ⚡
                 </button>
 
-                <div className="h-px bg-black/7 dark:bg-white/7 w-full" />
+                <div className="h-px bg-black/7 dark:bg-white/10 w-full" />
 
                 <button
                   onClick={() => {
