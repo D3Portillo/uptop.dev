@@ -99,6 +99,17 @@ export default function PageDeepscan() {
   const tryLoadFile = (file?: File) => {
     if (file?.type?.endsWith("pdf")) {
       setFile(file)
+
+      try {
+        // TRACK GA Event
+        window.gtag?.("event", "vc_upload", {
+          event_category: "engagement",
+          file_name: file.name,
+          file_size_in_kb: Math.round(file.size / 1024),
+        })
+      } catch (error) {
+        console.debug("[GA]: Could not track event", { error })
+      }
     } else {
       toast.error("Invalid File. Only PDF files are accepted")
     }
